@@ -1,13 +1,10 @@
-# Caleida
+# Documentação do Caleida
 
-Plataforma pública para organização, acompanhamento e descoberta cultural.
+Esta pasta reúne os documentos oficiais de produto, arquitetura,
+backlog, decisões, testes e operação do Caleida.
 
-O Caleida reúne livros, mangás, manhwas, manhuas, filmes, séries e animes em um catálogo global, permitindo que cada usuário construa e preserve sua própria trajetória cultural.
+O Project Design é a principal referência para o resultado final
+esperado do produto.
 
-> Cada história muda o desenho.
-
-## Estado do projeto
-
-Projeto em fase inicial de estruturação.
-
-A especificação oficial do produto está disponível na pasta `/docs`.
+O desenvolvimento deve ser realizado de forma incremental, por meio
+de épicos, User Stories, pull requests e critérios de aceite.
