@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após OPS-002  
+**Status:** Backlog do Incremento 0 reconciliado após OPS-003  
 **Escopo detalhado neste momento:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -26,9 +26,9 @@ Estados:
 
 ## Objetivo
 
-Criar uma aplicação vazia, porém instalável, testável e documentada, com fundação Neon reproduzível e sem iniciar funcionalidades de negócio.
+Criar uma aplicação vazia, porém instalável, testável, documentada e **deployable**, com fundação Neon reproduzível e sem iniciar funcionalidades de negócio.
 
-Deployment real não faz parte automaticamente do gate técnico; a política será reconciliada em `OPS-003`.
+Deployment real não é gate técnico do Incremento 0. Vercel é preparada para release manual do usuário, sem Git deployments automáticos.
 
 ## EPIC-00 — Fundação técnica
 
@@ -72,13 +72,13 @@ Deployment real não faz parte automaticamente do gate técnico; a política ser
 
 - **Prioridade:** P0
 - **Estado:** A FAZER
-- **Resultado:** GitHub Actions validando pull requests sem disparar deployment Vercel por consequência implícita.
+- **Resultado:** GitHub Actions validando pull requests com lint, typecheck, testes e build, sem jobs de deployment Vercel.
 
-### US-PLAT-008 — Preparar integração de hosting Vercel
+### US-PLAT-008 — Preparar hosting Vercel para release manual
 
 - **Prioridade:** P0
-- **Estado:** BLOQUEADA — aguarda `OPS-003`
-- **Resultado:** compatibilidade e configuração de hosting alinhadas à política canônica de deployment controlado, sem Preview/Production automáticos não autorizados.
+- **Estado:** A FAZER
+- **Resultado:** configuração de hosting compatível com Vercel, `vercel.json` com Git deployments automáticos desabilitados conforme documentação corrente, contrato de variáveis e runbook de release manual. A Story não exige conectar ou publicar o projeto.
 
 ### US-PLAT-009 — Separar variáveis por ambiente
 
@@ -90,7 +90,7 @@ Deployment real não faz parte automaticamente do gate técnico; a política ser
 
 - **Prioridade:** P0
 - **Estado:** A FAZER
-- **Resultado:** uma pull request de teste passa por CI, revisão e merge; banco quando aplicável é verificado em branch Neon isolada; deployment só participa se houver autorização/política específica vigente.
+- **Resultado:** uma pull request de teste passa por CI, revisão e merge; banco quando aplicável é verificado em branch Neon isolada; nenhum deployment é criado como consequência do fluxo.
 
 ---
 
@@ -104,12 +104,16 @@ O incremento estará concluído quando:
 - migrations puderem reconstruir o estado esperado desde baseline conhecida;
 - testes de banco/RLS puderem executar em branch isolada sem usar Production;
 - nenhuma credencial estiver versionada;
-- pull requests executarem CI;
-- a política de hosting/deployment estiver reconciliada e comprovadamente não gerar deploys não autorizados;
+- pull requests executarem CI sem CD;
+- a configuração de hosting estiver preparada para impedir Git deployments automáticos;
+- existir runbook de release manual do usuário;
+- o ciclo PR → CI → review → merge funcionar sem deployment;
 - os documentos operacionais refletirem o estado real.
+
+Um deployment Vercel real não é obrigatório para concluir o Incremento 0.
 
 # Próxima ação operacional
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-A sequência atual é governada por `docs/CHECKPOINT.md` e `docs/EXECUTION_PLAN.md`. Após OPS-002, a próxima tarefa operacional é `OPS-003 — Reconciliar a política de deployment`.
+A sequência é governada por `docs/CHECKPOINT.md` e `docs/EXECUTION_PLAN.md`. Após OPS-003, a próxima tarefa operacional é `OPS-004 — Evoluir o registro de decisões para ADRs`.

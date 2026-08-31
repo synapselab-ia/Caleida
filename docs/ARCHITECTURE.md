@@ -1,6 +1,6 @@
 # Arquitetura técnica
 
-**Status:** arquitetura de referência vigente após OPS-002; aplicação ainda não inicializada.
+**Status:** arquitetura de referência vigente após OPS-003; aplicação ainda não inicializada.
 
 ## 1. Visão geral
 
@@ -14,7 +14,7 @@ GitHub
 Next.js + React + TypeScript
         ↓
 Vercel
-  └── destino de hosting, sujeito à política de deployment controlado
+  └── destino de hosting; release exclusivamente manual pelo usuário
         ↓
 Neon
   ├── Neon Auth
@@ -26,7 +26,10 @@ Object Storage
   └── provider separado e ainda não escolhido
 ```
 
-O desenho detalhado da plataforma Neon está em `docs/NEON_PLATFORM.md`. As premissas antigas de Supabase permanecem apenas como histórico do Project Design v1.0 e são superseded por `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md` e `DEC-007`.
+Os amendments ativos são:
+
+- `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md` — plataforma de dados/identidade;
+- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` — hosting, CI e release.
 
 ## 2. Stack de referência
 
@@ -38,8 +41,8 @@ O desenho detalhado da plataforma Neon está em `docs/NEON_PLATFORM.md`. As prem
 - Neon Auth;
 - Neon Data API quando o acesso sob contexto de usuário exigir API HTTP;
 - PostgreSQL RLS;
-- Vercel como destino de hosting, sem autorização implícita para deploy;
-- GitHub Actions para validação;
+- Vercel como destino de hosting com deployment humano/manual;
+- GitHub Actions para CI/validação, sem CD;
 - Object Storage provider-independent, a decidir em Story própria.
 
 As versões exatas serão registradas quando cada componente for implementado e devem ser conferidas na documentação oficial corrente.
@@ -70,6 +73,23 @@ Projeto Neon separado do non-production.
 - secrets próprios;
 - sem testes destrutivos;
 - migrations chegam a partir do Git depois de verificação em ambiente isolado.
+
+### Vercel Preview
+
+Preview é ambiente de publicação opcional e manual.
+
+- não é criado automaticamente por PR/branch;
+- não é gate obrigatório de merge;
+- quando usado, deve receber configuração non-production apropriada;
+- só é publicado pelo usuário.
+
+### Vercel Production
+
+Production é ambiente de release manual.
+
+- somente o usuário inicia publicação;
+- IA pode preparar release candidate/runbook e verificar estado já publicado;
+- merge na `main` não publica automaticamente.
 
 ## 4. Domínios previstos
 
@@ -112,7 +132,7 @@ Regras:
 - autenticação não substitui autorização;
 - `authenticated` não concede acesso genérico a linhas;
 - ownership/visibilidade deve ser imposta por RLS;
-- o helper de identidade segue a documentação oficial vigente (`auth.user_id()` na documentação verificada em OPS-002);
+- helper/API de identidade deve seguir documentação oficial corrente;
 - credencial privilegiada nunca é enviada ao browser;
 - owner/BYPASSRLS não é utilizado como caminho normal de CRUD.
 
@@ -151,15 +171,44 @@ O cliente não recebe chaves privadas. Resultados são normalizados antes de che
 - uploads futuros terão validação, compressão, limites e limpeza de órfãos;
 - metadados de arquivo devem permanecer desacoplados do provedor.
 
-## 10. Deployment
+## 10. CI e deployment
 
-Vercel continua destino de hosting, mas deployment não é gate de build nem consequência automática de branch/PR.
+### CI
 
-Até OPS-003 reconciliar todos os artefatos de produto:
+O fluxo normal é:
 
-- não habilitar Preview/Production automáticos;
-- não usar deployment como estratégia de teste;
-- seguir `00_SYSTEM/DEPLOYMENT_POLICY.md`.
+```text
+branch → implementação → lint/typecheck/test/build → PR → review → merge
+```
+
+GitHub Actions valida, mas não publica.
+
+### Guardrail Vercel
+
+Quando `vercel.json` existir, a configuração deve desabilitar Git deployments automáticos conforme a documentação oficial corrente. Em OPS-003, o contrato validado é:
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": false
+  }
+}
+```
+
+### Release
+
+Release é separada do ciclo de integração:
+
+```text
+release candidate verificada
+  ↓
+MANUAL_ACTION_REQUIRED quando necessário
+  ↓
+usuário publica manualmente
+```
+
+IA não executa Preview, Production, promote, rollback ou redeploy.
 
 ## 11. Decisões ainda pendentes
 

@@ -4,7 +4,7 @@
 **Regra:** uma `NEXT_ACTION` limitada por vez  
 **Roadmap de produto:** `docs/PRODUCT_BACKLOG.md`
 
-Este documento transforma o backlog macro em tarefas executáveis. O backlog continua descrevendo capacidades e prioridades; este plano define ordem, dependências, critérios de aceite e limites operacionais.
+Este documento transforma o backlog macro em tarefas executáveis. O backlog descreve capacidades e prioridades; este plano define ordem, dependências, critérios e limites operacionais.
 
 ---
 
@@ -12,20 +12,9 @@ Este documento transforma o backlog macro em tarefas executáveis. O backlog con
 
 **Estado:** CONCLUÍDO
 
-## Objetivo
-
-Tornar o repositório suficiente para retomada confiável por novas sessões, sem depender da memória de chats.
-
 ## Resultado
 
-- `00_SYSTEM/SOURCE_OF_TRUTH.md`;
-- `00_SYSTEM/AI_WORK_PROTOCOL.md`;
-- `00_SYSTEM/VERIFICATION_PROTOCOL.md`;
-- `00_SYSTEM/DEPLOYMENT_POLICY.md`;
-- `docs/CHECKPOINT.md`;
-- este `docs/EXECUTION_PLAN.md`;
-- `AGENTS.md` reconciliado com o protocolo;
-- documentação operacional atualizada.
+Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Execution Plan e Checkpoint passaram a permitir retomada confiável pelo repositório.
 
 ---
 
@@ -33,147 +22,128 @@ Tornar o repositório suficiente para retomada confiável por novas sessões, se
 
 **Estado:** CONCLUÍDO
 
-## Objetivo
+## Resultado
 
-Substituir formalmente a escolha inicial de Supabase pela arquitetura Neon adequada ao Caleida antes do início da implementação técnica.
-
-## Evidência de contexto
-
-Na execução de OPS-002 foi confirmado que:
-
-- o repositório ainda não possui aplicação, migrations ou schema de produto;
-- nenhuma integração Supabase precisou ser migrada;
-- não existia projeto Neon do Caleida no ambiente conectado;
-- Supabase Free continua limitado a dois projetos ativos;
-- Neon Free oferece atualmente 100 projetos, branching e Neon Auth no Free;
-- Neon Auth usa Better Auth e mantém identidade/sessões no schema `neon_auth`;
-- Neon Data API integra JWT com PostgreSQL RLS;
-- Neon Object Storage permanece beta em 31/08/2026.
-
-## Decisões
-
-- `DEC-003` e `DEC-004` foram preservadas como históricas e marcadas `SUPERSEDED`;
 - `DEC-007` tornou Neon a plataforma canônica de Postgres/Auth/Data API/RLS;
-- Production e non-production usarão projetos Neon separados;
-- branches descartáveis de verificação existirão somente em non-production;
-- migrations ficarão em `database/migrations/` e testes de banco em `database/tests/`;
-- Storage permaneceu provider-independent e adiado por `DEC-008`;
-- o Project Design v1.0 permaneceu preservado e recebeu `PROJECT_DESIGN_PLATFORM_AMENDMENT.md` como amendment canônico da plataforma.
-
-## Verificação
-
-- documentação oficial atual Neon/Supabase: `PASS`;
-- decisão histórica preservada: `PASS`;
-- referências ativas de arquitetura/backlog reconciliadas: `PASS`;
-- Project Design reconciliado por amendment canônico: `PASS`;
-- estratégia de migrations/RLS/branches: `PASS`;
-- Storage boundary explícito: `PASS`;
-- secrets adicionados: `PASS — nenhum`;
-- projeto Neon criado: `SKIPPED — não necessário para decisão documental`;
-- aplicação/lint/typecheck/test/build: `SKIPPED — aplicação ainda não inicializada`;
-- banco/RLS executável: `SKIPPED — schema ainda não existe`;
-- deployment: `SKIPPED — proibido/fora do escopo`.
-
-## Artefatos principais
-
-- `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
-- `docs/NEON_PLATFORM.md`;
-- `docs/ARCHITECTURE.md`;
-- `docs/DECISIONS.md`;
-- `docs/PRODUCT_BACKLOG.md`;
-- `docs/CHECKPOINT.md`;
-- `AGENTS.md`;
-- documentação canônica associada.
+- Production e non-production foram separados;
+- branches descartáveis de verificação foram definidas;
+- migrations/testes passaram a usar `database/migrations/` e `database/tests/` como layout planejado;
+- Storage permaneceu provider-independent por `DEC-008`;
+- `PROJECT_DESIGN_PLATFORM_AMENDMENT.md` preservou e reconciliou o Project Design v1.0.
 
 ---
 
 # OPS-003 — Reconciliar a política de deployment
 
-**Estado:** NEXT_ACTION
+**Estado:** CONCLUÍDO
 
 ## Objetivo
 
-Reconciliar Project Design, backlog e arquitetura com a política operacional de deployment controlado, removendo a ambiguidade remanescente entre Preview automático e autorização manual.
+Eliminar a ambiguidade entre Preview automático e release manual antes do bootstrap da aplicação.
 
-## Por que agora
+## Evidência de contexto
 
-OPS-002 removeu a contradição da plataforma de dados, mas o Project Design v1.0 ainda descreve Preview Deployments automáticos e "publicar uma base vazia" como parte do ciclo original. O protocolo operacional já proíbe deploy implícito.
+Na execução de OPS-003 foi confirmado que:
 
-Antes de iniciar a aplicação, a regra de hosting deve ficar inequívoca para impedir churn de deployments durante desenvolvimento assistido.
+- a aplicação ainda não existe;
+- nenhum projeto/deployment Vercel do Caleida foi criado pela execução;
+- o Project Design v1.0 ainda preserva referências históricas a Preview automático;
+- a documentação oficial Vercel corrente permite desabilitar todos os Git deployments com `git.deploymentEnabled: false`;
+- Preview/Production podem ser criados manualmente por mecanismos oficiais da Vercel.
 
-## Dependências
+## Decisões
 
-- OPS-001 concluída;
-- OPS-002 concluída;
-- `00_SYSTEM/DEPLOYMENT_POLICY.md` vigente;
-- documentação oficial atual da Vercel verificada durante OPS-003.
+- `DEC-009` define deployment como ação exclusivamente humana/manual;
+- IA, automações e GitHub Actions não publicam o Caleida;
+- Git deployments automáticos devem permanecer desabilitados;
+- merge não significa release;
+- CI permanece separada de CD;
+- `PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` supersede as premissas históricas de Preview/Production automáticos;
+- `US-PLAT-008` prepara hosting sem exigir conexão/publicação;
+- `US-PLAT-010` valida PR → CI → review → merge sem deployment;
+- deployment real deixa de ser gate do Incremento 0.
 
-## Inspecionar antes de editar
+## Verificação
 
-- `docs/PROJECT_DESIGN.md` e amendment ativo;
+- documentação oficial Vercel: `PASS`;
+- comportamento/configuração `git.deploymentEnabled: false`: `PASS documental`;
+- Project Design reconciliado por amendment: `PASS`;
+- backlog/arquitetura/política reconciliados: `PASS`;
+- regra human-only para deployment: `PASS`;
+- secrets adicionados: `PASS — nenhum`;
+- aplicação/lint/typecheck/test/build: `SKIPPED — aplicação ainda não inicializada`;
+- conexão/projeto Vercel: `SKIPPED — fora do escopo`;
+- Preview/Production deployment: `SKIPPED — proibido para IA e fora do escopo`.
+
+## Artefatos principais
+
+- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`;
 - `00_SYSTEM/DEPLOYMENT_POLICY.md`;
 - `docs/ARCHITECTURE.md`;
-- `docs/PRODUCT_BACKLOG.md`;
 - `docs/DECISIONS.md`;
-- referências a Preview, Production, branch/PR deployment, Git integration e release gate.
-
-## Resultado esperado
-
-- Project Design formalmente reconciliado quanto a deployment;
-- Vercel permanece destino de hosting sem deploy automático como efeito colateral de push/PR;
-- CI/build claramente separados de publicação;
-- Stories `US-PLAT-008` e `US-PLAT-010` desbloqueadas/redefinidas de forma coerente;
-- regra de ação manual/release documentada;
-- nenhuma integração Vercel ativada apenas para concluir a tarefa documental;
-- `CHECKPOINT` aponta para a próxima tarefa executável.
-
-## Critérios de aceite
-
-- nenhuma referência ativa trata Preview automático como gate obrigatório;
-- deployment só ocorre sob política/autorização explícita;
-- build/CI continuam verificáveis sem deploy;
-- nenhum deployment é disparado na própria OPS-003;
-- histórico original permanece rastreável.
-
-## Non-goals
-
-- não inicializar Next.js;
-- não conectar GitHub à Vercel;
-- não publicar Preview/Production;
-- não criar domínio;
-- não criar banco.
+- `docs/PRODUCT_BACKLOG.md`;
+- `docs/CHECKPOINT.md`;
+- `AGENTS.md`.
 
 ---
 
 # OPS-004 — Evoluir o registro de decisões para ADRs
 
-**Estado:** PLANEJADO
+**Estado:** NEXT_ACTION
 
 ## Objetivo
 
-Criar estrutura `docs/adr/` e migrar gradualmente decisões arquiteturais sem perder histórico, links ou contexto das `DEC-*` existentes.
+Criar estrutura `docs/adr/` e migrar gradualmente as decisões arquiteturais relevantes sem perder histórico, status ou relações de supersessão das `DEC-*` existentes.
 
-## Dependência
+## Por que agora
 
-Após OPS-003 e antes de acumular decisões arquiteturais adicionais relevantes.
+As OPS-002 e OPS-003 adicionaram novas decisões materiais e relações de supersessão. Antes de iniciar a implementação técnica e acumular mais decisões, o registro deve ganhar estrutura própria por decisão.
+
+## Dependências
+
+- OPS-001 concluída;
+- OPS-002 concluída;
+- OPS-003 concluída;
+- `docs/DECISIONS.md` preservado como registro atual.
 
 ## Resultado esperado
 
-Cada decisão material passa a ter status, contexto, decisão, consequências e relação de supersessão rastreáveis.
+- diretório `docs/adr/`;
+- índice de ADRs;
+- formato mínimo com status, contexto, decisão, consequências e supersessão;
+- migração das decisões arquiteturais existentes para ADRs sem apagar `DECISIONS.md` silenciosamente;
+- referências canônicas atualizadas;
+- `CHECKPOINT` promovido para a primeira Story técnica depois da conclusão.
+
+## Critérios de aceite
+
+- histórico é preservado;
+- relações `SUPERSEDED` permanecem explícitas;
+- não há duas fontes concorrentes sem regra de precedência;
+- nenhuma feature/código/banco/deployment é criado nesta tarefa;
+- ao final, a próxima ação técnica é refinada a partir de `US-PLAT-001`.
+
+## Non-goals
+
+- não inicializar Next.js;
+- não criar banco Neon;
+- não criar `vercel.json`;
+- não conectar Vercel;
+- não implementar feature.
 
 ---
 
 # Fundação técnica após reconciliação operacional
 
-As User Stories do Incremento 0 permanecem no `PRODUCT_BACKLOG.md`, mas sua execução deve obedecer ao estado canônico atualizado depois das tarefas OPS.
+As User Stories do Incremento 0 permanecem no `PRODUCT_BACKLOG.md`.
 
-A primeira tarefa de aplicação continua conceitualmente equivalente a:
+Após OPS-004, a primeira tarefa técnica será refinada a partir de:
 
 ## US-PLAT-001 — Repository/application bootstrap
 
 Criar a aplicação Next.js/React/TypeScript mínima e reproduzível, com versões e package manager definidos a partir da documentação oficial corrente.
 
-Antes de executar, a sessão deve expandir a tarefa contra o estado atual incluindo:
+Antes de executar, a sessão deve detalhar:
 
 - objetivo;
 - dependências;
@@ -205,4 +175,4 @@ Para cada tarefa:
 10. abrir PR/revisar/mergear conforme o fluxo vigente;
 11. deixar uma única próxima ação clara para a sessão seguinte.
 
-Não crie trabalho artificial para manter atividade. Se uma frente depender de condição externa, use `ON_HOLD` e avance apenas para trabalho independente realmente previsto.
+Deployment segue `DEC-009` e nunca é consequência automática deste contrato.
