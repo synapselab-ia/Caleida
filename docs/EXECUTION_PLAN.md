@@ -10,13 +10,13 @@ Este documento transforma o backlog macro em tarefas executáveis. O backlog con
 
 # OPS-001 — Modernizar o protocolo canônico
 
-**Estado:** CONCLUÍDO NESTA ENTREGA
+**Estado:** CONCLUÍDO
 
 ## Objetivo
 
 Tornar o repositório suficiente para retomada confiável por novas sessões, sem depender da memória de chats.
 
-## Entregáveis
+## Resultado
 
 - `00_SYSTEM/SOURCE_OF_TRUTH.md`;
 - `00_SYSTEM/AI_WORK_PROTOCOL.md`;
@@ -27,102 +27,121 @@ Tornar o repositório suficiente para retomada confiável por novas sessões, se
 - `AGENTS.md` reconciliado com o protocolo;
 - documentação operacional atualizada.
 
-## Critérios de aceite
-
-- existe uma hierarquia explícita de fontes de verdade;
-- existe comando canônico de continuação;
-- `CHECKPOINT` contém uma única `NEXT_ACTION` executável;
-- estados `READY`, `IN_PROGRESS`, `BLOCKED`, `ON_HOLD`, `MANUAL_ACTION_REQUIRED` e `DONE` estão definidos;
-- verificação diferencia `PASS`, `FAIL`, `SKIPPED` e `BLOCKED`;
-- deployment não pode ser disparado implicitamente como estratégia de teste;
-- nenhum código de produto, banco ou infraestrutura externa é alterado nesta tarefa.
-
-## Verificação
-
-Revisão documental, coerência de caminhos, diff de escopo e ausência de secrets.
-
-## Non-goals
-
-- não trocar Supabase por Neon;
-- não alterar Project Design de produto;
-- não inicializar Next.js;
-- não criar banco;
-- não configurar Vercel;
-- não criar feature de negócio.
-
 ---
 
 # OPS-002 — Formalizar o pivot Supabase → Neon
 
-**Estado:** NEXT_ACTION
+**Estado:** CONCLUÍDO
 
 ## Objetivo
 
 Substituir formalmente a escolha inicial de Supabase pela arquitetura Neon adequada ao Caleida antes do início da implementação técnica.
 
-## Por que agora
+## Evidência de contexto
 
-O repositório ainda não possui aplicação, migrations ou integração de Auth/Storage. Este é o ponto de menor custo e risco para corrigir a decisão de plataforma sem carregar compatibilidade desnecessária.
+Na execução de OPS-002 foi confirmado que:
 
-## Dependências
+- o repositório ainda não possui aplicação, migrations ou schema de produto;
+- nenhuma integração Supabase precisou ser migrada;
+- não existia projeto Neon do Caleida no ambiente conectado;
+- Supabase Free continua limitado a dois projetos ativos;
+- Neon Free oferece atualmente 100 projetos, branching e Neon Auth no Free;
+- Neon Auth usa Better Auth e mantém identidade/sessões no schema `neon_auth`;
+- Neon Data API integra JWT com PostgreSQL RLS;
+- Neon Object Storage permanece beta em 31/08/2026.
 
-- OPS-001 concluída;
-- estado real do repositório confirmado;
-- documentação oficial atual de Neon e Supabase verificada na execução da tarefa.
+## Decisões
 
-## Inspecionar antes de editar
+- `DEC-003` e `DEC-004` foram preservadas como históricas e marcadas `SUPERSEDED`;
+- `DEC-007` tornou Neon a plataforma canônica de Postgres/Auth/Data API/RLS;
+- Production e non-production usarão projetos Neon separados;
+- branches descartáveis de verificação existirão somente em non-production;
+- migrations ficarão em `database/migrations/` e testes de banco em `database/tests/`;
+- Storage permaneceu provider-independent e adiado por `DEC-008`;
+- o Project Design v1.0 permaneceu preservado e recebeu `PROJECT_DESIGN_PLATFORM_AMENDMENT.md` como amendment canônico da plataforma.
 
-- `docs/PROJECT_DESIGN.md`;
+## Verificação
+
+- documentação oficial atual Neon/Supabase: `PASS`;
+- decisão histórica preservada: `PASS`;
+- referências ativas de arquitetura/backlog reconciliadas: `PASS`;
+- Project Design reconciliado por amendment canônico: `PASS`;
+- estratégia de migrations/RLS/branches: `PASS`;
+- Storage boundary explícito: `PASS`;
+- secrets adicionados: `PASS — nenhum`;
+- projeto Neon criado: `SKIPPED — não necessário para decisão documental`;
+- aplicação/lint/typecheck/test/build: `SKIPPED — aplicação ainda não inicializada`;
+- banco/RLS executável: `SKIPPED — schema ainda não existe`;
+- deployment: `SKIPPED — proibido/fora do escopo`.
+
+## Artefatos principais
+
+- `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
+- `docs/NEON_PLATFORM.md`;
 - `docs/ARCHITECTURE.md`;
-- `docs/PRODUCT_BACKLOG.md`;
 - `docs/DECISIONS.md`;
+- `docs/PRODUCT_BACKLOG.md`;
+- `docs/CHECKPOINT.md`;
 - `AGENTS.md`;
-- referências a Supabase, Auth, Storage, RLS, local development, staging, production e branching;
-- fluxo Neon já comprovado em outros projetos apenas como referência, nunca como substituto da documentação oficial atual.
-
-## Resultado esperado
-
-- decisão arquitetural formal de pivot;
-- Project Design e arquitetura reconciliados com a nova plataforma;
-- estratégia de Postgres/Auth/Data API/RLS definida com precisão suficiente para fundação técnica;
-- estratégia de Storage explicitamente decidida ou adiada com boundary claro;
-- backlog e tarefas de fundação reconciliados;
-- referências Supabase mantidas apenas quando históricas ou explicitamente superseded;
-- `CHECKPOINT` apontando para a próxima tarefa executável.
-
-## Critérios de aceite
-
-- nenhuma referência ativa contraditória de plataforma permanece nos artefatos canônicos;
-- a decisão antiga não é apagada silenciosamente: é marcada como superseded ou preservada historicamente;
-- migrations, RLS e ambiente de verificação têm estratégia definida;
-- secrets continuam fora do Git;
-- nenhum banco hospedado precisa ser criado para concluir apenas a decisão documental, salvo se a tarefa deliberadamente exigir prova técnica isolada;
-- nenhum deploy Vercel ocorre.
-
-## Non-goals
-
-- não construir schema de produto;
-- não implementar autenticação de aplicação;
-- não iniciar catálogo/biblioteca;
-- não publicar a aplicação.
+- documentação canônica associada.
 
 ---
 
 # OPS-003 — Reconciliar a política de deployment
 
-**Estado:** PLANEJADO
+**Estado:** NEXT_ACTION
 
 ## Objetivo
 
-Reconciliar Project Design, backlog e arquitetura com a política operacional de deployment controlado, removendo qualquer ambiguidade entre Preview automático e autorização manual.
+Reconciliar Project Design, backlog e arquitetura com a política operacional de deployment controlado, removendo a ambiguidade remanescente entre Preview automático e autorização manual.
 
-## Dependência
+## Por que agora
 
-OPS-002.
+OPS-002 removeu a contradição da plataforma de dados, mas o Project Design v1.0 ainda descreve Preview Deployments automáticos e "publicar uma base vazia" como parte do ciclo original. O protocolo operacional já proíbe deploy implícito.
+
+Antes de iniciar a aplicação, a regra de hosting deve ficar inequívoca para impedir churn de deployments durante desenvolvimento assistido.
+
+## Dependências
+
+- OPS-001 concluída;
+- OPS-002 concluída;
+- `00_SYSTEM/DEPLOYMENT_POLICY.md` vigente;
+- documentação oficial atual da Vercel verificada durante OPS-003.
+
+## Inspecionar antes de editar
+
+- `docs/PROJECT_DESIGN.md` e amendment ativo;
+- `00_SYSTEM/DEPLOYMENT_POLICY.md`;
+- `docs/ARCHITECTURE.md`;
+- `docs/PRODUCT_BACKLOG.md`;
+- `docs/DECISIONS.md`;
+- referências a Preview, Production, branch/PR deployment, Git integration e release gate.
 
 ## Resultado esperado
 
-Fluxo explícito de CI/verificação separado de deployment, com Vercel usada somente segundo política canônica aprovada.
+- Project Design formalmente reconciliado quanto a deployment;
+- Vercel permanece destino de hosting sem deploy automático como efeito colateral de push/PR;
+- CI/build claramente separados de publicação;
+- Stories `US-PLAT-008` e `US-PLAT-010` desbloqueadas/redefinidas de forma coerente;
+- regra de ação manual/release documentada;
+- nenhuma integração Vercel ativada apenas para concluir a tarefa documental;
+- `CHECKPOINT` aponta para a próxima tarefa executável.
+
+## Critérios de aceite
+
+- nenhuma referência ativa trata Preview automático como gate obrigatório;
+- deployment só ocorre sob política/autorização explícita;
+- build/CI continuam verificáveis sem deploy;
+- nenhum deployment é disparado na própria OPS-003;
+- histórico original permanece rastreável.
+
+## Non-goals
+
+- não inicializar Next.js;
+- não conectar GitHub à Vercel;
+- não publicar Preview/Production;
+- não criar domínio;
+- não criar banco.
 
 ---
 
@@ -136,7 +155,7 @@ Criar estrutura `docs/adr/` e migrar gradualmente decisões arquiteturais sem pe
 
 ## Dependência
 
-Após o pivot de plataforma e antes de acumular decisões arquiteturais adicionais relevantes.
+Após OPS-003 e antes de acumular decisões arquiteturais adicionais relevantes.
 
 ## Resultado esperado
 
@@ -146,7 +165,7 @@ Cada decisão material passa a ter status, contexto, decisão, consequências e 
 
 # Fundação técnica após reconciliação operacional
 
-As User Stories do Incremento 0 permanecem no `PRODUCT_BACKLOG.md`, mas sua execução deve obedecer ao estado canônico atualizado depois de OPS-002/OPS-003.
+As User Stories do Incremento 0 permanecem no `PRODUCT_BACKLOG.md`, mas sua execução deve obedecer ao estado canônico atualizado depois das tarefas OPS.
 
 A primeira tarefa de aplicação continua conceitualmente equivalente a:
 
@@ -177,7 +196,7 @@ Para cada tarefa:
 1. recuperar estado pelo protocolo canônico;
 2. confirmar que é a `NEXT_ACTION`;
 3. inspecionar repositório e documentação relevante;
-4. criar/usar branch limitada ao escopo;
+4. criar/usar Issue e branch limitadas ao escopo quando aplicável;
 5. implementar somente o necessário;
 6. executar `00_SYSTEM/VERIFICATION_PROTOCOL.md`;
 7. revisar diff;
