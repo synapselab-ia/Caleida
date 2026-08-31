@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após OPS-004  
+**Status:** Backlog do Incremento 0 — US-PLAT-001 em execução bloqueada  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -24,9 +24,10 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-001 — Inicializar a aplicação web
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** aplicação Next.js com TypeScript strict, estrutura mínima, runtime/package manager fixados, lockfile, lint, typecheck, teste básico e build.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
+- **Estado:** BLOQUEADA
+- **Resultado esperado:** aplicação Next.js com TypeScript strict, estrutura mínima, runtime/package manager fixados, lockfile, lint, typecheck, teste básico e build.
+- **Estado real:** fundação implementada em `feat/us-plat-001-app-bootstrap` / PR #9 Draft; smoke test 2/2 passou, mas lockfile/clean install/lint/typecheck/build aguardam ambiente executável com acesso ao npm registry.
+- **Execução/retomada:** `docs/EXECUTION_PLAN.md` e `docs/CHECKPOINT.md`.
 
 ### US-PLAT-002 — Organizar a estrutura documental
 
@@ -104,4 +105,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após OPS-004, o `CHECKPOINT` promove `US-PLAT-001 — Inicializar a aplicação web`, refinada em `docs/EXECUTION_PLAN.md`.
+Enquanto US-PLAT-001 permanecer `BLOQUEADA`, o `CHECKPOINT` mantém a mesma Story ativa e manda concluir o lockfile e os gates executáveis na Issue #8 / PR #9 existentes. Não iniciar US-PLAT-003 antes disso.

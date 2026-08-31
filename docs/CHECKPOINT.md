@@ -1,16 +1,17 @@
 # Checkpoint — Caleida
 
-**PROJECT_STATUS:** READY  
+**PROJECT_STATUS:** BLOCKED  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável / início técnico  
 **PROTOCOL_VERSION:** 2  
 **LAST_COMPLETED_TASK:** `OPS-004 — Evoluir o registro de decisões para ADRs`  
 **LAST_COMPLETED_ISSUE:** `#6`  
-**BASELINE_BEFORE_OPS_004:** `8be56851684a891d4001c5eb740a38d8d647d999`  
-**ACTIVE_TASK:** none  
-**ACTIVE_ISSUE:** none  
-**ACTIVE_BRANCH:** none  
-**NEXT_ACTION:** `US-PLAT-001 — Inicializar a aplicação web`  
-**BLOCKERS:** none  
+**ACTIVE_TASK:** `US-PLAT-001 — Inicializar a aplicação web`  
+**ACTIVE_ISSUE:** `#8`  
+**ACTIVE_BRANCH:** `feat/us-plat-001-app-bootstrap`  
+**ACTIVE_PR:** `#9 — DRAFT`  
+**IMPLEMENTATION_HEAD:** `5db549d104c8af15e48a056419ec085081a244d3`  
+**NEXT_ACTION:** `US-PLAT-001 — concluir lockfile e gates executáveis do bootstrap`  
+**BLOCKERS:** ambiente local sem resolução de `registry.npmjs.org`; GitHub Actions falha antes de iniciar runner/steps  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
 
@@ -18,94 +19,105 @@
 
 > Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
 
-Recupere o estado pelo GitHub e pelos documentos canônicos. Não peça ao usuário contexto já disponível.
+A próxima sessão deve recuperar a Issue #8, a branch `feat/us-plat-001-app-bootstrap` e a PR #9 antes de editar. Não recrie o bootstrap nem abra segunda implementação concorrente.
 
-## Estado técnico atual
+## Estado da US-PLAT-001
 
-O projeto concluiu a reconciliação operacional e está pronto para o primeiro bootstrap técnico.
+A implementação base existe na branch ativa, mas **não está concluída nem mergeada** porque os gates executáveis obrigatórios ainda não puderam ser provados.
 
-Ainda não existe:
+Implementado:
 
-- aplicação Next.js inicializada;
-- `package.json`/lockfile de aplicação;
-- schema/migrations de produto;
-- projeto Neon do Caleida;
-- Neon Auth/Data API implementados;
-- Object Storage escolhido;
-- projeto/conexão Vercel criada pela execução canônica;
-- Preview/Production deployment.
+- Next.js `16.3.3`;
+- React/React DOM `19.2.8`;
+- App Router em `src/app`;
+- TypeScript `strict`;
+- Tailwind CSS 4 via PostCSS;
+- ESLint CLI com `eslint-config-next`;
+- Node `24.20.0` fixado em `.nvmrc`;
+- npm `11.19.0` declarado como package manager;
+- scripts `dev`, `lint`, `typecheck`, `test`, `build`;
+- smoke test mínimo com `node:test`;
+- página inicial somente de fundação técnica;
+- `.env.example` sem secrets;
+- assets preexistentes de `public/` preservados.
 
-Assets/documentação existentes devem ser preservados durante o bootstrap.
+Ainda pendente:
 
-## Autoridade arquitetural
+- gerar e validar `package-lock.json` com npm;
+- executar `npm ci` em clone/árvore limpa;
+- executar `npm run lint`;
+- executar `npm run typecheck` com dependências reais;
+- executar `npm test` no ambiente alvo;
+- executar `npm run build`;
+- somente depois atualizar README/Changelog/Backlog, retirar PR de Draft e concluir/mergear a Story.
 
-A partir de OPS-004, `docs/adr/` é a fonte canônica das decisões arquiteturais.
+## Versões verificadas em 31/08/2026
 
-ADRs migrados:
+A execução consultou documentação oficial e o scaffold oficial `create-next-app@16.3.3` antes de escolher versões.
 
-- `ADR-001` — catálogo global separado da biblioteca pessoal — `Accepted`;
-- `ADR-002` — stack técnica original — `Superseded em partes`;
-- `ADR-003` — Supabase Free temporário — `Superseded`;
-- `ADR-004` — mudanças de banco somente por migrations — `Accepted`;
-- `ADR-005` — Neon como plataforma de dados/identidade — `Accepted`;
-- `ADR-006` — Object Storage desacoplado/adiado — `Accepted`;
-- `ADR-007` — deployment Vercel humano/manual — `Accepted`.
-
-`docs/DECISIONS.md` agora é índice/histórico legado e mantém `DEC-001` (produto) e `DEC-005` (processo) sem competir com ADRs.
-
-## Plataforma vigente
+Linha escolhida:
 
 ```text
-Next.js / React / TypeScript
-→ Neon Auth
-→ Neon Data API
-→ Neon Postgres
-→ PostgreSQL RLS
+Node 24.20.0 LTS
+npm 11.19.0
+Next.js 16.3.3
+React 19.2.8
+React DOM 19.2.8
+TypeScript 5.x
+Tailwind CSS 4.x
+ESLint 9.x
 ```
 
-Banco segue `ADR-004`; Storage segue `ADR-006`; deployment segue `ADR-007`.
+`@types/node` segue `^20`, como o template oficial corrente do `create-next-app@16.3.3`; isso não altera o runtime fixado em Node 24.
 
-## Deployment
+## Verificação realmente executada
 
-- IA/automações não publicam;
-- push/PR/merge não publicam;
-- release Vercel é humana/manual;
-- nenhum deployment é necessário para a próxima Story.
+- documentação oficial Next.js/React/Node/Tailwind: `PASS`;
+- alinhamento do manifesto/configuração com `create-next-app@16.3.3`: `PASS documental`;
+- smoke test `node:test`: `PASS — 2/2`;
+- diff da feature contra `main`: `PASS — 12 arquivos de fundação, sem integração externa`;
+- secrets: `PASS — nenhum`;
+- Neon/Auth/Storage: `SKIPPED — fora do escopo`;
+- Vercel/project/deployment: `SKIPPED — fora do escopo e deployment proibido para IA`;
+- `package-lock.json`: `BLOCKED — registry indisponível no ambiente local`;
+- clean install: `BLOCKED — registry indisponível`;
+- lint/typecheck/build com dependências reais: `BLOCKED — dependências não instaláveis no ambiente local`;
+- GitHub Actions como fallback: `BLOCKED — dois workflows descartáveis falharam antes de qualquer step/runner útil`.
 
-## Verificação de OPS-004
+### Evidência do fallback GitHub Actions
 
-- estado real da `main` inspecionado: `PASS`;
-- decisões arquiteturais classificadas: `PASS`;
-- sete ADRs migrados com origem/status/supersessão: `PASS`;
-- `DECISIONS.md` convertido sem apagar histórico: `PASS`;
-- precedência ADR × legado definida: `PASS`;
-- protocolos/documentação operacional reconciliados: `PASS`;
-- `US-PLAT-001` refinada no Execution Plan: `PASS`;
-- código de aplicação: `SKIPPED — não alterado`;
-- lint/typecheck/test/build: `SKIPPED — aplicação ainda não existe`;
-- Neon/banco: `SKIPPED — não alterado`;
-- Vercel/deployment: `SKIPPED — não alterado e deployment proibido para IA`;
-- secrets adicionados: `PASS — nenhum`.
+Foi usada a branch descartável `verify/us-plat-001-bootstrap`.
 
-## Próxima ação — US-PLAT-001
+- tentativa completa: falhou antes de qualquer step;
+- diagnóstico mínimo (`uname`, `node`, `npm`, `git`): falhou antes de qualquer step;
+- nenhum resultado foi contado como gate de aplicação;
+- a branch de verificação foi resetada para o mesmo head da feature após o diagnóstico, removendo o workflow temporário da ponta da branch;
+- nenhum workflow temporário faz parte da PR #9 ou da `main`.
 
-Executar somente:
+## Arquitetura e segurança permanecem inalteradas
 
-> `US-PLAT-001 — Inicializar a aplicação web`
+- `docs/adr/` continua autoridade arquitetural;
+- Neon continua definido por `ADR-005`, mas não foi provisionado;
+- Storage continua adiado por `ADR-006`;
+- deployment continua human-only por `ADR-007`;
+- não existe `vercel.json` nesta Story;
+- não houve deployment.
 
-A especificação executável está em `docs/EXECUTION_PLAN.md`.
+## Próxima ação executável
 
-Requisitos essenciais:
+Retomar **a mesma** `US-PLAT-001` na branch e PR existentes.
 
-1. verificar documentação oficial corrente de Next.js, React e Node antes de escolher versões;
-2. pin de runtime e um único package manager/lockfile;
-3. Next.js App Router + React + TypeScript strict;
-4. fundação Tailwind conforme stack vigente;
-5. scripts reais de lint/typecheck/test/build;
-6. página mínima sem feature de negócio;
-7. preservar assets existentes;
-8. nenhum Neon/Auth/Storage/Vercel remoto;
-9. nenhum `vercel.json` ou deployment nesta Story;
-10. executar clean install, lint, typecheck, test e build antes de concluir.
+Ordem:
 
-Não há mais tarefa OPS bloqueando o início técnico.
+1. obter um ambiente capaz de executar npm/Node 24 e acessar o registry;
+2. gerar o lockfile a partir do `package.json` da branch;
+3. executar `npm ci`;
+4. executar `npm run lint`;
+5. executar `npm run typecheck`;
+6. executar `npm test`;
+7. executar `npm run build`;
+8. corrigir apenas falhas reais encontradas;
+9. atualizar documentação de conclusão;
+10. revisar o diff, retirar a PR #9 de Draft e mergear somente com gates aplicáveis aprovados.
+
+Não promover `US-PLAT-003` enquanto a `US-PLAT-001` permanecer bloqueada.
