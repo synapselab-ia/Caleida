@@ -1,7 +1,7 @@
 # Neon Platform — Caleida
 
 **Status:** arquitetura canônica de plataforma após OPS-002  
-**Decisão relacionada:** `DEC-007`  
+**Decisão relacionada:** `docs/adr/ADR-005-neon-data-identity-platform.md`  
 **Project Design:** `PROJECT_DESIGN.md` + `PROJECT_DESIGN_PLATFORM_AMENDMENT.md`
 
 ## 1. Escopo
@@ -65,7 +65,7 @@ A separação por projeto é intencional para reduzir blast radius e impedir mis
 
 ## 4. Migrations
 
-Schema é propriedade do Git.
+Schema é propriedade do Git e segue `ADR-004`.
 
 Layout canônico planejado:
 
@@ -160,9 +160,9 @@ Testes mínimos futuros para tabelas user-scoped:
 
 ## 9. Storage
 
-Object Storage não faz parte da plataforma canônica nesta fase.
+Object Storage não faz parte da plataforma canônica nesta fase conforme `ADR-006`.
 
-Neon Object Storage está em beta em 31/08/2026. A decisão futura deve verificar novamente maturidade, regiões, pricing, lifecycle, backup, privacidade, integração com Auth/RLS e compatibilidade S3.
+Neon Object Storage estava em beta em 31/08/2026. A decisão futura deve verificar novamente maturidade, regiões, pricing, lifecycle, backup, privacidade, integração com Auth/RLS e compatibilidade S3.
 
 Até essa decisão, o domínio de arquivos deve permanecer desacoplado do banco e do provedor.
 
@@ -194,9 +194,9 @@ Arquivos `.env.example` futuros documentarão apenas nomes e finalidade das vari
 
 ## 12. Estado de OPS-002
 
-OPS-002 é somente decisão e reconciliação documental.
+OPS-002 foi somente decisão e reconciliação documental.
 
-Nesta tarefa:
+Naquela tarefa:
 
 - nenhum projeto Neon do Caleida foi criado;
 - nenhum Auth/Data API foi provisionado;

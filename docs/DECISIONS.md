@@ -1,201 +1,106 @@
-# Registro de decisões
+# Registro legado de decisões — Caleida
 
-Este documento registra decisões de produto e arquitetura que não devem ser alteradas silenciosamente.
+**Status:** índice histórico e registro de decisões não arquiteturais  
+**Arquitetura canônica:** `docs/adr/`
 
----
+A partir de `OPS-004`, decisões arquiteturais são registradas exclusivamente como Architecture Decision Records em `docs/adr/`.
+
+Este arquivo permanece para:
+
+- preservar identificadores `DEC-*` já citados historicamente;
+- mapear decisões arquiteturais antigas para seus ADRs canônicos;
+- manter decisões de produto/processo que não justificam ADR.
+
+Quando uma entrada arquitetural deste arquivo divergir do ADR correspondente, **o ADR prevalece**.
+
+## Mapa de migração arquitetural
+
+| Decisão legado | Estado histórico | ADR canônico |
+|---|---|---|
+| `DEC-002` — Catálogo global e biblioteca pessoal separados | Aprovada | `ADR-001` |
+| `DEC-003` — Stack técnica de referência original | Superseded em partes | `ADR-002` |
+| `DEC-004` — Supabase Free como infraestrutura temporária | Superseded | `ADR-003` |
+| `DEC-006` — Mudanças de banco somente por migration | Aprovada | `ADR-004` |
+| `DEC-007` — Neon como plataforma canônica de dados e identidade | Aprovada | `ADR-005` |
+| `DEC-008` — Storage desacoplado e decisão adiada | Aprovada | `ADR-006` |
+| `DEC-009` — Deployment Vercel exclusivamente humano/manual | Aprovada | `ADR-007` |
 
 ## DEC-001 — Plataforma pública com beta fechado
 
 **Data:** 03 de agosto de 2026  
+**Tipo:** Produto  
 **Status:** Aprovada
-
-### Decisão
 
 O Caleida será construído como plataforma pública multiusuário, mas seu lançamento inicial ocorrerá por convite ou aprovação administrativa.
 
-### Consequências
+Consequências principais:
 
-- A arquitetura deve suportar múltiplas contas desde o início.
-- Privacidade, moderação e isolamento não podem ser adicionados apenas no final.
-- O beta controlará custos, estabilidade e crescimento antes da abertura pública.
+- arquitetura multiusuário desde o início;
+- privacidade, moderação e isolamento não podem ser adicionados apenas no final;
+- beta controla custos, estabilidade e crescimento antes da abertura pública.
 
----
+A autoridade principal dessa decisão é o `docs/PROJECT_DESIGN.md`.
 
 ## DEC-002 — Catálogo global e biblioteca pessoal separados
 
-**Data:** 03 de agosto de 2026  
-**Status:** Aprovada
+**Tipo:** Arquitetura de domínio  
+**Status:** MIGRADA para `docs/adr/ADR-001-global-catalog-personal-library.md`
 
-### Decisão
-
-Cada obra terá um registro global compartilhado. Status, progresso, nota, favorito, resenha e demais dados de consumo pertencerão à relação individual entre usuário e obra.
-
-### Consequências
-
-- Uma obra não deve ser duplicada por usuário.
-- Exclusão de uma entrada pessoal não exclui o registro global.
-- Mesclagens do catálogo devem preservar todos os dados pessoais relacionados.
-
----
+O conteúdo arquitetural canônico está em `ADR-001`.
 
 ## DEC-003 — Stack técnica de referência original
 
-**Data:** 03 de agosto de 2026  
-**Status:** SUPERSEDED em partes por `DEC-007` e `DEC-009`
+**Tipo:** Arquitetura  
+**Status:** MIGRADA para `ADR-002`; superseded em partes por `ADR-005` e `ADR-007`
 
-### Decisão histórica
-
-A stack inicial foi definida como GitHub, Codex, Next.js, React, TypeScript, Tailwind CSS, Vercel e Supabase. A consequência original também tratava Vercel como Preview/Production automático por branch/PR.
-
-### Motivo da supersessão
-
-- `DEC-007` substituiu Supabase por Neon para dados/identidade;
-- `DEC-009` manteve Vercel como hosting, mas substituiu o modelo automático de deployment por release exclusivamente humana/manual.
-
-Os componentes não afetados continuam válidos quando confirmados pelos documentos canônicos atuais.
-
----
+O histórico da stack original permanece em `ADR-002`.
 
 ## DEC-004 — Supabase Free como infraestrutura temporária
 
-**Data:** 03 de agosto de 2026  
-**Status:** SUPERSEDED por `DEC-007`
-
-### Decisão histórica
-
-O plano gratuito do Supabase seria utilizado para desenvolvimento, staging e beta fechado controlado, com Supabase local para desenvolvimento.
-
-### Motivo da supersessão
-
-O Caleida passou a utilizar Neon como plataforma canônica antes de qualquer schema ou integração Supabase ter sido implementada.
-
----
+**Tipo:** Arquitetura  
+**Status:** MIGRADA para `ADR-003`; superseded por `ADR-005`
 
 ## DEC-005 — Desenvolvimento incremental por User Story
 
 **Data:** 03 de agosto de 2026  
+**Tipo:** Processo  
 **Status:** Aprovada
-
-### Decisão
 
 O produto será construído por incrementos, épicos e User Stories pequenas e verificáveis.
 
-### Consequências
+Consequências principais:
 
-- Cada tarefa deve possuir critérios de aceite e fora do escopo.
-- Uma sessão de IA não deve receber a ordem de construir o produto completo.
-- Cada entrega deve atualizar Checkpoint e documentação afetada.
-- Funcionalidades futuras não devem ser antecipadas sem necessidade.
+- cada tarefa possui critérios de aceite e non-goals;
+- trabalho é limitado pela `NEXT_ACTION`;
+- cada entrega reconcilia Checkpoint/documentação;
+- funcionalidades futuras não são antecipadas sem necessidade.
 
----
+A materialização operacional desta decisão está em `00_SYSTEM/AI_WORK_PROTOCOL.md` e `docs/EXECUTION_PLAN.md`.
 
 ## DEC-006 — Mudanças de banco somente por migration
 
-**Data:** 03 de agosto de 2026  
-**Status:** Aprovada
-
-### Decisão
-
-Toda alteração estrutural do banco será versionada no repositório por meio de migrations.
-
-### Consequências
-
-- Alterações realizadas apenas pelo painel/Console não representam estado oficial.
-- O banco deve poder ser reconstruído estruturalmente a partir do Git.
-- RLS, constraints e índices fazem parte da mesma entrega da funcionalidade quando aplicáveis.
-- Migrations aplicadas não são reescritas; correções usam nova migration.
-
----
+**Tipo:** Arquitetura  
+**Status:** MIGRADA para `docs/adr/ADR-004-database-changes-by-migrations.md`
 
 ## DEC-007 — Neon como plataforma canônica de dados e identidade
 
-**Data:** 31 de agosto de 2026  
-**Status:** Aprovada
-
-### Decisão
-
-O Caleida adotará:
-
-- Neon Postgres para persistência relacional;
-- Neon Auth como solução inicial de autenticação;
-- Neon Data API como caminho preferencial para CRUD normal sob contexto de usuário quando apropriado;
-- PostgreSQL RLS como camada persistente de autorização;
-- projeto Neon separado para Production;
-- projeto Neon separado para non-production/staging;
-- branches Neon descartáveis no projeto non-production para migrations, testes e verificação;
-- migrations em `database/migrations/`;
-- testes de banco em `database/tests/`.
-
-### Consequências
-
-- referências Supabase ficam históricas quando abrangidas pelo amendment;
-- Production não será laboratório de migration/RLS;
-- JWT/RLS devem ser testados com identidade normal da aplicação;
-- secrets permanecem fora do Git;
-- capacidade/custo serão reavaliados antes de beta/abertura.
-
----
+**Tipo:** Arquitetura  
+**Status:** MIGRADA para `docs/adr/ADR-005-neon-data-identity-platform.md`
 
 ## DEC-008 — Storage desacoplado e decisão adiada
 
-**Data:** 31 de agosto de 2026  
-**Status:** Aprovada
-
-### Decisão
-
-O Caleida não escolherá provedor de Object Storage antes da Story correspondente.
-
-### Consequências
-
-- Neon Object Storage não é dependência canônica nesta fase;
-- nenhum bucket/credencial é criado antecipadamente;
-- capas externas continuam por URL quando permitido;
-- metadados futuros devem permanecer provider-independent;
-- a escolha posterior exige avaliação de privacidade, autorização, lifecycle, backup, custo, regiões e maturidade.
-
----
+**Tipo:** Arquitetura  
+**Status:** MIGRADA para `docs/adr/ADR-006-object-storage-deferred.md`
 
 ## DEC-009 — Deployment Vercel exclusivamente humano e manual
 
-**Data:** 31 de agosto de 2026  
-**Status:** Aprovada
+**Tipo:** Arquitetura  
+**Status:** MIGRADA para `docs/adr/ADR-007-manual-vercel-deployment.md`
 
-### Contexto
+## Regra para decisões futuras
 
-O Project Design v1.0 tratava Preview Deployments por branch/PR e publicação como parte do ciclo normal de desenvolvimento. O fluxo evoluído do projeto exige evitar churn e consumo desnecessário de deployments, mantendo CI/build independentes de release.
+- arquitetura: criar/alterar relação de supersessão em `docs/adr/`;
+- produto: atualizar Project Design/amendment apropriado e registrar decisão adicional somente quando útil;
+- processo operacional: atualizar protocolo/Execution Plan correspondente.
 
-A documentação oficial Vercel verificada em OPS-003 permite desabilitar Git deployments automáticos com `git.deploymentEnabled: false`.
-
-### Decisão
-
-Vercel continua sendo o destino de hosting do Caleida, porém:
-
-- somente o usuário executa deployments;
-- IA não executa Preview, Production, promote, rollback ou redeploy;
-- automações e GitHub Actions não executam deployments;
-- push, branch, PR e merge não devem criar deployments automaticamente;
-- quando `vercel.json` existir, Git deployments automáticos devem permanecer desabilitados enquanto esta decisão estiver vigente;
-- Preview é opcional e manual;
-- Production é manual;
-- merge e release são eventos distintos;
-- deployment real não é gate obrigatório do Incremento 0.
-
-### Consequências
-
-- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` supersede referências históricas a Preview/Production automáticos;
-- `00_SYSTEM/DEPLOYMENT_POLICY.md` passa a ser human-only;
-- GitHub Actions permanece CI sem CD;
-- `US-PLAT-008` prepara configuração/runbook sem exigir publicação;
-- `US-PLAT-010` valida PR → CI → review → merge sem deployment;
-- uma futura release necessária deve ser registrada como ação manual do usuário;
-- a IA pode inspecionar/logar/diagnosticar deployment já executado, mas não dispará-lo.
-
-### Evidência documental verificada em OPS-003
-
-Em 31/08/2026, documentação oficial da Vercel confirmou:
-
-- `git.deploymentEnabled: false` desabilita deployments disparados por Git;
-- Preview e Production podem ser criados por comandos/mecanismos manuais oficiais;
-- a propriedade legada `github.enabled` não é a configuração recomendada para este guardrail quando `git.deploymentEnabled` está disponível.
-
-Esses comportamentos devem ser revalidados na Story que materializar a integração Vercel.
+Não crie uma nova `DEC-*` arquitetural em paralelo a um ADR.
