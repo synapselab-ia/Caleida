@@ -41,17 +41,18 @@ Cada obra terá um registro global compartilhado. Status, progresso, nota, favor
 ## DEC-003 — Stack técnica de referência original
 
 **Data:** 03 de agosto de 2026  
-**Status:** SUPERSEDED por `DEC-007`
+**Status:** SUPERSEDED em partes por `DEC-007` e `DEC-009`
 
 ### Decisão histórica
 
-A stack inicial foi definida como GitHub, Codex, Next.js, React, TypeScript, Tailwind CSS, Vercel e Supabase.
+A stack inicial foi definida como GitHub, Codex, Next.js, React, TypeScript, Tailwind CSS, Vercel e Supabase. A consequência original também tratava Vercel como Preview/Production automático por branch/PR.
 
 ### Motivo da supersessão
 
-Antes do início da implementação, a limitação de projetos gratuitos do Supabase e a evolução da plataforma Neon tornaram mais adequado adotar Neon para banco/identidade/Data API/RLS.
+- `DEC-007` substituiu Supabase por Neon para dados/identidade;
+- `DEC-009` manteve Vercel como hosting, mas substituiu o modelo automático de deployment por release exclusivamente humana/manual.
 
-A decisão permanece registrada para preservar histórico; não deve ser usada como arquitetura ativa.
+Os componentes não afetados continuam válidos quando confirmados pelos documentos canônicos atuais.
 
 ---
 
@@ -66,9 +67,7 @@ O plano gratuito do Supabase seria utilizado para desenvolvimento, staging e bet
 
 ### Motivo da supersessão
 
-O Supabase Free continua limitado a dois projetos ativos por usuário Owner/Admin. O Caleida passa a utilizar Neon como plataforma canônica antes de qualquer schema ou integração Supabase ter sido implementada.
-
-Nenhum recurso Supabase precisou ser migrado.
+O Caleida passou a utilizar Neon como plataforma canônica antes de qualquer schema ou integração Supabase ter sido implementada.
 
 ---
 
@@ -113,10 +112,6 @@ Toda alteração estrutural do banco será versionada no repositório por meio d
 **Data:** 31 de agosto de 2026  
 **Status:** Aprovada
 
-### Contexto
-
-O Caleida ainda não possui aplicação, migrations, schema de produto, Auth implementado ou banco hospedado. O Supabase Free possui limite atual de dois projetos ativos, enquanto o Neon Free oferece margem significativamente maior de projetos e branching. Neon Auth foi reconstruído sobre Better Auth com identidade branchable, e Neon Data API integra JWT com PostgreSQL RLS.
-
 ### Decisão
 
 O Caleida adotará:
@@ -128,29 +123,16 @@ O Caleida adotará:
 - projeto Neon separado para Production;
 - projeto Neon separado para non-production/staging;
 - branches Neon descartáveis no projeto non-production para migrations, testes e verificação;
-- migrations canônicas no repositório em `database/migrations/`;
+- migrations em `database/migrations/`;
 - testes de banco em `database/tests/`.
 
 ### Consequências
 
-- `DEC-003` e `DEC-004` tornam-se históricas/superseded.
-- Referências ativas a Supabase Postgres/Auth/Storage/local deixam de governar a implementação.
-- Production não será usada como laboratório de migration/RLS.
-- JWT/RLS devem ser testados com identidade normal da aplicação, não com owner/BYPASSRLS.
-- O helper de identidade e APIs exatas devem sempre seguir a documentação oficial corrente; em OPS-002, o Neon documenta `auth.user_id()` para RLS.
-- Connection strings, API keys, cookie secrets e OAuth secrets permanecem fora do Git.
-- A adoção do Neon Free não elimina gates de capacidade/custo antes do beta e da abertura pública.
-
-### Evidência documental verificada em OPS-002
-
-Em 31/08/2026, a documentação oficial consultada indicava:
-
-- Neon Free com 100 projetos e 10 branches incluídas por projeto;
-- Neon Auth disponível no Free e integrado ao schema `neon_auth`;
-- Neon Data API com JWT e RLS;
-- Supabase Free limitado a dois projetos ativos.
-
-Esses limites são externos e devem ser revalidados antes de decisões financeiras/operacionais futuras.
+- referências Supabase ficam históricas quando abrangidas pelo amendment;
+- Production não será laboratório de migration/RLS;
+- JWT/RLS devem ser testados com identidade normal da aplicação;
+- secrets permanecem fora do Git;
+- capacidade/custo serão reavaliados antes de beta/abertura.
 
 ---
 
@@ -159,20 +141,61 @@ Esses limites são externos e devem ser revalidados antes de decisões financeir
 **Data:** 31 de agosto de 2026  
 **Status:** Aprovada
 
-### Contexto
-
-O produto precisará de armazenamento próprio para avatar, banner e outros arquivos, mas nenhum fluxo de upload existe no Incremento 0. Neon Object Storage foi disponibilizado em beta e ainda não deve ser tratado como dependência estável de produção sem nova avaliação.
-
 ### Decisão
 
-O Caleida não escolherá provedor de Object Storage em OPS-002.
-
-A camada de arquivos deve permanecer provider-independent até a Story correspondente. Naquele momento, a sessão deve verificar novamente Neon Object Storage e alternativas S3-compatible adequadas.
+O Caleida não escolherá provedor de Object Storage antes da Story correspondente.
 
 ### Consequências
 
-- Neon Object Storage não é dependência canônica nesta fase.
-- Nenhum bucket ou credencial de Storage será criado antecipadamente.
-- Capas externas continuam por URL quando permitido.
-- Metadados de arquivos futuros devem ser modelados de forma que o provedor possa ser substituído.
-- A escolha posterior exige avaliação de privacidade, autorização, lifecycle, backup, custo, regiões e maturidade do serviço.
+- Neon Object Storage não é dependência canônica nesta fase;
+- nenhum bucket/credencial é criado antecipadamente;
+- capas externas continuam por URL quando permitido;
+- metadados futuros devem permanecer provider-independent;
+- a escolha posterior exige avaliação de privacidade, autorização, lifecycle, backup, custo, regiões e maturidade.
+
+---
+
+## DEC-009 — Deployment Vercel exclusivamente humano e manual
+
+**Data:** 31 de agosto de 2026  
+**Status:** Aprovada
+
+### Contexto
+
+O Project Design v1.0 tratava Preview Deployments por branch/PR e publicação como parte do ciclo normal de desenvolvimento. O fluxo evoluído do projeto exige evitar churn e consumo desnecessário de deployments, mantendo CI/build independentes de release.
+
+A documentação oficial Vercel verificada em OPS-003 permite desabilitar Git deployments automáticos com `git.deploymentEnabled: false`.
+
+### Decisão
+
+Vercel continua sendo o destino de hosting do Caleida, porém:
+
+- somente o usuário executa deployments;
+- IA não executa Preview, Production, promote, rollback ou redeploy;
+- automações e GitHub Actions não executam deployments;
+- push, branch, PR e merge não devem criar deployments automaticamente;
+- quando `vercel.json` existir, Git deployments automáticos devem permanecer desabilitados enquanto esta decisão estiver vigente;
+- Preview é opcional e manual;
+- Production é manual;
+- merge e release são eventos distintos;
+- deployment real não é gate obrigatório do Incremento 0.
+
+### Consequências
+
+- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` supersede referências históricas a Preview/Production automáticos;
+- `00_SYSTEM/DEPLOYMENT_POLICY.md` passa a ser human-only;
+- GitHub Actions permanece CI sem CD;
+- `US-PLAT-008` prepara configuração/runbook sem exigir publicação;
+- `US-PLAT-010` valida PR → CI → review → merge sem deployment;
+- uma futura release necessária deve ser registrada como ação manual do usuário;
+- a IA pode inspecionar/logar/diagnosticar deployment já executado, mas não dispará-lo.
+
+### Evidência documental verificada em OPS-003
+
+Em 31/08/2026, documentação oficial da Vercel confirmou:
+
+- `git.deploymentEnabled: false` desabilita deployments disparados por Git;
+- Preview e Production podem ser criados por comandos/mecanismos manuais oficiais;
+- a propriedade legada `github.enabled` não é a configuração recomendada para este guardrail quando `git.deploymentEnabled` está disponível.
+
+Esses comportamentos devem ser revalidados na Story que materializar a integração Vercel.

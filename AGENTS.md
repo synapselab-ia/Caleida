@@ -8,7 +8,7 @@ Antes de qualquer alteração:
 
 1. inspecione o estado real do repositório, branch padrão e commits recentes relevantes;
 2. leia `docs/PROJECT_DESIGN.md`;
-3. leia os amendments ativos do Project Design, atualmente `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
+3. leia os amendments ativos do Project Design: `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md` e `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`;
 4. leia `00_SYSTEM/SOURCE_OF_TRUTH.md`;
 5. leia `00_SYSTEM/AI_WORK_PROTOCOL.md`;
 6. leia `docs/CHECKPOINT.md`;
@@ -29,10 +29,9 @@ Regras essenciais:
 
 - `docs/PROJECT_DESIGN.md` v1.0 continua a base de produto;
 - amendments aprovados integram o Project Design e prevalecem somente no escopo declarado;
-- o amendment ativo de plataforma é `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
-- não use `docs/STATUS.md` como cursor atual; ele é snapshot histórico;
 - `docs/CHECKPOINT.md` define o estado operacional e a `NEXT_ACTION`;
 - `docs/EXECUTION_PLAN.md` define ordem e critérios operacionais;
+- `docs/STATUS.md` é snapshot histórico;
 - decisões de arquitetura não podem ser alteradas silenciosamente;
 - quando documentação e GitHub divergirem, confronte o estado real e reconcilie os artefatos antes de continuar trabalho dependente.
 
@@ -42,14 +41,12 @@ Regras essenciais:
 - Não antecipe funcionalidades de incrementos futuros.
 - Não refatore áreas não relacionadas sem necessidade demonstrável.
 - Não crie requisitos de negócio por conveniência técnica.
-- Não use dados fictícios para sustentar uma funcionalidade declarada concluída fora de testes/seeds apropriados.
+- Não use dados fictícios para sustentar funcionalidade declarada concluída fora de testes/seeds apropriados.
 - Se uma tarefa crescer além de uma unidade revisável, divida-a no plano antes de implementar.
 
 ## 4. Arquitetura canônica
 
-A arquitetura vigente deve ser lida dos documentos canônicos e das decisões aceitas atuais.
-
-Após OPS-002:
+Após OPS-002/OPS-003:
 
 - Neon Postgres é o banco canônico;
 - Neon Auth é a solução inicial de identidade;
@@ -58,9 +55,10 @@ Após OPS-002:
 - Production e non-production usam projetos Neon separados;
 - branches Neon descartáveis de verificação pertencem ao projeto non-production;
 - Object Storage permanece provider-independent e ainda não foi escolhido;
-- Vercel permanece destino de hosting, mas deployment segue `00_SYSTEM/DEPLOYMENT_POLICY.md`.
+- Vercel permanece destino de hosting;
+- deployment Vercel é exclusivamente humano/manual e não faz parte do CI.
 
-Referências a Supabase no Project Design v1.0, DEC-003 ou DEC-004 são históricas e explicitamente superseded por `DEC-007` e pelo amendment de plataforma. Não as trate como stack ativa.
+Referências históricas a Supabase e Preview automático não governam a implementação quando abrangidas pelos amendments/decisões posteriores.
 
 Mudanças materiais de plataforma, autenticação, banco, Storage, hosting, autorização ou integração externa exigem registro explícito da decisão antes ou na mesma unidade coerente de mudança.
 
@@ -72,7 +70,7 @@ Quando a implementação de banco começar:
 - testes de banco ficam em `database/tests/`;
 - toda mudança estrutural deve ser migration versionada;
 - não faça mudança canônica somente por Neon Console/dashboard;
-- não reescreva migration já aplicada para alterar a história;
+- não reescreva migration já aplicada para alterar história;
 - cada migration deve considerar constraints, índices, autorização, testes e recuperação;
 - RLS deve existir desde a primeira tabela privada/user-scoped exposta relevante;
 - nunca use Production para testes destrutivos;
@@ -81,7 +79,7 @@ Quando a implementação de banco começar:
 - autenticação pelo papel `authenticated` não substitui predicados de ownership/visibilidade;
 - helper, roles, grants e APIs da Neon Data API devem ser revalidados contra documentação oficial atual na tarefa que os implementar.
 
-O tooling exato de migrations deve ser o mais simples e reproduzível adequado ao projeto. Não introduza ORM apenas para administrar migrations sem necessidade de domínio demonstrada.
+O tooling exato de migrations deve ser o mais simples e reproduzível adequado ao projeto. Não introduza ORM apenas para administrar migrations sem necessidade demonstrada.
 
 ## 6. Segurança e secrets
 
@@ -91,6 +89,7 @@ Nunca grave no repositório, Issues, PRs, logs persistentes ou documentação:
 - tokens;
 - connection strings privadas;
 - Neon API keys;
+- Vercel tokens;
 - chaves administrativas;
 - credenciais de APIs;
 - secrets de autenticação/cookie;
@@ -130,7 +129,7 @@ Para Next.js, React, Neon Postgres/Auth/Data API, Vercel, APIs de catálogo, e-m
 - consulte documentação oficial atual quando a tarefa depender de comportamento, API, SDK, limites ou configuração corrente;
 - não confie exclusivamente em memória do modelo;
 - registre mudanças materiais de arquitetura/custos/privacidade;
-- revalide limites de Free tier antes de decisões operacionais ou financeiras.
+- revalide limites e configuração antes de decisões operacionais ou financeiras.
 
 ## 9. Storage
 
@@ -143,17 +142,21 @@ Até existir Story própria:
 - preserve capas externas por URL quando permitido;
 - modele metadados futuros de arquivo sem acoplamento desnecessário ao provedor.
 
-Na Story de arquivos, reavalie o estado corrente do Neon Object Storage e alternativas S3-compatible quanto a maturidade, privacidade, autorização, regiões, lifecycle, backup e custo.
-
 ## 10. Deployment
 
-Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`.
+Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`, `DEC-009` e `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`.
 
-Deployment não é verificação. Nenhum push, branch ou PR concede autorização automática para publicar Preview ou Production.
+Regras obrigatórias:
 
-Não configure ou execute deployment automático sem autorização canônica explícita.
+- deployment não é verificação;
+- push, branch, PR ou merge não podem gerar deployment automático;
+- quando `vercel.json` existir, manter `git.deploymentEnabled: false` enquanto a política atual estiver vigente;
+- IA não executa Preview, Production, promote, rollback, redeploy ou deploy hooks;
+- IA não cria workflow de CI que publique na Vercel;
+- somente o usuário executa deployments manualmente;
+- IA pode preparar runbook, validar pré-condições e diagnosticar deployment já executado.
 
-A contradição histórica de Preview automático do Project Design v1.0 será formalmente reconciliada em `OPS-003`. Até lá, a política operacional de deployment controlado prevalece para execução.
+Uma solicitação de continuação do projeto não autoriza deployment.
 
 ## 11. Fluxo Git
 
@@ -173,6 +176,8 @@ PR
 review
   ↓
 merge
+  ↓
+sem deploy automático
 ```
 
 - uma frente principal por vez, salvo aprovação explícita;
@@ -183,7 +188,7 @@ merge
 
 ## 12. Estados de trabalho
 
-Use os estados definidos no protocolo:
+Use:
 
 - `READY`;
 - `IN_PROGRESS`;
@@ -192,7 +197,9 @@ Use os estados definidos no protocolo:
 - `MANUAL_ACTION_REQUIRED`;
 - `DONE`.
 
-Uma frente `ON_HOLD` não é a frente ativa. Não fabrique dados, deploys ou atividade artificial apenas para desbloqueá-la.
+Uma frente `ON_HOLD` não é a frente ativa. Não fabrique dados, deploys ou atividade artificial para desbloqueá-la.
+
+Quando uma release externa for necessária e depender do usuário, registre `MANUAL_ACTION_REQUIRED` sem executar a ação humana.
 
 ## 13. Encerramento obrigatório
 

@@ -3,13 +3,13 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável / reconciliação operacional  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `OPS-002 — Formalizar o pivot Supabase → Neon`  
-**LAST_COMPLETED_ISSUE:** `#2`  
-**BASELINE_BEFORE_OPS_002:** `ee7db33f9b222f1f88f51da31aada942d66693a6`  
+**LAST_COMPLETED_TASK:** `OPS-003 — Reconciliar a política de deployment`  
+**LAST_COMPLETED_ISSUE:** `#4`  
+**BASELINE_BEFORE_OPS_003:** `dc682e31f071ff93c6c52f26aaff87721cca1189`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
-**NEXT_ACTION:** `OPS-003 — Reconciliar a política de deployment`  
+**NEXT_ACTION:** `OPS-004 — Evoluir o registro de decisões para ADRs`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -32,9 +32,10 @@ O Caleida continua antes do bootstrap da aplicação:
 - nenhum banco hospedado do Caleida criado;
 - nenhuma integração de autenticação implementada;
 - nenhum Object Storage selecionado/configurado;
-- nenhum deployment Vercel executado como parte deste fluxo.
+- nenhum projeto Vercel criado/conectado pela execução canônica;
+- nenhum Preview ou Production deployment executado.
 
-A plataforma canônica de dados/identidade agora é:
+A plataforma canônica de dados/identidade é:
 
 ```text
 Next.js
@@ -44,99 +45,86 @@ Next.js
 → PostgreSQL RLS
 ```
 
-Conexão direta ao Postgres permanece reservada a contexts server-side confiáveis, migrations e manutenção com least privilege.
+Vercel permanece destino de hosting, mas release é humana/manual.
 
-## Decisões de OPS-002
+## Decisões canônicas recentes
 
-- `DEC-003` — stack técnica original com Supabase: `SUPERSEDED`;
-- `DEC-004` — Supabase Free temporário: `SUPERSEDED`;
 - `DEC-007` — Neon como plataforma canônica de Postgres/Auth/Data API/RLS: `APROVADA`;
-- `DEC-008` — Object Storage desacoplado e decisão adiada: `APROVADA`.
+- `DEC-008` — Object Storage desacoplado e decisão adiada: `APROVADA`;
+- `DEC-009` — Deployment Vercel exclusivamente humano/manual: `APROVADA`.
 
-O Project Design v1.0 foi preservado como documento histórico-base. As premissas específicas de plataforma foram formalmente substituídas por:
+Amendments ativos do Project Design:
 
 - `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
-- `docs/NEON_PLATFORM.md`;
-- `docs/ARCHITECTURE.md`;
-- `docs/DECISIONS.md`.
+- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`.
 
-## Topologia de ambientes aprovada
+## Política de deployment aprovada
 
-### Non-production
+Enquanto `DEC-009` estiver vigente:
 
-Projeto Neon dedicado a desenvolvimento integrado/staging/verificação, com:
+- IA não executa deployments;
+- automações/CI não executam deployments;
+- push/branch/PR/merge não podem gerar deployments automáticos;
+- quando `vercel.json` existir, deve desabilitar Git deployments automáticos conforme documentação Vercel corrente; em OPS-003 o contrato verificado é `git.deploymentEnabled: false`;
+- Preview é opcional e manual;
+- Production é manual;
+- promote/rollback/redeploy são ações humanas;
+- IA pode preparar runbook, validar pré-condições e diagnosticar deployments já existentes.
 
-- branch canônica de staging;
-- branches curtas e descartáveis para migration, RLS e testes;
-- dados fictícios ou anonimizados;
-- Auth/Data API provisionados somente quando a Story correspondente exigir.
+## CI e release
 
-### Production
-
-Projeto Neon separado do non-production, com secrets e dados reais isolados.
-
-Production não recebe resets/testes destrutivos e não é usada como laboratório.
-
-## Banco e migrations
-
-Layout canônico planejado:
+Fluxo técnico normal:
 
 ```text
-database/migrations/
-database/tests/
+branch
+→ implementação
+→ lint/typecheck/test/build
+→ verificação de banco quando aplicável
+→ PR
+→ review
+→ merge
+→ sem deploy automático
 ```
 
-Migrations no Git serão a história de schema. Alterações permanentes somente no Neon Console não são aceitas como implementação canônica.
+Release externa é uma ação separada. Quando uma futura tarefa depender dela, o Checkpoint deve usar `MANUAL_ACTION_REQUIRED` e o usuário executará o deployment.
 
-O runner/tooling exato será definido na Story de fundação de banco; nenhum ORM foi escolhido apenas para migrations.
+## Backlog reconciliado
 
-## Auth, Data API e RLS
+- `US-PLAT-007` — CI sem CD;
+- `US-PLAT-008` — preparar hosting Vercel para release manual, sem exigir conexão/publicação;
+- `US-PLAT-010` — validar PR → CI → review → merge sem deployment;
+- deployment real não é critério obrigatório de encerramento do Incremento 0.
 
-- Neon Auth é a solução inicial de identidade;
-- Neon Data API é o caminho preferencial para CRUD normal sob contexto de usuário quando apropriado;
-- PostgreSQL RLS continua obrigatória para dados privados/user-scoped expostos;
-- autenticação (`authenticated`) não substitui ownership/visibilidade;
-- o helper/API de identidade deve ser revalidado na documentação oficial durante implementação; em OPS-002 a documentação corrente usa `auth.user_id()`;
-- owner/BYPASSRLS não serve como evidência de autorização normal de usuário.
-
-## Storage
-
-Nenhum provedor foi selecionado.
-
-Neon Object Storage permanecia beta na verificação de 31/08/2026; a decisão foi adiada até existir Story de arquivos/upload. O domínio deve permanecer provider-independent.
-
-## Verificação de OPS-002
+## Verificação de OPS-003
 
 - estado real da `main` inspecionado antes da edição: `PASS`;
-- documentação oficial corrente Neon/Supabase verificada: `PASS`;
-- limitação atual de projetos do Supabase Free confirmada: `PASS`;
-- capacidades atuais de Neon Projects/Branches/Auth/Data API/RLS verificadas: `PASS`;
-- decisão histórica preservada e supersessão explícita: `PASS`;
-- Project Design reconciliado por amendment de escopo: `PASS`;
+- documentação oficial Vercel consultada: `PASS`;
+- `git.deploymentEnabled: false` confirmado como configuração oficial para desabilitar Git deployments: `PASS`;
+- Project Design reconciliado por amendment específico: `PASS`;
 - arquitetura/backlog/Execution Plan reconciliados: `PASS`;
-- estratégia de migrations/branches/RLS definida: `PASS`;
-- boundary de Storage explícito: `PASS`;
+- regra human-only de deployment documentada: `PASS`;
+- CI separado de deployment: `PASS`;
 - secrets/credenciais adicionados: `PASS — nenhum`;
-- projeto Neon do Caleida criado: `SKIPPED — desnecessário para decisão documental`;
 - aplicação/lint/typecheck/test/build: `SKIPPED — aplicação ainda não inicializada`;
-- migrations/testes RLS executados: `SKIPPED — schema ainda não existe`;
-- deployment Vercel: `SKIPPED — fora do escopo e não autorizado`.
+- projeto/conexão Vercel: `SKIPPED — fora do escopo`;
+- Preview/Production deployment: `SKIPPED — proibido para IA e fora do escopo`;
+- Neon/banco: `SKIPPED — não alterado por OPS-003`.
 
-## Próxima ação — OPS-003
+## Próxima ação — OPS-004
 
 Executar somente:
 
-> `OPS-003 — Reconciliar a política de deployment`
+> `OPS-004 — Evoluir o registro de decisões para ADRs`
 
 Requisitos essenciais:
 
-1. verificar documentação oficial corrente da Vercel;
-2. localizar referências ativas a Preview/Production automáticos, Git integration e deploy como gate;
-3. formalizar a política manual/controlada no Project Design sem apagar o histórico original;
-4. separar CI/build/verificação de publicação;
-5. reconciliar `US-PLAT-008` e `US-PLAT-010`;
-6. não conectar o repositório à Vercel apenas para concluir a decisão documental;
-7. não executar Preview nem Production deployment;
-8. atualizar este checkpoint com uma única próxima ação executável.
+1. criar `docs/adr/` e índice canônico;
+2. definir formato mínimo de ADR;
+3. migrar decisões arquiteturais existentes preservando histórico e supersessões;
+4. evitar duas fontes concorrentes sem precedência clara;
+5. atualizar Source of Truth, AGENTS, README documental, Execution Plan e Checkpoint;
+6. não inicializar aplicação, banco ou Vercel;
+7. não executar deployment;
+8. ao final promover uma tarefa refinada derivada de `US-PLAT-001` como próxima ação técnica.
 
-`US-PLAT-001` não deve começar enquanto uma tarefa OPS anterior permanecer como `NEXT_ACTION`.
+`US-PLAT-001` não deve começar enquanto OPS-004 permanecer como `NEXT_ACTION`.
