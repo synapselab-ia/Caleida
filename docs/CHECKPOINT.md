@@ -1,14 +1,15 @@
 # Checkpoint — Caleida
 
 **PROJECT_STATUS:** READY  
-**CURRENT_PHASE:** Incremento 0 — Fundação executável / modernização operacional  
+**CURRENT_PHASE:** Incremento 0 — Fundação executável / reconciliação operacional  
 **PROTOCOL_VERSION:** 2  
-**PROTOCOL_BOOTSTRAP_TASK:** `OPS-001 — Modernizar o protocolo canônico`  
-**BASELINE_BEFORE_PROTOCOL_V2:** `5e5848b448090ab11301cf7344ac83f381bb654e`  
+**LAST_COMPLETED_TASK:** `OPS-002 — Formalizar o pivot Supabase → Neon`  
+**LAST_COMPLETED_ISSUE:** `#2`  
+**BASELINE_BEFORE_OPS_002:** `ee7db33f9b222f1f88f51da31aada942d66693a6`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
-**NEXT_ACTION:** `OPS-002 — Formalizar o pivot Supabase → Neon`  
+**NEXT_ACTION:** `OPS-003 — Reconciliar a política de deployment`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -23,59 +24,119 @@ Recupere o estado pelo GitHub e pelos documentos canônicos. Não peça ao usuá
 
 ## Estado técnico atual
 
-Até a conclusão de OPS-001, o estado conhecido da `main` era documental:
+O Caleida continua antes do bootstrap da aplicação:
 
 - aplicação Next.js ainda não inicializada;
 - nenhum `package.json` de aplicação;
 - nenhum schema/migration de produto;
 - nenhum banco hospedado do Caleida criado;
 - nenhuma integração de autenticação implementada;
-- nenhum deploy Vercel do Caleida configurado como parte do fluxo executado;
-- backlog do Incremento 0 existente;
-- Project Design v1.0 existente;
-- arquitetura inicial ainda baseada em Supabase e pendente de reconciliação por OPS-002.
+- nenhum Object Storage selecionado/configurado;
+- nenhum deployment Vercel executado como parte deste fluxo.
 
-O GitHub real deve ser conferido no início de cada sessão antes de assumir que este snapshot continua válido.
+A plataforma canônica de dados/identidade agora é:
 
-## Estado documental
+```text
+Next.js
+→ Neon Auth
+→ Neon Data API
+→ Neon Postgres
+→ PostgreSQL RLS
+```
 
-Com o protocolo v2, os artefatos operacionais passam a ter funções separadas:
+Conexão direta ao Postgres permanece reservada a contexts server-side confiáveis, migrations e manutenção com least privilege.
 
-- `docs/PROJECT_DESIGN.md` — produto;
-- `docs/PRODUCT_BACKLOG.md` — roadmap macro;
-- `docs/EXECUTION_PLAN.md` — tarefas executáveis e ordem operacional;
-- `docs/CHECKPOINT.md` — cursor de continuação;
-- `00_SYSTEM/SOURCE_OF_TRUTH.md` — precedência;
-- `00_SYSTEM/AI_WORK_PROTOCOL.md` — procedimento de trabalho;
-- `00_SYSTEM/VERIFICATION_PROTOCOL.md` — prova de conclusão;
-- `00_SYSTEM/DEPLOYMENT_POLICY.md` — guardrails de publicação;
-- `docs/STATUS.md` — snapshot histórico inicial, não cursor atual.
+## Decisões de OPS-002
 
-## Verificação de OPS-001
+- `DEC-003` — stack técnica original com Supabase: `SUPERSEDED`;
+- `DEC-004` — Supabase Free temporário: `SUPERSEDED`;
+- `DEC-007` — Neon como plataforma canônica de Postgres/Auth/Data API/RLS: `APROVADA`;
+- `DEC-008` — Object Storage desacoplado e decisão adiada: `APROVADA`.
 
-- coerência documental: `PASS`;
-- caminhos canônicos definidos: `PASS`;
-- `NEXT_ACTION` única e explícita: `PASS`;
+O Project Design v1.0 foi preservado como documento histórico-base. As premissas específicas de plataforma foram formalmente substituídas por:
+
+- `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
+- `docs/NEON_PLATFORM.md`;
+- `docs/ARCHITECTURE.md`;
+- `docs/DECISIONS.md`.
+
+## Topologia de ambientes aprovada
+
+### Non-production
+
+Projeto Neon dedicado a desenvolvimento integrado/staging/verificação, com:
+
+- branch canônica de staging;
+- branches curtas e descartáveis para migration, RLS e testes;
+- dados fictícios ou anonimizados;
+- Auth/Data API provisionados somente quando a Story correspondente exigir.
+
+### Production
+
+Projeto Neon separado do non-production, com secrets e dados reais isolados.
+
+Production não recebe resets/testes destrutivos e não é usada como laboratório.
+
+## Banco e migrations
+
+Layout canônico planejado:
+
+```text
+database/migrations/
+database/tests/
+```
+
+Migrations no Git serão a história de schema. Alterações permanentes somente no Neon Console não são aceitas como implementação canônica.
+
+O runner/tooling exato será definido na Story de fundação de banco; nenhum ORM foi escolhido apenas para migrations.
+
+## Auth, Data API e RLS
+
+- Neon Auth é a solução inicial de identidade;
+- Neon Data API é o caminho preferencial para CRUD normal sob contexto de usuário quando apropriado;
+- PostgreSQL RLS continua obrigatória para dados privados/user-scoped expostos;
+- autenticação (`authenticated`) não substitui ownership/visibilidade;
+- o helper/API de identidade deve ser revalidado na documentação oficial durante implementação; em OPS-002 a documentação corrente usa `auth.user_id()`;
+- owner/BYPASSRLS não serve como evidência de autorização normal de usuário.
+
+## Storage
+
+Nenhum provedor foi selecionado.
+
+Neon Object Storage permanecia beta na verificação de 31/08/2026; a decisão foi adiada até existir Story de arquivos/upload. O domínio deve permanecer provider-independent.
+
+## Verificação de OPS-002
+
+- estado real da `main` inspecionado antes da edição: `PASS`;
+- documentação oficial corrente Neon/Supabase verificada: `PASS`;
+- limitação atual de projetos do Supabase Free confirmada: `PASS`;
+- capacidades atuais de Neon Projects/Branches/Auth/Data API/RLS verificadas: `PASS`;
+- decisão histórica preservada e supersessão explícita: `PASS`;
+- Project Design reconciliado por amendment de escopo: `PASS`;
+- arquitetura/backlog/Execution Plan reconciliados: `PASS`;
+- estratégia de migrations/branches/RLS definida: `PASS`;
+- boundary de Storage explícito: `PASS`;
+- secrets/credenciais adicionados: `PASS — nenhum`;
+- projeto Neon do Caleida criado: `SKIPPED — desnecessário para decisão documental`;
 - aplicação/lint/typecheck/test/build: `SKIPPED — aplicação ainda não inicializada`;
-- banco/RLS: `SKIPPED — banco ainda não implementado`;
-- deployment: `SKIPPED — nenhum deployment necessário ou autorizado`;
-- secrets/credenciais adicionados: `PASS — nenhum valor sensível incluído`.
+- migrations/testes RLS executados: `SKIPPED — schema ainda não existe`;
+- deployment Vercel: `SKIPPED — fora do escopo e não autorizado`.
 
-## Próxima ação — OPS-002
+## Próxima ação — OPS-003
 
 Executar somente:
 
-> `OPS-002 — Formalizar o pivot Supabase → Neon`
+> `OPS-003 — Reconciliar a política de deployment`
 
 Requisitos essenciais:
 
-1. verificar documentação oficial corrente do Neon e do Supabase;
-2. localizar todas as referências ativas à plataforma anterior;
-3. formalizar a decisão de pivot sem apagar o histórico;
-4. reconciliar Project Design, arquitetura, backlog e regras operacionais afetadas;
-5. definir boundaries de Postgres, Auth/Data API, RLS e Storage;
-6. não iniciar schema de produto ou feature de negócio;
-7. não realizar deployment Vercel;
-8. atualizar este checkpoint ao final com a próxima ação executável.
+1. verificar documentação oficial corrente da Vercel;
+2. localizar referências ativas a Preview/Production automáticos, Git integration e deploy como gate;
+3. formalizar a política manual/controlada no Project Design sem apagar o histórico original;
+4. separar CI/build/verificação de publicação;
+5. reconciliar `US-PLAT-008` e `US-PLAT-010`;
+6. não conectar o repositório à Vercel apenas para concluir a decisão documental;
+7. não executar Preview nem Production deployment;
+8. atualizar este checkpoint com uma única próxima ação executável.
 
-`US-PLAT-001` não deve começar enquanto OPS-002 permanecer como `NEXT_ACTION`.
+`US-PLAT-001` não deve começar enquanto uma tarefa OPS anterior permanecer como `NEXT_ACTION`.

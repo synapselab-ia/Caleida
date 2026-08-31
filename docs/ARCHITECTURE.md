@@ -1,6 +1,6 @@
-# Arquitetura técnica inicial
+# Arquitetura técnica
 
-**Status:** Arquitetura de referência aprovada; aplicação ainda não inicializada.
+**Status:** arquitetura de referência vigente após OPS-002; aplicação ainda não inicializada.
 
 ## 1. Visão geral
 
@@ -8,24 +8,25 @@
 GitHub
   ├── código
   ├── documentação
-  ├── backlog e Issues
-  └── pull requests
+  ├── backlog, Issues e Checkpoint
+  └── pull requests / CI
         ↓
-Codex
-  ├── implementa uma User Story
-  ├── executa validações
-  └── prepara alterações para revisão
+Next.js + React + TypeScript
         ↓
 Vercel
-  ├── Preview para pull requests
-  └── Production para a branch principal
+  └── destino de hosting, sujeito à política de deployment controlado
         ↓
-Supabase
+Neon
+  ├── Neon Auth
+  ├── Neon Data API
   ├── Postgres
-  ├── Auth
-  ├── Storage
-  └── Row Level Security
+  └── PostgreSQL Row Level Security
+
+Object Storage
+  └── provider separado e ainda não escolhido
 ```
+
+O desenho detalhado da plataforma Neon está em `docs/NEON_PLATFORM.md`. As premissas antigas de Supabase permanecem apenas como histórico do Project Design v1.0 e são superseded por `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md` e `DEC-007`.
 
 ## 2. Stack de referência
 
@@ -33,36 +34,42 @@ Supabase
 - React;
 - TypeScript em modo estrito;
 - Tailwind CSS;
-- Supabase Postgres;
-- Supabase Auth;
-- Supabase Storage;
-- Vercel;
-- GitHub Actions.
+- Neon Postgres;
+- Neon Auth;
+- Neon Data API quando o acesso sob contexto de usuário exigir API HTTP;
+- PostgreSQL RLS;
+- Vercel como destino de hosting, sem autorização implícita para deploy;
+- GitHub Actions para validação;
+- Object Storage provider-independent, a decidir em Story própria.
 
-As versões exatas serão registradas quando a aplicação for inicializada.
+As versões exatas serão registradas quando cada componente for implementado e devem ser conferidas na documentação oficial corrente.
 
 ## 3. Ambientes
 
-### Desenvolvimento local
+### Desenvolvimento local da aplicação
 
-- Aplicação executada localmente.
-- Supabase CLI e serviços locais.
-- Dados exclusivamente fictícios.
-- Migrations aplicadas desde o zero.
+- Next.js executado localmente;
+- variáveis de ambiente locais fora do Git;
+- dados exclusivamente fictícios ou anonimizados;
+- integração real de banco/Auth contra ambiente Neon não produtivo quando necessária.
 
-### Staging
+### Neon Non-Production
 
-- Projeto Supabase hospedado dedicado.
-- Utilizado por homologação e Preview Deployments.
-- Pode conter apenas dados fictícios ou anonimizados.
-- Mudanças estruturais são aplicadas de forma coordenada.
+Projeto Neon dedicado a staging e verificação.
 
-### Production
+- branch canônica de staging/homologação;
+- branches temporárias para migrations, RLS, testes e desenvolvimento integrado;
+- branches descartáveis devem ser resetadas/removidas após uso;
+- nenhuma branch temporária é fonte canônica de schema.
 
-- Projeto Supabase hospedado dedicado.
-- Utilizado pelo beta fechado e, futuramente, pelo produto público.
-- Não recebe testes destrutivos.
-- Possui secrets próprios.
+### Neon Production
+
+Projeto Neon separado do non-production.
+
+- utilizado pelo beta real e futura operação pública;
+- secrets próprios;
+- sem testes destrutivos;
+- migrations chegam a partir do Git depois de verificação em ambiente isolado.
 
 ## 4. Domínios previstos
 
@@ -85,42 +92,85 @@ Os domínios devem permanecer separados, mas podem compartilhar componentes e se
 
 ## 5. Princípios de dados
 
-- Catálogo global separado dos dados pessoais.
-- Uma relação de biblioteca por usuário e obra.
-- Identificadores externos únicos por provedor quando aplicável.
-- RLS desde a primeira tabela exposta.
-- Dados externos normalizados e preservados localmente apenas quando necessários.
-- Cache com expiração e limpeza.
-- Auditoria compacta e sem secrets.
+- catálogo global separado dos dados pessoais;
+- uma relação de biblioteca por usuário e obra;
+- identificadores externos únicos por provedor quando aplicável;
+- RLS desde a primeira tabela privada/user-scoped exposta;
+- dados externos normalizados e preservados localmente apenas quando necessários;
+- cache com expiração e limpeza;
+- auditoria compacta e sem secrets;
+- migrations no Git como história canônica do schema.
 
-## 6. Estratégia de integração externa
+## 6. Autenticação e acesso a dados
 
-As APIs externas serão acessadas preferencialmente por rotas server-side.
+Neon Auth será a identidade canônica inicial.
 
-O cliente não deve receber chaves privadas. Resultados devem ser normalizados antes de chegar à interface. A indisponibilidade de um provedor não pode remover obras já salvas.
+Para CRUD normal sob contexto de usuário, a arquitetura prefere Neon Data API com JWT e RLS quando esse caminho for adequado ao caso de uso.
 
-## 7. Estratégia de imagens
+Regras:
 
-- Capas externas permanecerão por URL quando os termos permitirem.
-- Storage próprio será reservado para avatares, banners e imagens personalizadas.
-- Uploads terão compressão, limite de dimensão, limite de tamanho e limpeza de órfãos.
+- autenticação não substitui autorização;
+- `authenticated` não concede acesso genérico a linhas;
+- ownership/visibilidade deve ser imposta por RLS;
+- o helper de identidade segue a documentação oficial vigente (`auth.user_id()` na documentação verificada em OPS-002);
+- credencial privilegiada nunca é enviada ao browser;
+- owner/BYPASSRLS não é utilizado como caminho normal de CRUD.
 
-## 8. Estratégia de banco
+Operações server-side confiáveis podem usar conexão direta ao Postgres com least privilege e autorização própria comprovada.
 
-- Migrations em `supabase/migrations/`.
-- Seeds em `supabase/seed.sql` com dados fictícios.
-- Testes de RLS.
-- Índices adicionados com base em consultas reais.
-- Nenhuma alteração estrutural exclusiva do painel.
+## 7. Estratégia de banco
 
-## 9. Decisões ainda pendentes
+Layout canônico planejado:
 
-Serão decididas em Stories específicas:
+```text
+database/migrations/
+database/tests/
+```
 
+- toda mudança estrutural é migration versionada;
+- nenhuma alteração importante existe somente no Console;
+- migrations aplicadas não são reescritas;
+- correções usam novas migrations;
+- testes de constraints e RLS devem ser executáveis;
+- mudanças destrutivas/verificação ocorrem em branch Neon descartável, nunca em Production.
+
+O runner e tooling exatos serão definidos na Story de fundação do banco.
+
+## 8. Estratégia de integração externa
+
+APIs externas serão acessadas preferencialmente por rotas server-side quando houver segredo ou necessidade de controle.
+
+O cliente não recebe chaves privadas. Resultados são normalizados antes de chegar à interface. A indisponibilidade de um provedor não pode remover obras já salvas.
+
+## 9. Estratégia de imagens e arquivos
+
+- capas externas permanecem por URL quando os termos permitirem;
+- conteúdo próprio como avatar/banner exige Object Storage privado e controlado;
+- o provedor de Storage ainda não foi escolhido;
+- Neon Object Storage não é dependência canônica enquanto permanecer beta;
+- uploads futuros terão validação, compressão, limites e limpeza de órfãos;
+- metadados de arquivo devem permanecer desacoplados do provedor.
+
+## 10. Deployment
+
+Vercel continua destino de hosting, mas deployment não é gate de build nem consequência automática de branch/PR.
+
+Até OPS-003 reconciliar todos os artefatos de produto:
+
+- não habilitar Preview/Production automáticos;
+- não usar deployment como estratégia de teste;
+- seguir `00_SYSTEM/DEPLOYMENT_POLICY.md`.
+
+## 11. Decisões ainda pendentes
+
+Serão decididas em tarefas específicas:
+
+- tooling de migrations/testes de banco;
 - ferramenta de testes unitários;
 - ferramenta de testes end-to-end;
 - biblioteca de componentes acessíveis, se utilizada;
-- provedor SMTP;
-- serviço externo de backup;
+- provedor de Object Storage;
+- provedor/configuração de e-mail transacional;
+- serviço/estratégia de backup de longo prazo;
 - monitoramento e rastreamento de erros;
 - estratégia final de domínio.
