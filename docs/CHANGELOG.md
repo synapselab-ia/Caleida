@@ -17,17 +17,30 @@ O formato segue uma organização simples por versão e categoria.
 - Arquitetura técnica inicial.
 - Backlog inicial do Incremento 0.
 - Registro de decisões.
-- Documento de status.
+- Documento de status inicial.
+- Protocolo canônico v2 em `00_SYSTEM/` com Source of Truth, AI Work Protocol, Verification Protocol e Deployment Policy.
+- `docs/EXECUTION_PLAN.md` para separar roadmap macro de execução operacional.
+- `docs/CHECKPOINT.md` como cursor de continuidade e fonte da `NEXT_ACTION`.
 
 ### Alterado
 
-- Nenhuma alteração funcional.
+- `AGENTS.md` passou a recuperar estado pelo protocolo canônico, Checkpoint e Execution Plan antes de editar.
+- `docs/README.md` passou a documentar as funções dos artefatos canônicos.
+- `docs/STATUS.md` foi classificado como snapshot histórico, deixando de ser cursor operacional.
+- O fluxo operacional passou a distinguir `READY`, `IN_PROGRESS`, `BLOCKED`, `ON_HOLD`, `MANUAL_ACTION_REQUIRED` e `DONE`.
 
 ### Corrigido
 
-- Nenhuma correção funcional.
+- Eliminada a ambiguidade entre status histórico, backlog e próxima ação operacional.
+- Eliminada a dependência de memória de chat como mecanismo necessário de continuação do projeto.
 
 ### Segurança
 
-- Definida a proibição de versionar secrets.
-- Definida a obrigatoriedade futura de RLS e migrations.
+- Mantida a proibição de versionar secrets.
+- Mantida a obrigatoriedade futura de autorização persistente e migrations versionadas.
+- Deployment passou a exigir autorização operacional explícita e deixou de ser tratado como mecanismo implícito de verificação.
+
+### Observação operacional
+
+- Nenhum código de produto, banco, integração externa ou deployment foi criado nesta modernização.
+- A próxima ação canônica é `OPS-002 — Formalizar o pivot Supabase → Neon`.
