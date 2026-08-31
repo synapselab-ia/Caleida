@@ -36,171 +36,133 @@ Resultado: deployment Vercel passou a ser exclusivamente humano/manual; CI ficou
 
 **Estado:** CONCLUÍDO
 
-## Objetivo
-
-Criar estrutura própria para decisões arquiteturais antes do início da implementação técnica.
-
-## Resultado
-
-- `docs/adr/README.md` como índice/autoridade arquitetural;
-- `docs/adr/TEMPLATE.md` como formato mínimo;
-- sete ADRs migrados das decisões arquiteturais existentes;
-- relações de supersessão preservadas;
-- `docs/DECISIONS.md` convertido em índice/histórico legado;
-- Source of Truth, AGENTS, AI Work Protocol e documentação operacional reconciliados;
-- primeira Story técnica refinada e promovida como `NEXT_ACTION`.
-
-## Mapa migrado
-
-- `DEC-002` → `ADR-001`;
-- `DEC-003` → `ADR-002`;
-- `DEC-004` → `ADR-003`;
-- `DEC-006` → `ADR-004`;
-- `DEC-007` → `ADR-005`;
-- `DEC-008` → `ADR-006`;
-- `DEC-009` → `ADR-007`.
-
-`DEC-001` permanece decisão de produto e `DEC-005` decisão de processo.
-
-## Verificação
-
-- histórico preservado: `PASS`;
-- supersessões explícitas: `PASS`;
-- uma única autoridade arquitetural: `PASS`;
-- código/aplicação alterados: `SKIPPED — nenhum`;
-- banco/Neon alterados: `SKIPPED — nenhum`;
-- Vercel/deployment: `SKIPPED — proibido/fora do escopo`.
+Resultado: `docs/adr/` tornou-se autoridade arquitetural, decisões legadas foram migradas com supersessões explícitas e a primeira Story técnica foi refinada.
 
 ---
 
 # US-PLAT-001 — Inicializar a aplicação web
 
-**Estado:** NEXT_ACTION  
-**Backlog:** `US-PLAT-001` / EPIC-00  
+**Estado:** BLOCKED — implementação em Draft PR #9  
+**Issue:** `#8`  
+**Branch:** `feat/us-plat-001-app-bootstrap`  
+**PR:** `#9`  
 **Tipo:** primeira tarefa técnica do Incremento 0
 
 ## Objetivo
 
 Inicializar a aplicação Next.js/React/TypeScript mínima, reproduzível e verificável, sem implementar domínio de produto ou infraestrutura externa.
 
-Ao final, o repositório deve possuir uma base real que possa ser instalada do zero e passar pelos gates técnicos locais.
+## Estado de implementação
 
-## Por que agora
+A fundação técnica foi implementada na branch da Story e inclui:
 
-As quatro tarefas OPS concluíram a reconciliação de protocolo, plataforma, deployment e decisões. Não há mais decisão operacional pendente que justifique atrasar o bootstrap da aplicação.
+- Next.js `16.3.3` + React/React DOM `19.2.8`;
+- App Router em `src/app`;
+- TypeScript strict;
+- Tailwind CSS 4 via PostCSS;
+- Node `24.20.0` pinado;
+- npm `11.19.0` como package manager;
+- ESLint CLI;
+- scripts `dev`, `lint`, `typecheck`, `test`, `build`;
+- smoke test com `node:test`;
+- página mínima de fundação;
+- `.gitignore` e `.env.example` seguros;
+- nenhum Neon, Auth, Storage, Vercel ou feature de negócio.
 
-## Dependências
-
-- OPS-001 a OPS-004 concluídas;
-- `ADR-002` interpretado com suas supersessões atuais;
-- `ADR-005`, `ADR-006` e `ADR-007` respeitados;
-- nenhuma necessidade de projeto Neon/Vercel para esta Story.
-
-## Inspecionar antes de editar
-
-1. estado real da `main` e estrutura do repositório;
-2. `docs/PROJECT_DESIGN.md` + amendments;
-3. `docs/adr/README.md` e ADRs aplicáveis;
-4. `docs/ARCHITECTURE.md`;
-5. `public/brand/` e demais assets existentes;
-6. documentação oficial corrente de Next.js, React e Node.js;
-7. compatibilidade do runtime e package manager escolhidos;
-8. requisitos atuais de lint/configuração do framework.
+A PR permanece Draft porque a definição de pronto exige verificação executável que o ambiente disponível não conseguiu realizar.
 
 ## Versões e runtime
 
-Não assumir versões por memória.
+A escolha foi baseada na documentação oficial corrente em 31/08/2026 e no template `create-next-app@16.3.3`:
 
-Durante a execução:
+```text
+Node 24.20.0 LTS
+npm 11.19.0
+Next.js 16.3.3
+React 19.2.8
+React DOM 19.2.8
+TypeScript 5.x
+Tailwind CSS 4.x
+ESLint 9.x
+```
 
-- verificar documentação oficial atual do Next.js/React/Node;
-- selecionar runtime Node suportado e estável para a versão do framework;
-- fixar a versão de runtime no repositório (`.nvmrc` ou mecanismo equivalente apropriado);
-- escolher um único package manager e gerar lockfile canônico;
-- evitar dependências desnecessárias.
-
-A escolha de versões é implementação de baixo impacto e não exige novo ADR, salvo se introduzir restrição arquitetural material.
-
-## Escopo esperado
-
-Criar somente a fundação necessária, incluindo conforme a ferramenta oficial corrente:
-
-- `package.json` e lockfile;
-- Next.js App Router;
-- React e TypeScript em modo estrito;
-- estrutura `src/` quando compatível com a inicialização escolhida;
-- Tailwind CSS conforme stack vigente, sem construir design system completo;
-- página inicial mínima de fundação, sem feature de negócio;
-- scripts reais para `dev`, lint, typecheck, test e build;
-- configuração mínima de lint/TypeScript/framework;
-- pin de runtime;
-- `.gitignore` adequado;
-- teste básico/smoke reproduzível com a solução mínima compatível;
-- README/instruções locais atualizados somente no necessário.
-
-Preservar assets existentes em `public/`.
-
-## Segurança
-
-- nenhum secret;
-- nenhum `.env` com valores reais;
-- nenhuma chave exposta ao cliente;
-- nenhuma integração Auth/banco;
-- nenhum dado pessoal real;
-- nenhuma configuração que possa disparar deployment Vercel.
+A escolha de versões permanece decisão de implementação de baixo impacto e não exigiu novo ADR.
 
 ## Critérios de aceite
 
 1. clone limpo pode instalar dependências a partir do lockfile;
 2. aplicação inicia localmente;
-3. TypeScript estrito está ativo;
+3. TypeScript strict está ativo;
 4. lint passa;
 5. typecheck passa;
 6. teste básico passa;
-7. build de produção passa localmente;
-8. estrutura não contém feature de negócio prematura;
-9. assets existentes não são removidos sem justificativa;
-10. nenhum secret ou integração externa é criado;
-11. nenhum deployment ocorre;
-12. documentação/Checkpoint refletem o estado real.
+7. build de produção passa;
+8. nenhuma feature de negócio prematura;
+9. assets existentes preservados;
+10. nenhum secret ou integração externa criada;
+11. nenhum deployment;
+12. documentação/Checkpoint refletem estado real.
 
-## Verificação obrigatória
+## Verificação realizada até o momento
 
-Executar usando o package manager real escolhido:
+- documentação oficial corrente: `PASS`;
+- configuração alinhada ao scaffold oficial Next 16.3.3: `PASS documental`;
+- smoke test do bootstrap: `PASS — 2/2`;
+- revisão de escopo/diff: `PASS`;
+- secrets/integrações externas/deployment: `PASS — nenhum`;
+- `package-lock.json`: `BLOCKED`;
+- clean install: `BLOCKED`;
+- lint com dependências reais: `BLOCKED`;
+- typecheck com dependências reais: `BLOCKED`;
+- build: `BLOCKED`.
 
-```text
-clean install
-lint
-typecheck
-test
-build
-```
+### Motivo do bloqueio
 
-Também revisar diff completo e confirmar ausência de credenciais/configuração de CD.
+O ambiente local disponível não resolve `registry.npmjs.org`.
 
-Se ambiente de ferramenta impedir algum gate, registrar `BLOCKED`/`SKIPPED` com evidência; não declarar PASS fictício.
+Como fallback, foi usada uma branch GitHub descartável. O workflow completo e depois um diagnóstico mínimo de um único step falharam antes de executar qualquer step, sem fornecer ambiente de runner útil. Isso não é evidência de falha do código, mas também não permite declarar os gates como aprovados.
 
-## Non-goals
+Nenhum workflow temporário está presente na PR #9 ou na `main`.
 
-- Neon project/schema/migrations;
+## NEXT_ACTION dentro da Story
+
+> `US-PLAT-001 — concluir lockfile e gates executáveis do bootstrap`
+
+Executar na branch/PR já existentes:
+
+1. usar ambiente com Node 24/npm e acesso ao registry;
+2. gerar `package-lock.json` a partir do manifesto atual;
+3. `npm ci`;
+4. `npm run lint`;
+5. `npm run typecheck`;
+6. `npm test`;
+7. `npm run build`;
+8. corrigir somente falhas reais;
+9. atualizar README/Changelog/Backlog/Checkpoint;
+10. tirar PR #9 de Draft e mergear somente após os gates aplicáveis.
+
+## Non-goals preservados
+
+- projeto/schema/migrations Neon;
 - Neon Auth/Data API;
 - RLS;
 - Object Storage;
-- Vercel project/integration/deployment;
-- `vercel.json` de hosting (Story `US-PLAT-008`);
-- CI GitHub Actions (Story `US-PLAT-007`);
-- catálogo, biblioteca, perfil ou qualquer feature funcional;
+- projeto/conexão/deployment Vercel;
+- `vercel.json`;
+- CI permanente GitHub Actions;
+- catálogo, biblioteca, perfil ou feature funcional;
 - design system completo;
 - E2E amplo.
 
 ## Definition of Done
 
-- implementação em branch limitada à Story;
-- gates aplicáveis executados e registrados;
-- PR revisável sem escopo extra;
-- documentação afetada e Changelog atualizados;
-- Checkpoint aponta para uma única próxima Story coerente;
-- merge na `main` não dispara deployment.
+A Story somente passa a `CONCLUÍDA` quando os gates obrigatórios forem executados e a PR #9 puder ser mergeada sem alegações fictícias de verificação.
+
+---
+
+# Próximas Stories do Incremento 0
+
+`US-PLAT-003` e seguintes permanecem no `PRODUCT_BACKLOG.md` e **não** devem ser promovidas enquanto a US-PLAT-001 estiver bloqueada.
 
 ---
 
@@ -211,13 +173,13 @@ Para cada tarefa:
 1. recuperar estado pelo protocolo;
 2. confirmar `NEXT_ACTION`;
 3. inspecionar repositório/documentação;
-4. criar/usar Issue e branch limitadas;
+4. reutilizar Issue/branch/PR ativos quando já existirem;
 5. implementar somente o necessário;
 6. executar Verification Protocol;
 7. revisar diff;
 8. atualizar docs/ADRs quando aplicável;
 9. atualizar Checkpoint;
-10. abrir/revisar/mergear PR;
+10. abrir/revisar/mergear PR conforme gates;
 11. deixar uma única próxima ação.
 
 Deployment segue `ADR-007` e nunca é consequência automática do fluxo.
