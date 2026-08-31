@@ -1,125 +1,178 @@
 # AGENTS.md — Caleida
 
-Este arquivo define instruções permanentes para qualquer agente de código que trabalhe neste repositório.
+Este arquivo define as regras obrigatórias para qualquer agente de IA que trabalhe neste repositório.
 
-## 1. Fonte de verdade
+## 1. Recuperação canônica antes de editar
 
-Antes de alterar qualquer arquivo, leia nesta ordem:
+Antes de qualquer alteração:
 
-1. `docs/PROJECT_DESIGN.md`
-2. `docs/ARCHITECTURE.md`
-3. `docs/PRODUCT_BACKLOG.md`
-4. `docs/STATUS.md`
-5. `docs/DECISIONS.md`
-6. a GitHub Issue ou User Story indicada na tarefa
+1. inspecione o estado real do repositório, branch padrão e commits recentes relevantes;
+2. leia `docs/PROJECT_DESIGN.md`;
+3. leia `00_SYSTEM/SOURCE_OF_TRUTH.md`;
+4. leia `00_SYSTEM/AI_WORK_PROTOCOL.md`;
+5. leia `docs/CHECKPOINT.md`;
+6. leia `docs/EXECUTION_PLAN.md` e a tarefa indicada por `NEXT_ACTION`;
+7. leia `00_SYSTEM/VERIFICATION_PROTOCOL.md`;
+8. leia `00_SYSTEM/DEPLOYMENT_POLICY.md`;
+9. consulte `docs/ARCHITECTURE.md`, `docs/PRODUCT_BACKLOG.md`, `docs/DECISIONS.md` e documentos de domínio relacionados quando aplicáveis;
+10. verifique Issue, branch e PR ativos quando existirem;
+11. inspecione implementação, migrations, testes e dependências relevantes antes de propor mudanças.
 
-O histórico de um chat não substitui os documentos do repositório.
+O histórico de um chat não substitui o repositório.
 
-## 2. Regra de escopo
+## 2. Fonte de verdade
 
-- Implemente apenas a User Story solicitada.
+A precedência entre artefatos é definida em `00_SYSTEM/SOURCE_OF_TRUTH.md`.
+
+Regras essenciais:
+
+- não use `docs/STATUS.md` como cursor atual; ele é snapshot histórico;
+- `docs/CHECKPOINT.md` define o estado operacional e a `NEXT_ACTION`;
+- `docs/EXECUTION_PLAN.md` define ordem e critérios operacionais;
+- decisões de arquitetura não podem ser alteradas silenciosamente;
+- quando documentação e GitHub divergirem, confronte o estado real e reconcilie os artefatos antes de continuar trabalho dependente.
+
+## 3. Regra de escopo
+
+- Execute somente a `NEXT_ACTION`, salvo mudança explícita do usuário ou bloqueio real.
 - Não antecipe funcionalidades de incrementos futuros.
 - Não refatore áreas não relacionadas sem necessidade demonstrável.
-- Não altere decisões estruturais silenciosamente.
-- Quando houver conflito entre a tarefa e o Project Design, interrompa a implementação da parte conflitante e registre a divergência.
-- Dados fictícios podem existir em testes e seeds, mas não podem sustentar uma funcionalidade declarada concluída.
+- Não crie requisitos de negócio por conveniência técnica.
+- Não use dados fictícios para sustentar uma funcionalidade declarada concluída fora de testes/seeds apropriados.
+- Se uma tarefa crescer além de uma unidade revisável, divida-a no plano antes de implementar.
 
-## 3. Arquitetura obrigatória
+## 4. Arquitetura
 
-A stack de referência é:
+A arquitetura vigente deve ser lida dos documentos canônicos e das decisões aceitas atuais.
 
-- Next.js;
-- React;
-- TypeScript em modo estrito;
-- Tailwind CSS;
-- Supabase Postgres;
-- Supabase Auth;
-- Supabase Storage;
-- Row Level Security;
-- Vercel;
-- GitHub Actions.
+Não assuma stack ou provedor apenas por memória. O Project Design inicial contém decisões históricas que podem ser formalmente superseded em tarefas posteriores.
 
-Mudanças nessa stack exigem registro em `docs/DECISIONS.md` antes da implementação.
+Mudanças materiais de plataforma, autenticação, banco, storage, hosting, autorização ou integração externa exigem registro explícito da decisão antes ou na mesma unidade coerente de mudança.
 
-## 4. Banco de dados
+## 5. Banco de dados
 
-- Toda mudança de esquema deve ser criada como migration versionada em `supabase/migrations/`.
-- Não faça alterações estruturais somente pelo painel do Supabase.
-- Toda tabela exposta deve possuir políticas de Row Level Security adequadas.
-- Cada migration deve considerar constraints, índices, autorização, testes e recuperação.
-- Nunca use o banco de produção para testes.
-- Não armazene payloads externos integrais sem justificativa e política de expiração.
+Quando houver banco implementado:
 
-## 5. Segurança e secrets
+- toda mudança estrutural deve ser migration versionada;
+- não faça mudança canônica somente por dashboard/console;
+- não reescreva migration já aplicada para alterar a história;
+- cada migration deve considerar constraints, índices, autorização, testes e recuperação;
+- RLS/autorização persistente deve existir desde a primeira tabela exposta relevante;
+- nunca use produção para testes destrutivos;
+- use ambiente isolado e descartável para verificação de schema quando possível;
+- credencial owner/BYPASSRLS não serve para provar autorização normal de usuário.
 
-Nunca grave em código, documentação, Issues, commits, logs ou respostas:
+## 6. Segurança e secrets
+
+Nunca grave no repositório, Issues, PRs, logs persistentes ou documentação:
 
 - senhas;
 - tokens;
-- chaves privadas;
-- `SUPABASE_SECRET_KEY`;
-- chaves legadas `service_role`;
+- connection strings privadas;
+- chaves administrativas;
 - credenciais de APIs;
+- secrets de autenticação;
 - dados pessoais reais usados como teste.
 
-Variáveis públicas e secretas devem permanecer separadas. Nenhuma chave secreta pode utilizar prefixo `NEXT_PUBLIC_`.
+Nenhuma chave secreta deve ser exposta ao browser por conveniência.
 
-## 6. Limites operacionais
-
-O Supabase Free é temporário para desenvolvimento e beta controlado.
-
-Ao implementar uma funcionalidade, avalie quando aplicável:
-
-- impacto no tamanho do banco;
-- novos índices;
-- retenção de histórico;
-- uso de Storage;
-- tamanho e quantidade de uploads;
-- egress;
-- necessidade real de Realtime;
-- envio de e-mail;
-- inclusão em backup e restauração.
-
-Prefira paginação, consultas enxutas, cache com expiração, compressão de imagens e remoção de arquivos órfãos.
+Não desabilite autorização, RLS ou validação para fazer uma tarefa passar.
 
 ## 7. Qualidade mínima
 
-Uma tarefa não está concluída enquanto não houver, quando aplicável:
+Uma tarefa não está concluída enquanto os gates aplicáveis de `00_SYSTEM/VERIFICATION_PROTOCOL.md` não forem executados ou registrados como `SKIPPED`/`BLOCKED` com motivo.
+
+Quando aplicável, verificar:
 
 - validação de entrada;
 - autorização no servidor e no banco;
-- estados de carregamento, vazio e erro;
+- estados de loading/vazio/erro;
 - responsividade;
 - acessibilidade básica;
-- testes unitários e/ou de integração;
-- testes de RLS;
+- testes unitários/integrados/E2E adequados ao estágio;
+- testes adversariais de autorização;
 - lint;
 - typecheck;
+- testes;
 - build;
+- diff completo;
 - documentação atualizada.
 
-## 8. Fluxo de trabalho
+Nunca declare verificação que não ocorreu.
 
-- Uma User Story por branch e pull request, salvo agrupamento explicitamente aprovado.
-- Não faça push direto na `main` quando a proteção estiver ativa.
-- Commits devem ser pequenos e descritivos.
-- A pull request deve explicar o que mudou, como testar, migrations, riscos e limitações.
-- Corrija a mesma Story na mesma pull request sempre que possível.
+## 8. Plataformas externas
 
-## 9. Encerramento obrigatório
+Para Next.js, React, provedor de banco/auth, Vercel, APIs de catálogo, e-mail, storage ou qualquer serviço de evolução rápida:
+
+- consulte documentação oficial atual quando a tarefa depender de comportamento, API, SDK, limites ou configuração corrente;
+- não confie exclusivamente em memória do modelo;
+- registre mudanças materiais de arquitetura/custos/privacidade.
+
+## 9. Deployment
+
+Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`.
+
+Deployment não é verificação. Nenhum push, branch ou PR concede autorização automática para publicar Preview ou Production.
+
+Não configure ou execute deployment automático sem autorização canônica explícita.
+
+## 10. Fluxo Git
+
+Fluxo preferencial:
+
+```text
+NEXT_ACTION / Issue
+  ↓
+branch
+  ↓
+implementação
+  ↓
+verificação
+  ↓
+PR
+  ↓
+review
+  ↓
+merge
+```
+
+- uma frente principal por vez, salvo aprovação explícita;
+- commits devem ser semanticamente claros;
+- não faça push silencioso de mudança relevante na `main`;
+- PR deve explicar escopo, motivação, validação, riscos e migrations quando aplicável;
+- `main` deve permanecer recuperável e compreensível.
+
+## 11. Estados de trabalho
+
+Use os estados definidos no protocolo:
+
+- `READY`;
+- `IN_PROGRESS`;
+- `BLOCKED`;
+- `ON_HOLD`;
+- `MANUAL_ACTION_REQUIRED`;
+- `DONE`.
+
+Uma frente `ON_HOLD` não é a frente ativa. Não fabrique dados, deploys ou atividade artificial apenas para desbloqueá-la.
+
+## 12. Encerramento obrigatório
 
 Ao concluir uma tarefa:
 
-1. execute os comandos de validação disponíveis;
-2. informe os arquivos alterados;
-3. informe migrations criadas ou modificadas;
-4. descreva como validar manualmente;
-5. registre limitações e riscos;
-6. atualize `docs/STATUS.md`;
-7. atualize `docs/CHANGELOG.md`;
-8. atualize `docs/DECISIONS.md` se houver decisão arquitetural;
+1. revise o diff completo;
+2. execute os gates aplicáveis;
+3. informe migrations criadas/modificadas, se houver;
+4. registre limitações e riscos reais;
+5. atualize `docs/CHECKPOINT.md`;
+6. atualize `docs/CHANGELOG.md` quando aplicável;
+7. atualize decisões/documentação de arquitetura quando houver mudança material;
+8. deixe uma única `NEXT_ACTION` clara e executável;
 9. não declare conclusão sem evidência verificável.
 
-## 10. Estado inicial
+## 13. Experiência de continuidade
 
-O repositório ainda está em preparação documental. Não inicialize a aplicação, conecte serviços externos ou crie banco hospedado sem uma User Story aprovada para isso.
+O projeto deve poder ser retomado em um chat novo com:
+
+> Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
+
+Se a informação já estiver no repositório ou puder ser obtida pelas ferramentas disponíveis, não peça ao usuário para repeti-la.

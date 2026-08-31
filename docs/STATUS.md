@@ -1,12 +1,14 @@
-# Status do projeto
+# Status histórico do projeto
+
+> **LEGADO:** este documento preserva o snapshot de preparação inicial do Caleida em 03 de agosto de 2026. Após a adoção do protocolo canônico v2, o cursor operacional oficial é `docs/CHECKPOINT.md`.
 
 **Produto:** Caleida  
-**Data de referência:** 03 de agosto de 2026  
-**Fase atual:** Preparação do repositório  
-**Incremento atual:** Incremento 0 — Fundação executável  
-**Estado geral:** Não iniciado tecnicamente
+**Data de referência deste snapshot:** 03 de agosto de 2026  
+**Fase registrada:** Preparação do repositório  
+**Incremento registrado:** Incremento 0 — Fundação executável  
+**Estado geral registrado:** Não iniciado tecnicamente
 
-## Concluído
+## Concluído naquele snapshot
 
 - Repositório privado criado sob controle do proprietário do produto.
 - `README.md` inicial criado.
@@ -16,7 +18,7 @@
 - Colaborador técnico convidado.
 - Regras operacionais iniciais preparadas.
 
-## Em preparação
+## Em preparação naquele snapshot
 
 - Versão operacional do Project Design em Markdown.
 - Arquitetura técnica inicial.
@@ -24,7 +26,9 @@
 - Registro de decisões.
 - Configuração do Codex com o repositório.
 
-## Ainda não iniciado
+Esses itens devem ser conferidos contra o GitHub atual; vários foram concluídos após a data deste snapshot.
+
+## Ainda não iniciado naquele snapshot
 
 - Aplicação Next.js.
 - Ambiente local.
@@ -36,24 +40,16 @@
 - Catálogo.
 - Biblioteca pessoal.
 
-## Próxima User Story planejada
+## Próxima User Story planejada à época
 
 **US-PLAT-001 — Inicializar a aplicação web**
 
-Essa Story só deverá começar depois de:
+O protocolo atual pode inserir tarefas operacionais anteriores a essa Story. Consulte obrigatoriamente `docs/CHECKPOINT.md` e `docs/EXECUTION_PLAN.md` antes de iniciar qualquer implementação.
 
-1. os documentos da Fase 2 estarem no repositório;
-2. o Codex estar conectado ao repositório;
-3. a Issue possuir critérios de aceite aprovados.
-
-## Bloqueios atuais
-
-Nenhum bloqueio técnico. O projeto aguarda conclusão da preparação documental e conexão do Codex.
-
-## Regras operacionais vigentes
+## Regras históricas ainda compatíveis
 
 - Nenhum secret deve ser enviado ao repositório.
-- Nenhum projeto Supabase hospedado deve ser criado antes da fase correspondente.
-- Nenhum deploy Vercel deve ser configurado antes de existir uma aplicação compilável.
 - Toda mudança futura de banco deverá ser uma migration versionada.
-- O Supabase Free será utilizado apenas como infraestrutura temporária de desenvolvimento, homologação e beta controlado.
+- Nenhum teste destrutivo deve usar produção.
+
+As referências específicas a Supabase e Preview Deployments deste snapshot não representam decisões atuais por si só; devem ser avaliadas nos artefatos canônicos vigentes.
