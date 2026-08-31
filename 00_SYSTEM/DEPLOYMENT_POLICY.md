@@ -41,7 +41,7 @@ A configuração oficial verificada da Vercel permite desabilitar deployments di
 }
 ```
 
-Quando `vercel.json` for criado para o Caleida, essa configuração deve permanecer ativa enquanto `DEC-009` estiver vigente.
+Quando `vercel.json` for criado para o Caleida, essa configuração deve permanecer ativa enquanto `ADR-007` estiver vigente.
 
 Não conectar/importar o repositório de forma que um deployment automático seja disparado antes desse guardrail estar materializado.
 
@@ -72,7 +72,7 @@ lint
 typecheck
 test
 build
-bank/RLS checks quando aplicável
+banco/RLS checks quando aplicável
 ```
 
 GitHub Actions não deve possuir job de deployment Vercel como parte do fluxo normal.
@@ -130,7 +130,7 @@ Se uma publicação manual falhar:
 
 `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` formaliza esta política no nível de produto/arquitetura e supersede referências históricas a Preview/Production automáticos.
 
-`DEC-009` registra a decisão arquitetural.
+`docs/adr/ADR-007-manual-vercel-deployment.md` registra a decisão arquitetural canônica. `DEC-009` permanece apenas como identificador histórico no registro legado.
 
 ## 11. Fontes oficiais verificadas em OPS-003
 

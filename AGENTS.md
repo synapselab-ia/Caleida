@@ -15,9 +15,11 @@ Antes de qualquer alteração:
 7. leia `docs/EXECUTION_PLAN.md` e a tarefa indicada por `NEXT_ACTION`;
 8. leia `00_SYSTEM/VERIFICATION_PROTOCOL.md`;
 9. leia `00_SYSTEM/DEPLOYMENT_POLICY.md`;
-10. consulte `docs/ARCHITECTURE.md`, `docs/NEON_PLATFORM.md`, `docs/PRODUCT_BACKLOG.md`, `docs/DECISIONS.md` e documentos de domínio relacionados quando aplicáveis;
-11. verifique Issue, branch e PR ativos quando existirem;
-12. inspecione implementação, migrations, testes e dependências relevantes antes de propor mudanças.
+10. leia `docs/adr/README.md` e os ADRs aplicáveis;
+11. consulte `docs/ARCHITECTURE.md`, `docs/NEON_PLATFORM.md`, `docs/PRODUCT_BACKLOG.md` e documentos de domínio relacionados quando aplicáveis;
+12. use `docs/DECISIONS.md` apenas para histórico e decisões não arquiteturais;
+13. verifique Issue, branch e PR ativos quando existirem;
+14. inspecione implementação, migrations, testes e dependências relevantes antes de propor mudanças.
 
 O histórico de um chat não substitui o repositório.
 
@@ -29,6 +31,9 @@ Regras essenciais:
 
 - `docs/PROJECT_DESIGN.md` v1.0 continua a base de produto;
 - amendments aprovados integram o Project Design e prevalecem somente no escopo declarado;
+- ADRs `Accepted` em `docs/adr/` são a fonte canônica das decisões arquiteturais;
+- ADRs `Superseded` permanecem históricos e não governam trabalho novo na parte substituída;
+- `docs/DECISIONS.md` é índice/histórico legado e não compete com ADRs;
 - `docs/CHECKPOINT.md` define o estado operacional e a `NEXT_ACTION`;
 - `docs/EXECUTION_PLAN.md` define ordem e critérios operacionais;
 - `docs/STATUS.md` é snapshot histórico;
@@ -46,21 +51,22 @@ Regras essenciais:
 
 ## 4. Arquitetura canônica
 
-Após OPS-002/OPS-003:
+ADRs vigentes principais:
 
-- Neon Postgres é o banco canônico;
-- Neon Auth é a solução inicial de identidade;
-- Neon Data API é o caminho preferencial para CRUD normal sob contexto de usuário quando apropriado;
-- PostgreSQL RLS é a camada persistente de autorização;
-- Production e non-production usam projetos Neon separados;
-- branches Neon descartáveis de verificação pertencem ao projeto non-production;
-- Object Storage permanece provider-independent e ainda não foi escolhido;
-- Vercel permanece destino de hosting;
-- deployment Vercel é exclusivamente humano/manual e não faz parte do CI.
+- `ADR-001` — catálogo global separado da biblioteca pessoal;
+- `ADR-004` — mudanças de banco somente por migrations;
+- `ADR-005` — Neon Postgres/Auth/Data API/RLS;
+- `ADR-006` — Object Storage provider-independent e ainda não escolhido;
+- `ADR-007` — deployment Vercel exclusivamente humano/manual.
 
-Referências históricas a Supabase e Preview automático não governam a implementação quando abrangidas pelos amendments/decisões posteriores.
+Histórico relevante:
 
-Mudanças materiais de plataforma, autenticação, banco, Storage, hosting, autorização ou integração externa exigem registro explícito da decisão antes ou na mesma unidade coerente de mudança.
+- `ADR-002` — stack técnica original, superseded em partes;
+- `ADR-003` — Supabase Free temporário, superseded por `ADR-005`.
+
+Referências históricas a Supabase e Preview automático não governam a implementação quando abrangidas pelos ADRs/amendments posteriores.
+
+Mudanças materiais de plataforma, autenticação, banco, Storage, hosting, autorização ou integração externa exigem novo ADR ou supersessão explícita antes ou na mesma unidade coerente de mudança.
 
 ## 5. Banco de dados
 
@@ -128,12 +134,12 @@ Para Next.js, React, Neon Postgres/Auth/Data API, Vercel, APIs de catálogo, e-m
 
 - consulte documentação oficial atual quando a tarefa depender de comportamento, API, SDK, limites ou configuração corrente;
 - não confie exclusivamente em memória do modelo;
-- registre mudanças materiais de arquitetura/custos/privacidade;
+- registre mudanças materiais de arquitetura/custos/privacidade em ADR/amendment quando aplicável;
 - revalide limites e configuração antes de decisões operacionais ou financeiras.
 
 ## 9. Storage
 
-`DEC-008` mantém Object Storage desacoplado e não escolhido.
+`ADR-006` mantém Object Storage desacoplado e não escolhido.
 
 Até existir Story própria:
 
@@ -144,13 +150,13 @@ Até existir Story própria:
 
 ## 10. Deployment
 
-Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`, `DEC-009` e `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`.
+Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`, `ADR-007` e `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`.
 
 Regras obrigatórias:
 
 - deployment não é verificação;
 - push, branch, PR ou merge não podem gerar deployment automático;
-- quando `vercel.json` existir, manter `git.deploymentEnabled: false` enquanto a política atual estiver vigente;
+- quando `vercel.json` existir, manter `git.deploymentEnabled: false` enquanto a política atual estiver vigente, sujeito à documentação oficial corrente;
 - IA não executa Preview, Production, promote, rollback, redeploy ou deploy hooks;
 - IA não cria workflow de CI que publique na Vercel;
 - somente o usuário executa deployments manualmente;
@@ -211,7 +217,7 @@ Ao concluir uma tarefa:
 4. registre limitações e riscos reais;
 5. atualize `docs/CHECKPOINT.md`;
 6. atualize `docs/CHANGELOG.md` quando aplicável;
-7. atualize decisões/documentação de arquitetura quando houver mudança material;
+7. atualize/crie ADRs e documentação de arquitetura quando houver mudança material;
 8. deixe uma única `NEXT_ACTION` clara e executável;
 9. não declare conclusão sem evidência verificável.
 

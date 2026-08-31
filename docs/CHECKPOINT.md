@@ -1,130 +1,111 @@
 # Checkpoint — Caleida
 
 **PROJECT_STATUS:** READY  
-**CURRENT_PHASE:** Incremento 0 — Fundação executável / reconciliação operacional  
+**CURRENT_PHASE:** Incremento 0 — Fundação executável / início técnico  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `OPS-003 — Reconciliar a política de deployment`  
-**LAST_COMPLETED_ISSUE:** `#4`  
-**BASELINE_BEFORE_OPS_003:** `dc682e31f071ff93c6c52f26aaff87721cca1189`  
+**LAST_COMPLETED_TASK:** `OPS-004 — Evoluir o registro de decisões para ADRs`  
+**LAST_COMPLETED_ISSUE:** `#6`  
+**BASELINE_BEFORE_OPS_004:** `8be56851684a891d4001c5eb740a38d8d647d999`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
-**NEXT_ACTION:** `OPS-004 — Evoluir o registro de decisões para ADRs`  
+**NEXT_ACTION:** `US-PLAT-001 — Inicializar a aplicação web`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
 
 ## Comando de continuação
 
-Uma nova sessão deve poder iniciar com:
-
 > Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
 
-Recupere o estado pelo GitHub e pelos documentos canônicos. Não peça ao usuário para repetir contexto já disponível.
+Recupere o estado pelo GitHub e pelos documentos canônicos. Não peça ao usuário contexto já disponível.
 
 ## Estado técnico atual
 
-O Caleida continua antes do bootstrap da aplicação:
+O projeto concluiu a reconciliação operacional e está pronto para o primeiro bootstrap técnico.
 
-- aplicação Next.js ainda não inicializada;
-- nenhum `package.json` de aplicação;
-- nenhum schema/migration de produto;
-- nenhum banco hospedado do Caleida criado;
-- nenhuma integração de autenticação implementada;
-- nenhum Object Storage selecionado/configurado;
-- nenhum projeto Vercel criado/conectado pela execução canônica;
-- nenhum Preview ou Production deployment executado.
+Ainda não existe:
 
-A plataforma canônica de dados/identidade é:
+- aplicação Next.js inicializada;
+- `package.json`/lockfile de aplicação;
+- schema/migrations de produto;
+- projeto Neon do Caleida;
+- Neon Auth/Data API implementados;
+- Object Storage escolhido;
+- projeto/conexão Vercel criada pela execução canônica;
+- Preview/Production deployment.
+
+Assets/documentação existentes devem ser preservados durante o bootstrap.
+
+## Autoridade arquitetural
+
+A partir de OPS-004, `docs/adr/` é a fonte canônica das decisões arquiteturais.
+
+ADRs migrados:
+
+- `ADR-001` — catálogo global separado da biblioteca pessoal — `Accepted`;
+- `ADR-002` — stack técnica original — `Superseded em partes`;
+- `ADR-003` — Supabase Free temporário — `Superseded`;
+- `ADR-004` — mudanças de banco somente por migrations — `Accepted`;
+- `ADR-005` — Neon como plataforma de dados/identidade — `Accepted`;
+- `ADR-006` — Object Storage desacoplado/adiado — `Accepted`;
+- `ADR-007` — deployment Vercel humano/manual — `Accepted`.
+
+`docs/DECISIONS.md` agora é índice/histórico legado e mantém `DEC-001` (produto) e `DEC-005` (processo) sem competir com ADRs.
+
+## Plataforma vigente
 
 ```text
-Next.js
+Next.js / React / TypeScript
 → Neon Auth
 → Neon Data API
 → Neon Postgres
 → PostgreSQL RLS
 ```
 
-Vercel permanece destino de hosting, mas release é humana/manual.
+Banco segue `ADR-004`; Storage segue `ADR-006`; deployment segue `ADR-007`.
 
-## Decisões canônicas recentes
+## Deployment
 
-- `DEC-007` — Neon como plataforma canônica de Postgres/Auth/Data API/RLS: `APROVADA`;
-- `DEC-008` — Object Storage desacoplado e decisão adiada: `APROVADA`;
-- `DEC-009` — Deployment Vercel exclusivamente humano/manual: `APROVADA`.
+- IA/automações não publicam;
+- push/PR/merge não publicam;
+- release Vercel é humana/manual;
+- nenhum deployment é necessário para a próxima Story.
 
-Amendments ativos do Project Design:
+## Verificação de OPS-004
 
-- `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
-- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`.
+- estado real da `main` inspecionado: `PASS`;
+- decisões arquiteturais classificadas: `PASS`;
+- sete ADRs migrados com origem/status/supersessão: `PASS`;
+- `DECISIONS.md` convertido sem apagar histórico: `PASS`;
+- precedência ADR × legado definida: `PASS`;
+- protocolos/documentação operacional reconciliados: `PASS`;
+- `US-PLAT-001` refinada no Execution Plan: `PASS`;
+- código de aplicação: `SKIPPED — não alterado`;
+- lint/typecheck/test/build: `SKIPPED — aplicação ainda não existe`;
+- Neon/banco: `SKIPPED — não alterado`;
+- Vercel/deployment: `SKIPPED — não alterado e deployment proibido para IA`;
+- secrets adicionados: `PASS — nenhum`.
 
-## Política de deployment aprovada
-
-Enquanto `DEC-009` estiver vigente:
-
-- IA não executa deployments;
-- automações/CI não executam deployments;
-- push/branch/PR/merge não podem gerar deployments automáticos;
-- quando `vercel.json` existir, deve desabilitar Git deployments automáticos conforme documentação Vercel corrente; em OPS-003 o contrato verificado é `git.deploymentEnabled: false`;
-- Preview é opcional e manual;
-- Production é manual;
-- promote/rollback/redeploy são ações humanas;
-- IA pode preparar runbook, validar pré-condições e diagnosticar deployments já existentes.
-
-## CI e release
-
-Fluxo técnico normal:
-
-```text
-branch
-→ implementação
-→ lint/typecheck/test/build
-→ verificação de banco quando aplicável
-→ PR
-→ review
-→ merge
-→ sem deploy automático
-```
-
-Release externa é uma ação separada. Quando uma futura tarefa depender dela, o Checkpoint deve usar `MANUAL_ACTION_REQUIRED` e o usuário executará o deployment.
-
-## Backlog reconciliado
-
-- `US-PLAT-007` — CI sem CD;
-- `US-PLAT-008` — preparar hosting Vercel para release manual, sem exigir conexão/publicação;
-- `US-PLAT-010` — validar PR → CI → review → merge sem deployment;
-- deployment real não é critério obrigatório de encerramento do Incremento 0.
-
-## Verificação de OPS-003
-
-- estado real da `main` inspecionado antes da edição: `PASS`;
-- documentação oficial Vercel consultada: `PASS`;
-- `git.deploymentEnabled: false` confirmado como configuração oficial para desabilitar Git deployments: `PASS`;
-- Project Design reconciliado por amendment específico: `PASS`;
-- arquitetura/backlog/Execution Plan reconciliados: `PASS`;
-- regra human-only de deployment documentada: `PASS`;
-- CI separado de deployment: `PASS`;
-- secrets/credenciais adicionados: `PASS — nenhum`;
-- aplicação/lint/typecheck/test/build: `SKIPPED — aplicação ainda não inicializada`;
-- projeto/conexão Vercel: `SKIPPED — fora do escopo`;
-- Preview/Production deployment: `SKIPPED — proibido para IA e fora do escopo`;
-- Neon/banco: `SKIPPED — não alterado por OPS-003`.
-
-## Próxima ação — OPS-004
+## Próxima ação — US-PLAT-001
 
 Executar somente:
 
-> `OPS-004 — Evoluir o registro de decisões para ADRs`
+> `US-PLAT-001 — Inicializar a aplicação web`
+
+A especificação executável está em `docs/EXECUTION_PLAN.md`.
 
 Requisitos essenciais:
 
-1. criar `docs/adr/` e índice canônico;
-2. definir formato mínimo de ADR;
-3. migrar decisões arquiteturais existentes preservando histórico e supersessões;
-4. evitar duas fontes concorrentes sem precedência clara;
-5. atualizar Source of Truth, AGENTS, README documental, Execution Plan e Checkpoint;
-6. não inicializar aplicação, banco ou Vercel;
-7. não executar deployment;
-8. ao final promover uma tarefa refinada derivada de `US-PLAT-001` como próxima ação técnica.
+1. verificar documentação oficial corrente de Next.js, React e Node antes de escolher versões;
+2. pin de runtime e um único package manager/lockfile;
+3. Next.js App Router + React + TypeScript strict;
+4. fundação Tailwind conforme stack vigente;
+5. scripts reais de lint/typecheck/test/build;
+6. página mínima sem feature de negócio;
+7. preservar assets existentes;
+8. nenhum Neon/Auth/Storage/Vercel remoto;
+9. nenhum `vercel.json` ou deployment nesta Story;
+10. executar clean install, lint, typecheck, test e build antes de concluir.
 
-`US-PLAT-001` não deve começar enquanto OPS-004 permanecer como `NEXT_ACTION`.
+Não há mais tarefa OPS bloqueando o início técnico.

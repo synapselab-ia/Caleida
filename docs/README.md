@@ -1,39 +1,50 @@
 # Documentação do Caleida
 
-Esta pasta reúne os documentos oficiais de produto, arquitetura, execução, decisões, testes e operação do Caleida.
+Esta pasta reúne os documentos oficiais de produto, arquitetura, execução, decisões, testes e operação.
 
 ## Artefatos principais
 
-- `PROJECT_DESIGN.md` — especificação base do produto e resultado final esperado; preserva a edição v1.0 e seu contexto histórico.
-- `PROJECT_DESIGN_PLATFORM_AMENDMENT.md` — amendment ativo de plataforma/dados/identidade/Storage.
-- `PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` — amendment ativo de hosting, CI, deployment e release.
-- `PRODUCT_BACKLOG.md` — roadmap macro de épicos e User Stories.
-- `EXECUTION_PLAN.md` — ordem operacional e tarefas executáveis.
-- `CHECKPOINT.md` — cursor atual de continuação e `NEXT_ACTION`.
+- `PROJECT_DESIGN.md` — especificação base do produto.
+- `PROJECT_DESIGN_PLATFORM_AMENDMENT.md` — amendment de plataforma/dados/identidade/Storage.
+- `PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` — amendment de hosting, CI, deployment e release.
+- `adr/README.md` — índice e autoridade canônica das decisões arquiteturais.
+- `adr/TEMPLATE.md` — formato mínimo para novos ADRs.
 - `ARCHITECTURE.md` — arquitetura técnica vigente.
-- `NEON_PLATFORM.md` — topologia e guardrails específicos de Neon Postgres/Auth/Data API/RLS.
-- `DECISIONS.md` — registro histórico de decisões e supersessões até a migração para ADRs.
-- `CHANGELOG.md` — mudanças relevantes do projeto.
-- `STATUS.md` — snapshot histórico da preparação inicial; não é o cursor operacional atual.
+- `NEON_PLATFORM.md` — topologia/guardrails Neon.
+- `PRODUCT_BACKLOG.md` — roadmap macro de épicos/User Stories.
+- `EXECUTION_PLAN.md` — ordem operacional e tarefas executáveis.
+- `CHECKPOINT.md` — cursor atual e `NEXT_ACTION`.
+- `DECISIONS.md` — índice/histórico legado; não é fonte concorrente dos ADRs.
+- `CHANGELOG.md` — mudanças relevantes.
+- `STATUS.md` — snapshot histórico da preparação inicial.
+
+## Decisões arquiteturais
+
+Após `OPS-004`, novas decisões arquiteturais são registradas em `docs/adr/`.
+
+ADRs aceitos vigentes de maior impacto:
+
+- `ADR-001` — catálogo global separado da biblioteca pessoal;
+- `ADR-004` — mudanças de banco somente por migrations;
+- `ADR-005` — Neon como plataforma de dados/identidade;
+- `ADR-006` — Object Storage desacoplado/adiado;
+- `ADR-007` — deployment Vercel exclusivamente humano/manual.
+
+`ADR-002` e `ADR-003` preservam a arquitetura inicial e o Supabase histórico com supersessões explícitas.
 
 ## Plataforma vigente
 
-Dados/identidade:
-
 ```text
-Neon Postgres
-+ Neon Auth
-+ Neon Data API
-+ PostgreSQL RLS
+Next.js / React / TypeScript
+→ Neon Auth
+→ Neon Data API
+→ Neon Postgres
+→ PostgreSQL RLS
 ```
 
-Object Storage permanece provider-independent e ainda não foi escolhido.
+Object Storage permanece provider-independent.
 
 ## Hosting e release
-
-Vercel permanece destino de hosting.
-
-A política vigente é:
 
 ```text
 GitHub / CI
@@ -43,20 +54,15 @@ GitHub / CI
 → release manual somente pelo usuário quando necessária
 ```
 
-Enquanto `DEC-009` estiver vigente:
-
-- IA não executa deployments;
-- GitHub Actions não executa deployments;
-- Preview/Production são manuais;
-- quando `vercel.json` existir, Git deployments automáticos devem ficar desabilitados conforme a documentação oficial corrente.
+Vercel permanece destino de hosting, conforme `ADR-007` e `00_SYSTEM/DEPLOYMENT_POLICY.md`.
 
 ## Protocolo canônico
 
-As regras de precedência, trabalho, verificação e deployment estão em `00_SYSTEM/`:
+As regras operacionais estão em `00_SYSTEM/`:
 
 - `SOURCE_OF_TRUTH.md`;
 - `AI_WORK_PROTOCOL.md`;
 - `VERIFICATION_PROTOCOL.md`;
 - `DEPLOYMENT_POLICY.md`.
 
-O desenvolvimento deve ser incremental e recuperável por GitHub. Uma nova sessão deve seguir o `CHECKPOINT` e executar somente a `NEXT_ACTION` definida no plano.
+Uma nova sessão deve seguir o Checkpoint, ler os ADRs aplicáveis e executar somente a `NEXT_ACTION` definida no Execution Plan.

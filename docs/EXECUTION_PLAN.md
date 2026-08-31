@@ -4,7 +4,7 @@
 **Regra:** uma `NEXT_ACTION` limitada por vez  
 **Roadmap de produto:** `docs/PRODUCT_BACKLOG.md`
 
-Este documento transforma o backlog macro em tarefas executáveis. O backlog descreve capacidades e prioridades; este plano define ordem, dependências, critérios e limites operacionais.
+Este documento transforma o backlog macro em tarefas executáveis.
 
 ---
 
@@ -12,9 +12,7 @@ Este documento transforma o backlog macro em tarefas executáveis. O backlog des
 
 **Estado:** CONCLUÍDO
 
-## Resultado
-
-Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Execution Plan e Checkpoint passaram a permitir retomada confiável pelo repositório.
+Resultado: Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Execution Plan e Checkpoint tornaram o repositório recuperável sem memória de chat.
 
 ---
 
@@ -22,14 +20,7 @@ Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Exe
 
 **Estado:** CONCLUÍDO
 
-## Resultado
-
-- `DEC-007` tornou Neon a plataforma canônica de Postgres/Auth/Data API/RLS;
-- Production e non-production foram separados;
-- branches descartáveis de verificação foram definidas;
-- migrations/testes passaram a usar `database/migrations/` e `database/tests/` como layout planejado;
-- Storage permaneceu provider-independent por `DEC-008`;
-- `PROJECT_DESIGN_PLATFORM_AMENDMENT.md` preservou e reconciliou o Project Design v1.0.
+Resultado: plataforma Neon formalizada, ambientes isolados definidos, migrations/testes planejados em `database/`, Storage adiado e Project Design reconciliado por amendment.
 
 ---
 
@@ -37,125 +28,179 @@ Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Exe
 
 **Estado:** CONCLUÍDO
 
-## Objetivo
-
-Eliminar a ambiguidade entre Preview automático e release manual antes do bootstrap da aplicação.
-
-## Evidência de contexto
-
-Na execução de OPS-003 foi confirmado que:
-
-- a aplicação ainda não existe;
-- nenhum projeto/deployment Vercel do Caleida foi criado pela execução;
-- o Project Design v1.0 ainda preserva referências históricas a Preview automático;
-- a documentação oficial Vercel corrente permite desabilitar todos os Git deployments com `git.deploymentEnabled: false`;
-- Preview/Production podem ser criados manualmente por mecanismos oficiais da Vercel.
-
-## Decisões
-
-- `DEC-009` define deployment como ação exclusivamente humana/manual;
-- IA, automações e GitHub Actions não publicam o Caleida;
-- Git deployments automáticos devem permanecer desabilitados;
-- merge não significa release;
-- CI permanece separada de CD;
-- `PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` supersede as premissas históricas de Preview/Production automáticos;
-- `US-PLAT-008` prepara hosting sem exigir conexão/publicação;
-- `US-PLAT-010` valida PR → CI → review → merge sem deployment;
-- deployment real deixa de ser gate do Incremento 0.
-
-## Verificação
-
-- documentação oficial Vercel: `PASS`;
-- comportamento/configuração `git.deploymentEnabled: false`: `PASS documental`;
-- Project Design reconciliado por amendment: `PASS`;
-- backlog/arquitetura/política reconciliados: `PASS`;
-- regra human-only para deployment: `PASS`;
-- secrets adicionados: `PASS — nenhum`;
-- aplicação/lint/typecheck/test/build: `SKIPPED — aplicação ainda não inicializada`;
-- conexão/projeto Vercel: `SKIPPED — fora do escopo`;
-- Preview/Production deployment: `SKIPPED — proibido para IA e fora do escopo`.
-
-## Artefatos principais
-
-- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`;
-- `00_SYSTEM/DEPLOYMENT_POLICY.md`;
-- `docs/ARCHITECTURE.md`;
-- `docs/DECISIONS.md`;
-- `docs/PRODUCT_BACKLOG.md`;
-- `docs/CHECKPOINT.md`;
-- `AGENTS.md`.
+Resultado: deployment Vercel passou a ser exclusivamente humano/manual; CI ficou separada de CD; Project Design/backlog foram reconciliados.
 
 ---
 
 # OPS-004 — Evoluir o registro de decisões para ADRs
 
-**Estado:** NEXT_ACTION
+**Estado:** CONCLUÍDO
 
 ## Objetivo
 
-Criar estrutura `docs/adr/` e migrar gradualmente as decisões arquiteturais relevantes sem perder histórico, status ou relações de supersessão das `DEC-*` existentes.
+Criar estrutura própria para decisões arquiteturais antes do início da implementação técnica.
 
-## Por que agora
+## Resultado
 
-As OPS-002 e OPS-003 adicionaram novas decisões materiais e relações de supersessão. Antes de iniciar a implementação técnica e acumular mais decisões, o registro deve ganhar estrutura própria por decisão.
+- `docs/adr/README.md` como índice/autoridade arquitetural;
+- `docs/adr/TEMPLATE.md` como formato mínimo;
+- sete ADRs migrados das decisões arquiteturais existentes;
+- relações de supersessão preservadas;
+- `docs/DECISIONS.md` convertido em índice/histórico legado;
+- Source of Truth, AGENTS, AI Work Protocol e documentação operacional reconciliados;
+- primeira Story técnica refinada e promovida como `NEXT_ACTION`.
 
-## Dependências
+## Mapa migrado
 
-- OPS-001 concluída;
-- OPS-002 concluída;
-- OPS-003 concluída;
-- `docs/DECISIONS.md` preservado como registro atual.
+- `DEC-002` → `ADR-001`;
+- `DEC-003` → `ADR-002`;
+- `DEC-004` → `ADR-003`;
+- `DEC-006` → `ADR-004`;
+- `DEC-007` → `ADR-005`;
+- `DEC-008` → `ADR-006`;
+- `DEC-009` → `ADR-007`.
 
-## Resultado esperado
+`DEC-001` permanece decisão de produto e `DEC-005` decisão de processo.
 
-- diretório `docs/adr/`;
-- índice de ADRs;
-- formato mínimo com status, contexto, decisão, consequências e supersessão;
-- migração das decisões arquiteturais existentes para ADRs sem apagar `DECISIONS.md` silenciosamente;
-- referências canônicas atualizadas;
-- `CHECKPOINT` promovido para a primeira Story técnica depois da conclusão.
+## Verificação
 
-## Critérios de aceite
-
-- histórico é preservado;
-- relações `SUPERSEDED` permanecem explícitas;
-- não há duas fontes concorrentes sem regra de precedência;
-- nenhuma feature/código/banco/deployment é criado nesta tarefa;
-- ao final, a próxima ação técnica é refinada a partir de `US-PLAT-001`.
-
-## Non-goals
-
-- não inicializar Next.js;
-- não criar banco Neon;
-- não criar `vercel.json`;
-- não conectar Vercel;
-- não implementar feature.
+- histórico preservado: `PASS`;
+- supersessões explícitas: `PASS`;
+- uma única autoridade arquitetural: `PASS`;
+- código/aplicação alterados: `SKIPPED — nenhum`;
+- banco/Neon alterados: `SKIPPED — nenhum`;
+- Vercel/deployment: `SKIPPED — proibido/fora do escopo`.
 
 ---
 
-# Fundação técnica após reconciliação operacional
+# US-PLAT-001 — Inicializar a aplicação web
 
-As User Stories do Incremento 0 permanecem no `PRODUCT_BACKLOG.md`.
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-PLAT-001` / EPIC-00  
+**Tipo:** primeira tarefa técnica do Incremento 0
 
-Após OPS-004, a primeira tarefa técnica será refinada a partir de:
+## Objetivo
 
-## US-PLAT-001 — Repository/application bootstrap
+Inicializar a aplicação Next.js/React/TypeScript mínima, reproduzível e verificável, sem implementar domínio de produto ou infraestrutura externa.
 
-Criar a aplicação Next.js/React/TypeScript mínima e reproduzível, com versões e package manager definidos a partir da documentação oficial corrente.
+Ao final, o repositório deve possuir uma base real que possa ser instalada do zero e passar pelos gates técnicos locais.
 
-Antes de executar, a sessão deve detalhar:
+## Por que agora
 
-- objetivo;
-- dependências;
-- arquivos afetados;
-- versões/runtime;
-- segurança;
-- testes;
-- critérios de aceite;
-- non-goals;
-- Definition of Done.
+As quatro tarefas OPS concluíram a reconciliação de protocolo, plataforma, deployment e decisões. Não há mais decisão operacional pendente que justifique atrasar o bootstrap da aplicação.
 
-Não iniciar `US-PLAT-001` enquanto o `CHECKPOINT` apontar para uma tarefa OPS anterior.
+## Dependências
+
+- OPS-001 a OPS-004 concluídas;
+- `ADR-002` interpretado com suas supersessões atuais;
+- `ADR-005`, `ADR-006` e `ADR-007` respeitados;
+- nenhuma necessidade de projeto Neon/Vercel para esta Story.
+
+## Inspecionar antes de editar
+
+1. estado real da `main` e estrutura do repositório;
+2. `docs/PROJECT_DESIGN.md` + amendments;
+3. `docs/adr/README.md` e ADRs aplicáveis;
+4. `docs/ARCHITECTURE.md`;
+5. `public/brand/` e demais assets existentes;
+6. documentação oficial corrente de Next.js, React e Node.js;
+7. compatibilidade do runtime e package manager escolhidos;
+8. requisitos atuais de lint/configuração do framework.
+
+## Versões e runtime
+
+Não assumir versões por memória.
+
+Durante a execução:
+
+- verificar documentação oficial atual do Next.js/React/Node;
+- selecionar runtime Node suportado e estável para a versão do framework;
+- fixar a versão de runtime no repositório (`.nvmrc` ou mecanismo equivalente apropriado);
+- escolher um único package manager e gerar lockfile canônico;
+- evitar dependências desnecessárias.
+
+A escolha de versões é implementação de baixo impacto e não exige novo ADR, salvo se introduzir restrição arquitetural material.
+
+## Escopo esperado
+
+Criar somente a fundação necessária, incluindo conforme a ferramenta oficial corrente:
+
+- `package.json` e lockfile;
+- Next.js App Router;
+- React e TypeScript em modo estrito;
+- estrutura `src/` quando compatível com a inicialização escolhida;
+- Tailwind CSS conforme stack vigente, sem construir design system completo;
+- página inicial mínima de fundação, sem feature de negócio;
+- scripts reais para `dev`, lint, typecheck, test e build;
+- configuração mínima de lint/TypeScript/framework;
+- pin de runtime;
+- `.gitignore` adequado;
+- teste básico/smoke reproduzível com a solução mínima compatível;
+- README/instruções locais atualizados somente no necessário.
+
+Preservar assets existentes em `public/`.
+
+## Segurança
+
+- nenhum secret;
+- nenhum `.env` com valores reais;
+- nenhuma chave exposta ao cliente;
+- nenhuma integração Auth/banco;
+- nenhum dado pessoal real;
+- nenhuma configuração que possa disparar deployment Vercel.
+
+## Critérios de aceite
+
+1. clone limpo pode instalar dependências a partir do lockfile;
+2. aplicação inicia localmente;
+3. TypeScript estrito está ativo;
+4. lint passa;
+5. typecheck passa;
+6. teste básico passa;
+7. build de produção passa localmente;
+8. estrutura não contém feature de negócio prematura;
+9. assets existentes não são removidos sem justificativa;
+10. nenhum secret ou integração externa é criado;
+11. nenhum deployment ocorre;
+12. documentação/Checkpoint refletem o estado real.
+
+## Verificação obrigatória
+
+Executar usando o package manager real escolhido:
+
+```text
+clean install
+lint
+typecheck
+test
+build
+```
+
+Também revisar diff completo e confirmar ausência de credenciais/configuração de CD.
+
+Se ambiente de ferramenta impedir algum gate, registrar `BLOCKED`/`SKIPPED` com evidência; não declarar PASS fictício.
+
+## Non-goals
+
+- Neon project/schema/migrations;
+- Neon Auth/Data API;
+- RLS;
+- Object Storage;
+- Vercel project/integration/deployment;
+- `vercel.json` de hosting (Story `US-PLAT-008`);
+- CI GitHub Actions (Story `US-PLAT-007`);
+- catálogo, biblioteca, perfil ou qualquer feature funcional;
+- design system completo;
+- E2E amplo.
+
+## Definition of Done
+
+- implementação em branch limitada à Story;
+- gates aplicáveis executados e registrados;
+- PR revisável sem escopo extra;
+- documentação afetada e Changelog atualizados;
+- Checkpoint aponta para uma única próxima Story coerente;
+- merge na `main` não dispara deployment.
 
 ---
 
@@ -163,16 +208,16 @@ Não iniciar `US-PLAT-001` enquanto o `CHECKPOINT` apontar para uma tarefa OPS a
 
 Para cada tarefa:
 
-1. recuperar estado pelo protocolo canônico;
-2. confirmar que é a `NEXT_ACTION`;
-3. inspecionar repositório e documentação relevante;
-4. criar/usar Issue e branch limitadas ao escopo quando aplicável;
+1. recuperar estado pelo protocolo;
+2. confirmar `NEXT_ACTION`;
+3. inspecionar repositório/documentação;
+4. criar/usar Issue e branch limitadas;
 5. implementar somente o necessário;
-6. executar `00_SYSTEM/VERIFICATION_PROTOCOL.md`;
+6. executar Verification Protocol;
 7. revisar diff;
-8. atualizar documentação/decisões afetadas;
-9. atualizar `docs/CHECKPOINT.md`;
-10. abrir PR/revisar/mergear conforme o fluxo vigente;
-11. deixar uma única próxima ação clara para a sessão seguinte.
+8. atualizar docs/ADRs quando aplicável;
+9. atualizar Checkpoint;
+10. abrir/revisar/mergear PR;
+11. deixar uma única próxima ação.
 
-Deployment segue `DEC-009` e nunca é consequência automática deste contrato.
+Deployment segue `ADR-007` e nunca é consequência automática do fluxo.
