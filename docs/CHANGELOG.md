@@ -13,6 +13,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/NEON_PLATFORM.md` para a plataforma Neon.
 - `docs/NEON_NONPROD.md` como inventário operacional da fundação Neon non-production realmente provisionada.
 - `docs/LOCAL_DEVELOPMENT.md` como guia canônico de setup local, execução, gates e troubleshooting.
+- `docs/CI.md` como contrato operacional da integração contínua permanente.
 - `docs/adr/README.md` como índice canônico de Architecture Decision Records.
 - `docs/adr/TEMPLATE.md` como formato mínimo de ADR.
 - `ADR-001` — catálogo global separado da biblioteca pessoal.
@@ -34,6 +35,8 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `npm run verify` como entrada canônica para manifesto de migrations, lint, typecheck, testes e build.
 - `npm run verify:db` como entrada separada para aplicar migrations e executar testes SQL em ambiente de banco apropriado.
 - `tests/verification-contract.test.mjs` para fixar a ordem e separação dos gates canônicos.
+- `.github/workflows/ci.yml` como workflow permanente de CI em PRs para `main` e pushes na `main`.
+- `tests/ci-contract.test.mjs` para proteger permissões, comandos, PostgreSQL 18 e ausência de superfície de deployment no CI.
 
 ### Alterado
 
@@ -47,9 +50,11 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-PLAT-003` foi concluída com verificação de runtime, instalação, dev server HTTP, lint, typecheck, test e build.
 - O branch Neon default `main` de `caleida-nonprod` foi adotado como baseline canônica non-production/staging.
 - A estratégia de verificação de banco foi separada em gate PostgreSQL portável e gate Neon-specific conforme `ADR-008`.
-- `00_SYSTEM/VERIFICATION_PROTOCOL.md`, `README.md` e `docs/LOCAL_DEVELOPMENT.md` passaram a apontar os comandos `verify` e `verify:db` como entradas canônicas em vez de exigir montagem manual da sequência de gates.
+- `00_SYSTEM/VERIFICATION_PROTOCOL.md`, `README.md` e `docs/LOCAL_DEVELOPMENT.md` passaram a apontar os comandos `verify` e `verify:db` como entradas canônicas.
 - `US-PLAT-006` foi concluída sem framework, dependência ou workflow CI permanente adicional.
-- `docs/EXECUTION_PLAN.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-007 — Configurar integração contínua` como próxima ação.
+- O Verification Protocol passou a reconhecer `.github/workflows/ci.yml` como CI permanente e `docs/CI.md` como contrato operacional.
+- `US-PLAT-007` foi concluída com CI sem CD, permissões mínimas e PostgreSQL 18 descartável.
+- `docs/EXECUTION_PLAN.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-008 — Preparar hosting Vercel para release manual` como próxima ação.
 
 ### Corrigido
 
@@ -61,6 +66,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - O runner de migrations deixou de passar uma URL completa via `PGDATABASE`; conexões passam por `psql --dbname` e a URL é redigida em mensagens de erro.
 - A indisponibilidade do endpoint de branching Neon deixou de bloquear migrations que dependem apenas de comportamento PostgreSQL portável, sem reduzir gates Neon-specific.
 - A ordem dos gates padrão deixou de depender de memória/documentação dispersa e passou a ser executável por um único comando versionado.
+- PRs agora recebem um check permanente que executa os mesmos comandos canônicos provados localmente, sem duplicar a lógica dos gates no YAML.
 
 ### Segurança e operação
 
@@ -70,8 +76,9 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - A baseline Neon `main` não é usada como laboratório destrutivo.
 - Production e non-production Neon permanecem separados por decisão; Production ainda não foi provisionada.
 - Deployment continua exclusivamente humano/manual; IA e CI não publicam.
-- Nenhum token Vercel deve ser mantido no CI para publicação automática.
-- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-006.
+- O CI permanente usa somente `permissions: contents: read` e não necessita secrets externos.
+- Nenhum token Vercel, deploy hook ou `id-token: write` foi introduzido no CI.
+- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-007.
 - Nenhuma connection string, senha ou Neon API key foi versionada.
 
 ### Observação operacional
@@ -81,4 +88,5 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Em US-PLAT-005, as rotas de branching/migration temporária do conector Neon apresentaram incompatibilidade camelCase/snake_case; a limitação fica registrada para gates Neon-specific futuros.
 - A fundação de migrations foi provada em PostgreSQL 18 descartável com aplicação, testes, reaplicação do ledger e reconstrução do zero em PASS.
 - Em US-PLAT-006, `npm ci`, `npm run verify` e `npm run verify:db` contra PostgreSQL 18 passaram em runner descartável.
-- A próxima ação canônica é `US-PLAT-007 — Configurar integração contínua`.
+- Em US-PLAT-007, o workflow permanente `CI` passou na PR #23 com runtime pinado, `npm ci`, `verify`, PostgreSQL 18 e `verify:db`.
+- A próxima ação canônica é `US-PLAT-008 — Preparar hosting Vercel para release manual`.
