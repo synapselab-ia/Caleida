@@ -3,7 +3,7 @@
 **Status:** provisionado  
 **Data de referência:** 2026-09-01  
 **Projeto relacionado:** `docs/NEON_PLATFORM.md`  
-**Decisões:** `ADR-004` e `ADR-005`
+**Decisões:** `ADR-004`, `ADR-005` e `ADR-008`
 
 ## 1. Recurso remoto canônico
 
@@ -31,12 +31,12 @@ Responsabilidades:
 
 - receber somente mudanças persistentes de banco aprovadas e versionadas por migrations;
 - representar o estado integrado de non-production;
-- servir de referência para branches descartáveis de desenvolvimento/verificação;
+- servir de referência para branches descartáveis quando um gate Neon-specific exigir isolamento no serviço;
 - nunca receber experimentos destrutivos diretamente.
 
 ## 3. Convenção de branches temporárias
 
-Use branches curtas e descartáveis:
+Quando necessárias, use branches curtas e descartáveis:
 
 ```text
 verify/<task-id>
@@ -46,33 +46,33 @@ dev/<task-id>
 Regras:
 
 - derivar da baseline non-production adequada;
-- aplicar migrations/testes somente na branch isolada durante verificação destrutiva;
+- usar branch isolada para testes que dependam de comportamento específico do Neon;
 - remover a branch após a tarefa;
 - não usar Production como parent operacional de testes;
 - não manter branches temporárias como ambientes permanentes.
 
-A documentação Neon vigente continua tratando branches como ambientes isolados adequados para testes e desenvolvimento branch-first.
+Branches Neon continuam úteis para integração e compatibilidade do serviço, mas `ADR-008` não as torna requisito para provar SQL PostgreSQL portável.
 
 ## 4. Estado do conector Neon em US-PLAT-005
 
 A leitura/provisionamento do projeto funciona normalmente pelo conector Neon.
 
-A ação exposta de criação de branch, porém, continua com incompatibilidade entre o contrato público do wrapper e o backend:
+As rotas de criação de branch e de migration temporária apresentaram incompatibilidade entre o contrato público do wrapper e o backend:
 
-- wrapper expõe `projectId` e `branchName`;
-- backend rejeita essas chaves e solicita `project_id` e `branch_name`;
-- o wrapper não permite enviar as chaves snake_case.
+- wrapper expõe parâmetros camelCase;
+- backend rejeita essas chaves e solicita nomes snake_case;
+- as chamadas falham antes de criar recurso ou executar DDL.
 
-A tentativa de criar `verify/us-plat-005-baseline` falhou antes de criar qualquer recurso.
+Foram testadas tanto a ação direta de criação de branch quanto a rota oficial de migration temporária; ambas falharam pela mesma incompatibilidade.
 
-Consequências de segurança:
+Consequências:
 
-- nenhum DDL de US-PLAT-005 foi executado remotamente;
-- a baseline `main` não foi usada como laboratório;
-- a infraestrutura Git de migrations/testes pode ser desenvolvida e validada offline;
-- a prova remota e a conclusão da Story permanecem bloqueadas até que uma branch descartável possa ser criada de forma suportada.
+- nenhum DDL foi executado na baseline Neon `main`;
+- nenhuma branch temporária foi criada por workaround;
+- o problema do conector fica registrado como limitação de integração;
+- ele só bloqueia futuras mudanças que realmente necessitem de gate Neon-specific.
 
-Não usar credenciais/API paralelas como workaround apenas para contornar o conector.
+A fundação de migrations PostgreSQL portáveis é verificada em PostgreSQL 18 descartável conforme `ADR-008`.
 
 ## 5. Credenciais e connection strings
 
@@ -80,11 +80,11 @@ Nenhum valor real é versionado.
 
 Contrato atual:
 
-- `DATABASE_URL` — conexão pooled para runtime server-side quando apropriado;
-- `DATABASE_URL_UNPOOLED` — conexão direta para migrations/manutenção;
-- `CALEIDA_DB_TARGET` — guardrail operacional (`isolated` ou promoção explícita `baseline`);
-- `CALEIDA_NEON_BRANCH_ID` — ID não secreto do branch-alvo, usado pelo guardrail;
-- `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES` — segundo sinal obrigatório para promoção deliberada à baseline.
+- `DATABASE_URL` — conexão pooled para runtime server-side futuro quando apropriado;
+- `DATABASE_URL_UNPOOLED` — conexão PostgreSQL direta usada pelo tooling;
+- `CALEIDA_DB_TARGET=ephemeral` — gate primário PostgreSQL descartável;
+- `CALEIDA_DB_TARGET=neon-isolated` + `CALEIDA_NEON_BRANCH_ID` — gate Neon-specific em branch descartável;
+- `CALEIDA_DB_TARGET=baseline` + branch ID canônico + `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES` — promoção deliberada para a baseline.
 
 Neon API key e credenciais owner/admin continuam fora do Git e do browser.
 
