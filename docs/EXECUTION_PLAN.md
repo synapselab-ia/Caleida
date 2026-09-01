@@ -339,79 +339,83 @@ Na PR #27, head de implementação `5b91c07d665b73a249a07665612bd4548fa888a1`, r
 - diff sem migration, dependência ou workflow alterado: `PASS`;
 - gate Neon-specific: `SKIPPED — Story não depende de comportamento gerenciado do Neon`;
 - deployment Vercel: `SKIPPED/PROIBIDO — nenhum deployment executado`;
-- CI permanente do head documental final da PR deve estar `PASS` antes do merge.
+- CI permanente do head documental final da PR: `PASS` antes do merge.
 
 ---
 
 # US-PLAT-010 — Validar o ciclo técnico de entrega
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO  
 **Backlog:** `US-PLAT-010` / EPIC-00  
+**Issue:** `#28`  
+**PR:** `#29`  
 **Tipo:** auditoria/validação final do Incremento 0 sem feature artificial
 
-## Objetivo
+## Resultado
 
-Validar de ponta a ponta que a fundação do Caleida consegue percorrer o ciclo real de entrega `Issue → branch → implementação/documentação necessária → CI → PR → review → merge`, permanecendo reproduzível, sem secrets e sem qualquer deployment automático, e registrar a evidência final necessária para encerrar o Incremento 0 quando todos os critérios estiverem satisfeitos.
-
-## Dependências
-
-- `US-PLAT-009` concluída;
-- CI permanente em funcionamento;
-- `vercel.json` com Git deployments desabilitados;
-- contrato de ambientes concluído;
-- migrations/testes de banco existentes e reproduzíveis;
-- `ADR-007` vigente.
-
-## Inspecionar antes de editar
-
-1. estado real de `main`, Issues, branches, PRs e último CI integrado;
-2. critérios de encerramento do Incremento 0 no backlog/Project Design amendments;
-3. CI, contratos de verificação, `vercel.json`, `.env.example` e `docs/ENVIRONMENTS.md`;
-4. estado Vercel para confirmar que Git/merge não publicou o Caleida;
-5. estado Neon somente para confirmar topologia e identificar se algum gate Neon-specific é realmente aplicável;
-6. documentação canônica por inconsistências residuais que impeçam declarar o incremento validado.
-
-## Escopo esperado
-
-- usar a própria Story como ciclo real de entrega, sem criar PR ou feature de demonstração separada;
-- criar somente a evidência/documentação mínima necessária para registrar a auditoria do Incremento 0;
-- executar CI no head da PR e revisar todos os gates;
-- confirmar ausência de secrets, CD e deployment automático;
-- confirmar que merge continua separado de release;
-- reconciliar eventuais inconsistências documentais limitadas ao Incremento 0;
-- depois do merge, confirmar CI da `main` em PASS e ausência de deployment Caleida;
-- marcar o Incremento 0 como encerrado somente se todos os critérios estiverem realmente satisfeitos.
+- a própria Story percorreu `Issue → branch → documentação mínima → CI → PR → review → merge → CI main`;
+- head final da PR `935a7fb742b78bba0df97169366b4c7ce806977d` foi revisado sem finding bloqueante;
+- CI da PR, run `33560189535`: `PASS`;
+- merge squash ocorreu somente com o head verificado, gerando `4e0367957dc61b955e7b748244d50272b9209223`;
+- CI pós-merge da `main`, run `33560364513`: `PASS`;
+- `npm run verify`, PostgreSQL 18 e `npm run verify:db` passaram na PR e na `main`;
+- diff da validação permaneceu documental, sem migration, dependência, código de produto ou workflow alterado;
+- nenhum secret/token/connection string foi introduzido;
+- gate Neon-specific: `SKIPPED — Story não depende de comportamento gerenciado do Neon`;
+- Neon permaneceu somente com `caleida-nonprod/main`, PostgreSQL 18, sem recurso novo;
+- Vercel foi inspecionada antes, durante e depois do merge e permaneceu sem projeto Caleida;
+- nenhum Preview/Production/promote/rollback/redeploy foi executado;
+- `docs/INCREMENT_0_VALIDATION.md` registra a evidência detalhada;
+- o Incremento 0 foi tecnicamente validado e encerrado.
 
 ## Critérios de aceite
 
-1. existe Issue/branch/PR reais para `US-PLAT-010`;
-2. PR executa o CI permanente e todos os gates aplicáveis passam;
-3. diff é limitado à validação/fechamento do Incremento 0;
-4. não há secret real no Git/CI;
-5. nenhum Vercel Preview/Production é criado por branch, PR ou merge;
-6. Neon-specific é executado somente se houver dependência real do serviço, caso contrário `SKIPPED` com motivo;
-7. PR é revisada e mergeada com head verificado;
-8. push integrado na `main` recebe CI `PASS`;
-9. documentos canônicos refletem o estado integrado e apontam a próxima fase/ação real, sem depender do chat.
+1. Issue/branch/PR reais: `PASS`;
+2. CI permanente da PR: `PASS`;
+3. diff limitado: `PASS`;
+4. sem secret real: `PASS`;
+5. sem deployment Vercel automático: `PASS`;
+6. gate Neon-specific aplicado somente quando necessário: `PASS` (`SKIPPED` com motivo);
+7. PR revisada e mergeada com head verificado: `PASS`;
+8. CI pós-merge da `main`: `PASS`;
+9. documentação canônica reconciliada com uma única próxima ação: `PASS` após integração do fechamento.
 
-## Verificação obrigatória
+---
 
-- `npm run verify` via CI permanente na PR;
-- PostgreSQL 18 efêmero + `npm run verify:db` via CI;
-- revisar diff completo e secrets;
-- revisar reviews/threads/mergeability;
-- confirmar estado Vercel antes e depois do merge sem executar deployment;
-- confirmar CI pós-merge na `main`;
-- confirmar Issue/PR encerradas e checkpoint integrado.
+# OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)
 
-## Non-goals
+**Estado:** NEXT_ACTION  
+**Tipo:** planejamento/refino; nenhuma implementação de produto nesta tarefa
 
-- criar funcionalidade de produto apenas para gerar atividade;
-- provisionar Production Neon;
-- implementar Auth/Data API/schema funcional;
-- conectar/importar projeto Vercel;
-- executar Preview/Production/promote/rollback/redeploy;
-- adicionar CD.
+## Objetivo
+
+Transformar o próximo horizonte definido no Project Design — `EPIC-01 — Identidade e design system` — em um incremento operacional limitado, com primeira Story executável e critérios verificáveis, sem antecipar funcionalidade antes do refino.
+
+## Inspecionar antes de editar
+
+1. `docs/PROJECT_DESIGN.md`, especialmente EPIC-01;
+2. amendments vigentes e ADRs `Accepted`;
+3. estado integrado do Incremento 0 e `docs/INCREMENT_0_VALIDATION.md`;
+4. backlog atual, que ainda não contém Stories refinadas de EPIC-01;
+5. tokens/identidade visual já existentes no repositório, se houver;
+6. requisitos transversais de responsividade, acessibilidade, testes e segurança aplicáveis à UI.
+
+## Escopo esperado
+
+- definir o objetivo e limite do Incremento 1;
+- decompor EPIC-01 em Stories pequenas e ordenadas;
+- selecionar uma única primeira Story como próxima ação técnica;
+- explicitar dependências, critérios de aceite, verificações e non-goals;
+- reconciliar `PRODUCT_BACKLOG`, `EXECUTION_PLAN` e `CHECKPOINT`;
+- criar ADR somente se surgir decisão arquitetural material nova;
+- não implementar componentes, telas ou features nesta tarefa de refino.
+
+## Critério de saída
+
+- Incremento 1 limitado e coerente com Project Design;
+- Stories de EPIC-01 priorizadas e verificáveis;
+- exatamente uma próxima Story promovida a `NEXT_ACTION`;
+- nenhuma implementação antecipada.
 
 ---
 
