@@ -5,7 +5,7 @@
 **PROTOCOL_VERSION:** 2  
 **LAST_COMPLETED_TASK:** `US-PLAT-001 — Inicializar a aplicação web`  
 **LAST_COMPLETED_ISSUE:** `#8`  
-**LAST_COMPLETED_PR:** `#9`  
+**LAST_COMPLETED_PR:** `#11`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
@@ -65,6 +65,8 @@ Em runner GitHub Actions descartável, Node `24.20.0` e npm `11.19.0`:
 - Vercel/deployment: `SKIPPED — fora do escopo e deployment proibido para IA`.
 
 O workflow temporário usado para desbloquear a verificação não integra a Story nem deve permanecer na `main`.
+
+A PR #9 preserva o histórico da tentativa original em Draft; a PR #11 a substituiu exclusivamente porque o comando do conector para retirar o estado Draft falhou por erro interno.
 
 ## Plataforma vigente
 
