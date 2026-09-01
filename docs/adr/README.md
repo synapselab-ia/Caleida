@@ -44,6 +44,7 @@ São permitidas correções editoriais que não mudem semântica e atualização
 | [ADR-005](ADR-005-neon-data-identity-platform.md) | Accepted | Neon como plataforma canônica de dados e identidade | `DEC-007` |
 | [ADR-006](ADR-006-object-storage-deferred.md) | Accepted | Object Storage desacoplado e decisão adiada | `DEC-008` |
 | [ADR-007](ADR-007-manual-vercel-deployment.md) | Accepted | Deployment Vercel exclusivamente humano/manual | `DEC-009` |
+| [ADR-008](ADR-008-ephemeral-postgres-verification.md) | Accepted | PostgreSQL efêmero como gate primário de migrations/RLS portáveis | decisão de `US-PLAT-005` |
 
 ## O que não virou ADR
 
