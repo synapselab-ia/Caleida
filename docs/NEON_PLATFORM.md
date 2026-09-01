@@ -6,7 +6,7 @@
 
 ## 1. Escopo
 
-Este documento define como o Caleida utilizará Neon para banco, identidade, API de dados, RLS e ambientes. Não cria recursos remotos nem substitui migrations futuras.
+Este documento define como o Caleida utilizará Neon para banco, identidade, API de dados, RLS e ambientes. Recursos remotos existentes são registrados em `NEON_NONPROD.md`; schema persistente continua pertencendo às migrations futuras.
 
 ## 2. Topologia planejada
 
@@ -36,23 +36,26 @@ Storage de objetos: provider separado, ainda não escolhido
 
 ### Non-production
 
-Projeto Neon dedicado a desenvolvimento integrado, staging e verificação.
-
-Estrutura prevista:
+O projeto dedicado existe desde `US-PLAT-004`:
 
 ```text
 caleida-nonprod
-  ├── staging
-  ├── verify/<task-id>
-  ├── dev/<task-id>
-  └── outras branches temporárias quando justificadas
+  └── main                  ← baseline canônica non-production/staging
+      ├── verify/<task-id>  ← temporária, quando necessária
+      └── dev/<task-id>     ← temporária, quando necessária
 ```
 
-Branches temporárias devem ser curtas, resetáveis e removidas ao fim da tarefa.
+O branch Neon `main` não é a branch Git `main`.
+
+A baseline `main` foi adotada como estado integrado de non-production porque é o branch default criado pelo Neon. Um branch adicional chamado `staging` não é necessário apenas para duplicar a mesma função.
+
+Branches temporárias devem ser curtas, resetáveis e removidas ao fim da tarefa. Migrations destrutivas e testes de RLS não devem ser experimentados diretamente na baseline.
+
+O estado remoto e os IDs não sensíveis são registrados em `docs/NEON_NONPROD.md`.
 
 ### Production
 
-Projeto Neon separado:
+Projeto Neon separado, ainda não provisionado nesta fase:
 
 ```text
 caleida-production
@@ -92,12 +95,14 @@ rebuild/reset quando necessário
   ↓
 review
   ↓
-aplicar em staging
+aplicar na baseline non-production
   ↓
 aplicar em production somente após gates
 ```
 
 O tooling exato será implementado em Story própria. Não introduzir ORM apenas para administrar migrations.
+
+Se o tooling de branching estiver indisponível, a tarefa que exige verificação destrutiva deve ficar `BLOCKED`; não usar a baseline non-production como substituto de branch descartável.
 
 ## 5. Neon Auth
 
@@ -144,6 +149,8 @@ Regras:
 - não usar owner/BYPASSRLS para CRUD comum;
 - testes de autorização devem usar papéis e JWT equivalentes aos usuários reais.
 
+Para tooling futuro, `DATABASE_URL` representa a conexão pooled e `DATABASE_URL_UNPOOLED` a conexão direta, conforme o contrato atual do Neon. Nenhum valor real é versionado.
+
 ## 8. RLS
 
 RLS faz parte do contrato do produto.
@@ -184,15 +191,16 @@ Antes do beta, uma Story própria deve definir:
 Nunca versionar:
 
 - `DATABASE_URL`;
+- `DATABASE_URL_UNPOOLED`;
 - Neon API keys;
 - Auth URLs/secrets quando tratados como sensíveis;
 - cookie secrets;
 - OAuth client secrets;
 - credenciais de Storage futuro.
 
-Arquivos `.env.example` futuros documentarão apenas nomes e finalidade das variáveis.
+Arquivos `.env.example` documentam somente nomes/finalidade e placeholders seguros.
 
-## 12. Estado de OPS-002
+## 12. Estado histórico de OPS-002
 
 OPS-002 foi somente decisão e reconciliação documental.
 
@@ -205,4 +213,14 @@ Naquela tarefa:
 - nenhum secret foi gerado;
 - nenhum deployment ocorreu.
 
-A criação real da infraestrutura começa apenas quando o `CHECKPOINT` promover uma tarefa técnica correspondente.
+## 13. Estado após US-PLAT-004
+
+A infraestrutura mínima non-production passou a existir:
+
+- projeto `caleida-nonprod` provisionado;
+- PostgreSQL 18 em `aws-us-east-1`;
+- branch default `main` adotada como baseline non-production/staging;
+- nenhum schema de produto aplicado;
+- nenhum Neon Auth/Data API/Storage provisionado;
+- Production continua não provisionada;
+- detalhes operacionais em `docs/NEON_NONPROD.md`.

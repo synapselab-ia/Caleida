@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-003  
+**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-004  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -42,15 +42,15 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-004 — Configurar a fundação Neon de desenvolvimento
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** projeto non-production, branch canônica de staging/desenvolvimento e workflow de branches descartáveis, sem schema de negócio prematuro.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
+- **Estado:** CONCLUÍDA
+- **Resultado:** projeto Neon `caleida-nonprod` provisionado; branch Neon `main` adotada como baseline canônica non-production/staging; convenção `verify/<task-id>`/`dev/<task-id>` documentada; Production/Auth/Data API/Storage/schema de produto não provisionados.
 
 ### US-PLAT-005 — Definir migrations, testes de banco e RLS
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Resultado:** `database/migrations/` e `database/tests/` com runner reproduzível, baseline mínima e convenções de autorização.
+- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ### US-PLAT-006 — Configurar validações automatizadas
 
@@ -104,4 +104,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após US-PLAT-003, o `CHECKPOINT` promove `US-PLAT-004 — Configurar a fundação Neon de desenvolvimento`, refinada em `docs/EXECUTION_PLAN.md`.
+Após US-PLAT-004, o `CHECKPOINT` promove `US-PLAT-005 — Definir migrations, testes de banco e RLS`, refinada em `docs/EXECUTION_PLAN.md`.
