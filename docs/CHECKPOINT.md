@@ -5,7 +5,7 @@
 **PROTOCOL_VERSION:** 2  
 **LAST_COMPLETED_TASK:** `US-PLAT-005 — Definir migrations, testes de banco e RLS`  
 **LAST_COMPLETED_ISSUE:** `#16`  
-**LAST_COMPLETED_PR:** `#17`  
+**LAST_COMPLETED_PR:** `#19`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
@@ -101,6 +101,8 @@ Em GitHub Actions descartável com service container `postgres:18`:
 - Production/Vercel/deployment: `SKIPPED — fora do escopo`.
 
 A primeira tentativa do gate PostgreSQL revelou um defeito real no runner (`PGDATABASE` recebia uma URL completa). O runner foi corrigido para usar `psql --dbname` e redigir a URL em mensagens de erro; a segunda execução passou integralmente.
+
+A PR Draft #17 foi fechada sem merge somente porque o conector GitHub falhou ao executar a transição `Ready for review`. A PR #19 reutiliza a mesma branch e é a PR final integrada da Story.
 
 ## Neon non-production
 
