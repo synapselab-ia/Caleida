@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-005  
+**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-006  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -55,15 +55,15 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-006 — Configurar validações automatizadas
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** comandos reais de lint, typecheck, testes, validação de migrations e build executáveis consistentemente por uma entrada canônica de verificação.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
+- **Estado:** CONCLUÍDA
+- **Resultado:** `npm run verify` consolida manifesto de migrations, lint, typecheck, testes e build; `npm run verify:db` mantém migration + testes SQL como gate explícito que exige ambiente PostgreSQL apropriado.
 
 ### US-PLAT-007 — Configurar integração contínua
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Resultado:** GitHub Actions validando PRs com gates técnicos, incluindo banco descartável quando aplicável, sem jobs de deployment Vercel.
+- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ### US-PLAT-008 — Preparar hosting Vercel para release manual
 
@@ -105,4 +105,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após US-PLAT-005, o `CHECKPOINT` promove `US-PLAT-006 — Configurar validações automatizadas`, refinada em `docs/EXECUTION_PLAN.md`.
+Após US-PLAT-006, o `CHECKPOINT` promove `US-PLAT-007 — Configurar integração contínua`, refinada em `docs/EXECUTION_PLAN.md`.
