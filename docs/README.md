@@ -11,6 +11,7 @@ Esta pasta reúne os documentos oficiais de produto, arquitetura, execução, de
 - `adr/TEMPLATE.md` — formato mínimo para novos ADRs.
 - `ARCHITECTURE.md` — arquitetura técnica vigente.
 - `NEON_PLATFORM.md` — topologia/guardrails Neon.
+- `NEON_NONPROD.md` — inventário e convenções do recurso Neon non-production realmente provisionado.
 - `LOCAL_DEVELOPMENT.md` — setup local, variáveis, execução, gates e troubleshooting.
 - `PRODUCT_BACKLOG.md` — roadmap macro de épicos/User Stories.
 - `EXECUTION_PLAN.md` — ordem operacional e tarefas executáveis.
@@ -45,11 +46,22 @@ Next.js / React / TypeScript
 
 Object Storage permanece provider-independent.
 
+## Neon non-production
+
+A fundação remota non-production está registrada em `NEON_NONPROD.md`.
+
+No estado atual:
+
+- existe o projeto `caleida-nonprod`;
+- o branch Neon `main` é a baseline canônica non-production/staging;
+- Production ainda não foi provisionada;
+- Auth/Data API/Storage e schema de produto ainda não foram provisionados.
+
 ## Desenvolvimento local
 
 O ambiente local canônico está documentado em `LOCAL_DEVELOPMENT.md` e usa Node `24.20.0`, npm `11.19.0` e instalação por `npm ci` a partir do lockfile.
 
-Nenhum serviço remoto é necessário para iniciar a aplicação no estado atual.
+A aplicação ainda não exige conexão Neon para iniciar localmente. Variáveis de banco reservadas para tooling futuro estão documentadas, sem valores, em `.env.example`.
 
 ## Hosting e release
 
