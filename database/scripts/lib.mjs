@@ -6,6 +6,7 @@ import path from "node:path";
 export const MIGRATION_FILENAME = /^(\d{6})_([a-z0-9]+(?:_[a-z0-9]+)*)\.sql$/;
 export const TEST_FILENAME = /^(\d{6})_([a-z0-9]+(?:_[a-z0-9]+)*)\.sql$/;
 export const NONPROD_BASELINE_BRANCH_ID = "br-restless-cherry-awpcwy6r";
+export const ISOLATED_DATABASE_TARGETS = new Set(["ephemeral", "neon-isolated"]);
 
 export function sha256(content) {
   return createHash("sha256").update(content, "utf8").digest("hex");
@@ -59,22 +60,28 @@ export function requireDatabaseTarget({ testsOnly = false } = {}) {
   const target = process.env.CALEIDA_DB_TARGET;
   const branchId = process.env.CALEIDA_NEON_BRANCH_ID;
 
-  if (!branchId) {
-    throw new Error("CALEIDA_NEON_BRANCH_ID é obrigatório para tooling de banco.");
+  if (target === "ephemeral") {
+    return target;
   }
 
-  if (testsOnly && target !== "isolated") {
-    throw new Error("Testes de banco exigem CALEIDA_DB_TARGET=isolated.");
-  }
-
-  if (target === "isolated") {
+  if (target === "neon-isolated") {
+    if (!branchId) {
+      throw new Error("CALEIDA_NEON_BRANCH_ID é obrigatório para alvo neon-isolated.");
+    }
     if (branchId === NONPROD_BASELINE_BRANCH_ID) {
-      throw new Error("A baseline Neon main não pode ser usada como alvo isolated.");
+      throw new Error("A baseline Neon main não pode ser usada como alvo neon-isolated.");
     }
     return target;
   }
 
+  if (testsOnly) {
+    throw new Error("Testes de banco exigem CALEIDA_DB_TARGET=ephemeral ou neon-isolated.");
+  }
+
   if (target === "baseline") {
+    if (!branchId) {
+      throw new Error("CALEIDA_NEON_BRANCH_ID é obrigatório para promoção baseline.");
+    }
     if (branchId !== NONPROD_BASELINE_BRANCH_ID) {
       throw new Error("Promoção baseline exige o branch ID canônico non-production.");
     }
@@ -84,7 +91,9 @@ export function requireDatabaseTarget({ testsOnly = false } = {}) {
     return target;
   }
 
-  throw new Error("Defina CALEIDA_DB_TARGET=isolated ou baseline com os guardrails documentados.");
+  throw new Error(
+    "Defina CALEIDA_DB_TARGET=ephemeral, neon-isolated ou baseline com os guardrails documentados.",
+  );
 }
 
 export function requireDirectDatabaseUrl() {
