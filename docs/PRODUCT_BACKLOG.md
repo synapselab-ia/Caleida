@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-009  
+**Status:** Backlog do Incremento 0 em validação final por US-PLAT-010  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -83,8 +83,11 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 ### US-PLAT-010 — Validar o ciclo técnico de entrega
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
+- **Estado:** EM ANDAMENTO
+- **Issue:** `#28`
+- **Branch:** `verify/us-plat-010-delivery-cycle`
 - **Resultado esperado:** ciclo real `Issue → branch → CI → PR → review → merge` validado de ponta a ponta com gates canônicos em PASS, ausência de deployment automático comprovada e evidência final do Incremento 0 registrada sem criar feature artificial.
+- **Evidência:** `docs/INCREMENT_0_VALIDATION.md`.
 - **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ---
@@ -110,4 +113,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após US-PLAT-009, o `CHECKPOINT` promove `US-PLAT-010 — Validar o ciclo técnico de entrega`, refinada em `docs/EXECUTION_PLAN.md`.
+Enquanto `US-PLAT-010` estiver ativa, o `CHECKPOINT` mantém essa Story como única ação operacional. Depois do encerramento verificável do Incremento 0, o próximo trabalho deve refinar o horizonte `EPIC-01 — Identidade e design system` antes de iniciar funcionalidades.
