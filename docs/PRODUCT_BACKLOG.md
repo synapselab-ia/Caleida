@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 em execução  
+**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-003  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -25,7 +25,7 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Resultado:** aplicação Next.js com TypeScript strict, estrutura mínima, runtime/package manager fixados, lockfile, lint, typecheck, teste básico e build verificados.
+- **Resultado:** aplicação Next.js com TypeScript strict, estrutura mínima, runtime/package manager fixados, lockfile, lint, typecheck, teste básico e build.
 
 ### US-PLAT-002 — Organizar a estrutura documental
 
@@ -36,14 +36,15 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-003 — Configurar o ambiente local da aplicação
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** instruções reproduzíveis para dependências, variáveis sem valores sensíveis e execução local.
+- **Estado:** CONCLUÍDA
+- **Resultado:** guia local reproduzível para clone, runtime, `npm ci`, `npm run dev`, variáveis seguras, gates e troubleshooting; ambiente validado sem serviços remotos.
 
 ### US-PLAT-004 — Configurar a fundação Neon de desenvolvimento
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
-- **Resultado:** projeto non-production, branch canônica de staging e workflow de branches descartáveis, sem schema de negócio prematuro.
+- **Estado:** PRONTA
+- **Resultado:** projeto non-production, branch canônica de staging/desenvolvimento e workflow de branches descartáveis, sem schema de negócio prematuro.
+- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ### US-PLAT-005 — Definir migrations, testes de banco e RLS
 
@@ -103,4 +104,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após a conclusão da US-PLAT-001, o `CHECKPOINT` promove `US-PLAT-003 — Configurar o ambiente local da aplicação`.
+Após US-PLAT-003, o `CHECKPOINT` promove `US-PLAT-004 — Configurar a fundação Neon de desenvolvimento`, refinada em `docs/EXECUTION_PLAN.md`.
