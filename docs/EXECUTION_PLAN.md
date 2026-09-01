@@ -133,7 +133,7 @@ Database default: neondb
 **Estado:** CONCLUÍDO  
 **Backlog:** `US-PLAT-005` / EPIC-00  
 **Issue:** `#16`  
-**PR:** `#17`
+**PR:** `#19` (`#17` preservada como Draft histórica, fechada sem merge por falha do conector na transição Ready for review)
 
 ## Resultado
 
