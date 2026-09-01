@@ -102,81 +102,156 @@ Em runner GitHub Actions descartável:
 - secrets: `PASS — nenhum`;
 - Neon/Vercel/deployment: `SKIPPED — fora do escopo`.
 
-O workflow temporário usado para verificação não integra a Story nem deve permanecer na `main`.
-
 ---
 
 # US-PLAT-004 — Configurar a fundação Neon de desenvolvimento
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO  
 **Backlog:** `US-PLAT-004` / EPIC-00  
-**Tipo:** infraestrutura non-production
+**Issue:** `#14`
 
-## Objetivo
+## Resultado
 
-Criar a fundação Neon non-production do Caleida de forma segura e reproduzível, sem introduzir schema de negócio prematuro.
+- criado o projeto Neon `caleida-nonprod` na organização conectada;
+- PostgreSQL 18 provisionado em `aws-us-east-1`;
+- branch default Neon `main` adotada como baseline canônica non-production/staging;
+- criado `docs/NEON_NONPROD.md` como inventário operacional do recurso remoto;
+- convenção `verify/<task-id>` e `dev/<task-id>` documentada para branches descartáveis;
+- `.env.example` passou a reservar, sem valores, `DATABASE_URL` e `DATABASE_URL_UNPOOLED` para tooling futuro;
+- Production, Neon Auth, Data API, Object Storage e schema de produto permaneceram não provisionados.
 
-## Dependências
+## Estado remoto registrado
 
-- `US-PLAT-001` e `US-PLAT-003` concluídas;
-- `ADR-004` — mudanças de banco somente por migrations;
-- `ADR-005` — Neon como plataforma canônica de dados/identidade;
-- `ADR-006` — Object Storage permanece desacoplado/adiado;
-- nenhum deployment Vercel necessário.
+```text
+Projeto: caleida-nonprod
+Project ID: patient-glade-95136440
+Região: aws-us-east-1
+PostgreSQL: 18
+Baseline branch: main
+Branch ID: br-restless-cherry-awpcwy6r
+Database default: neondb
+```
 
-## Inspecionar antes de executar
-
-1. documentação oficial Neon corrente;
-2. `docs/NEON_PLATFORM.md`;
-3. `docs/adr/ADR-004-database-changes-by-migrations.md`;
-4. `docs/adr/ADR-005-neon-data-identity-platform.md`;
-5. estado real dos projetos Neon conectados;
-6. contratos atuais de branches, roles e connection strings do Neon.
-
-## Escopo esperado
-
-- criar ou selecionar um projeto Neon exclusivamente non-production para o Caleida;
-- definir branch canônica de desenvolvimento/staging conforme arquitetura vigente;
-- definir convenção para branches descartáveis de verificação;
-- documentar quais credenciais/connections pertencem a cada ambiente, sem versionar valores;
-- manter Production isolada e não provisioná-la apenas por conveniência;
-- registrar o estado remoto real no repositório;
-- não criar schema/tabelas de produto antes da Story de migrations.
-
-## Segurança
-
-- nenhum secret ou connection string real no Git, Issue, PR ou documentação;
-- não usar Production como ambiente de teste;
-- não conceder privilégios extras sem necessidade;
-- não tratar credencial owner/admin como prova de autorização de usuário;
-- não habilitar Auth/Data API apenas por existir o projeto, salvo necessidade explícita e compatível com o escopo.
-
-## Critérios de aceite
-
-1. existe fundação Neon non-production identificável do Caleida;
-2. topologia de projeto/branch está coerente com ADR-005;
-3. convenção de branch descartável está documentada;
-4. nenhum schema de negócio prematuro é criado;
-5. nenhum secret é versionado;
-6. Production permanece isolada/não usada como laboratório;
-7. documentação e Checkpoint refletem os recursos remotos realmente existentes.
+IDs de recurso não são secrets. Nenhuma connection string, senha ou API key foi versionada.
 
 ## Verificação
 
-- confirmar projeto/branch via Neon conectado;
-- confirmar ausência de alterações de schema de produto;
-- revisar diff e ausência de credenciais;
-- consultar documentação oficial atual para qualquer comportamento de branching/roles/conexões assumido.
+Via Neon conectado:
+
+- projeto `caleida-nonprod`: `PASS`;
+- branch baseline `main`: `PASS`;
+- PostgreSQL 18 / região esperada: `PASS`;
+- nenhuma operação SQL/migration executada nesta Story: `PASS`;
+- Production não provisionada: `PASS`;
+- Auth/Data API/Storage não provisionados: `PASS`;
+- secrets no Git: `PASS — nenhum`;
+- branch adicional `staging`: `SKIPPED — baseline default main adotada como non-production/staging`;
+- branch descartável de prova: `BLOCKED — ação de branching do conector apresenta inconsistência de schema e deve ser revalidada antes de migration destrutiva`.
+
+O defeito do conector não impede encerrar a fundação: existe uma baseline non-production identificável e nenhum schema foi aplicado. Ele é, porém, precondição operacional para a próxima Story antes de qualquer migration/teste destrutivo.
+
+---
+
+# US-PLAT-005 — Definir migrations, testes de banco e RLS
+
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-PLAT-005` / EPIC-00  
+**Tipo:** fundação de schema/autorização
+
+## Objetivo
+
+Criar a infraestrutura versionada mínima para migrations, testes de banco e RLS, sem iniciar o schema funcional completo de catálogo/biblioteca.
+
+Ao final, o Git deve conseguir representar e verificar uma baseline de banco reproduzível em branch Neon isolada.
+
+## Dependências
+
+- `US-PLAT-004` concluída;
+- `ADR-004` — mudanças de banco somente por migrations;
+- `ADR-005` — Neon como plataforma canônica;
+- projeto `caleida-nonprod` existente;
+- baseline Neon `main` existente;
+- branching isolado precisa estar operacional antes de executar alteração destrutiva.
+
+## Inspecionar antes de editar
+
+1. documentação oficial Neon corrente para branching, connection strings e Postgres 18;
+2. `docs/NEON_NONPROD.md` e `docs/NEON_PLATFORM.md`;
+3. `ADR-004` e `ADR-005`;
+4. estado remoto atual do projeto `caleida-nonprod`;
+5. ação de branch do conector Neon — revalidar a inconsistência registrada em US-PLAT-004;
+6. `package.json`, `.env.example` e política de secrets;
+7. necessidade real de dependência npm para runner de migrations — preferir solução simples e reproduzível.
+
+## Precondição de segurança
+
+Antes de aplicar qualquer DDL de teste:
+
+- criar uma branch Neon descartável;
+- passar explicitamente o branch ID em toda operação de banco;
+- não usar a baseline `main` como laboratório destrutivo;
+- se a criação de branch isolada continuar indisponível, marcar a Story `BLOCKED` em vez de aplicar migration diretamente na baseline.
+
+## Escopo esperado
+
+- criar `database/migrations/`;
+- criar `database/tests/`;
+- definir convenção de nomes/ordem de migrations;
+- definir runner reproduzível para aplicar migrations a uma URL de banco fornecida por ambiente;
+- criar somente a baseline técnica mínima necessária para provar o pipeline de migrations/RLS;
+- incluir teste(s) que provem reconstrução/estado esperado;
+- estabelecer padrão para testes futuros de RLS: owner, non-owner, anonymous e payload forjado quando existirem tabelas user-scoped;
+- manter connection strings fora do Git;
+- aplicar/verificar somente em branch Neon descartável;
+- promover para a baseline non-production somente se a mudança persistente estiver versionada e os gates passarem.
+
+## Limite de domínio
+
+Esta Story não deve antecipar modelagem completa de catálogo, biblioteca, perfil ou social.
+
+Uma migration técnica mínima pode existir apenas para provar o mecanismo se tiver propósito claro e não congelar prematuramente entidades de produto.
+
+## Segurança
+
+- nenhuma credencial no Git, Issue, PR ou logs voluntários;
+- owner/admin apenas para migrations/manutenção;
+- owner/BYPASSRLS não conta como teste de autorização de usuário;
+- RLS deve ser testada na camada de banco quando houver tabela exposta/user-scoped;
+- nenhuma operação em Production;
+- nenhuma Data API/Auth apenas para completar esta Story, salvo decisão técnica estritamente necessária e revalidada.
+
+## Critérios de aceite
+
+1. `database/migrations/` existe e possui convenção documentada;
+2. `database/tests/` existe e possui runner/contrato reproduzível;
+3. uma branch Neon descartável é usada para provar aplicação desde baseline conhecida;
+4. nenhuma mudança estrutural existe apenas no Console;
+5. testes aplicáveis passam;
+6. connection strings/secrets não são versionados;
+7. baseline non-production só recebe alteração persistente que esteja no Git;
+8. documentação e Checkpoint refletem estado real;
+9. Production/Vercel/deployment permanecem fora do escopo.
+
+## Verificação obrigatória
+
+- criar branch Neon descartável;
+- aplicar migrations desde baseline conhecida;
+- executar testes de banco;
+- inspecionar schema/constraints/RLS aplicáveis;
+- comparar/reconstruir quando necessário;
+- limpar branch descartável ao final;
+- executar gates de aplicação se dependências/scripts de app forem alterados;
+- revisar diff e secrets.
 
 ## Non-goals
 
-- schema/migrations/RLS de produto (`US-PLAT-005`);
-- implementação Neon Auth/Data API na aplicação;
+- schema funcional completo do produto;
+- Neon Auth/Data API na aplicação;
 - Object Storage;
-- CI permanente;
-- projeto/conexão Vercel;
-- deployment;
-- features de produto.
+- CI permanente (`US-PLAT-007`);
+- Vercel/project/deployment;
+- Production;
+- feature de negócio.
 
 ---
 
