@@ -37,7 +37,11 @@ Esse gate padrão não exige banco nem credencial externa. A validação integra
 npm run verify:db
 ```
 
-`verify:db` exige um ambiente de banco já provisionado corretamente e reutiliza `db:migrate` seguido de `db:test`. O lifecycle do PostgreSQL descartável pertence ao ambiente de execução; CI permanente só será definida em `US-PLAT-007`.
+`verify:db` exige um ambiente de banco já provisionado corretamente e reutiliza `db:migrate` seguido de `db:test`.
+
+A partir de `US-PLAT-007`, `.github/workflows/ci.yml` é o CI permanente do repositório. Ele executa os mesmos comandos canônicos em pull requests para `main` e em pushes integrados na `main`, usando PostgreSQL 18 descartável para o gate portável. O contrato operacional está em `docs/CI.md`.
+
+CI não é CD. O workflow permanente deve permanecer sem Vercel, deploy hooks, tokens de publicação ou permissões de escrita desnecessárias.
 
 Use os comandos reais definidos no `package.json`. Não invente scripts sem inspecionar o repositório e, quando houver dependência de comportamento corrente da ferramenta, sua documentação oficial.
 
@@ -52,7 +56,7 @@ Para mudanças exclusivamente documentais, verificar no mínimo:
 - links/caminhos internos coerentes;
 - `NEXT_ACTION` concreta e executável.
 
-Gates de aplicação ainda inexistentes devem ser marcados `SKIPPED — aplicação não inicializada`, não simulados.
+Quando o CI permanente for disparado por uma alteração documental, seu resultado deve ser registrado normalmente; isso não transforma gates tecnicamente não relacionados em requisito semântico adicional da Story.
 
 ## 3. Banco de dados
 
@@ -73,7 +77,7 @@ reconstruir do zero quando a mudança exigir prova adicional
 limpar o ambiente descartável
 ```
 
-No estado atual, o gate usa PostgreSQL 18. Com o banco já disponível e as variáveis corretas, `npm run verify:db` executa a parte versionada de migration + testes SQL.
+No estado atual, o gate usa PostgreSQL 18. Com o banco já disponível e as variáveis corretas, `npm run verify:db` executa a parte versionada de migration + testes SQL. O CI permanente provisiona esse PostgreSQL 18 como service container.
 
 ### 3.2 Gate Neon-specific
 
@@ -149,6 +153,8 @@ Quando uma tarefa tocar APIs ou serviços externos:
 Build local/CI é um gate técnico. Deploy não é um comando de teste.
 
 Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`. Não publique Preview ou Production apenas para descobrir se a aplicação compila.
+
+O workflow permanente de CI não deve ganhar responsabilidades de release sem uma decisão arquitetural posterior explícita.
 
 ## 8. Diff e Git
 
