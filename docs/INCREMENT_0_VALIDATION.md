@@ -1,52 +1,105 @@
 # Validação do Incremento 0 — Caleida
 
-**Status:** IN_PROGRESS  
+**Status:** VALIDATED  
 **Story:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
 **Issue:** `#28`  
-**Branch:** `verify/us-plat-010-delivery-cycle`  
-**PR:** `#29`  
+**Branch validada:** `verify/us-plat-010-delivery-cycle`  
+**PR validada:** `#29`  
 **Escopo:** auditoria e evidência de encerramento do Incremento 0; nenhuma funcionalidade de produto
 
-## 1. Objetivo
+## 1. Resultado
 
-Registrar evidência verificável de que a fundação do Caleida percorre o ciclo real de integração:
+O ciclo real de integração foi validado de ponta a ponta:
 
 ```text
-Issue → branch → documentação mínima → CI → PR → review → merge → CI na main
+Issue #28
+  → branch verify/us-plat-010-delivery-cycle
+  → documentação mínima
+  → CI da PR
+  → review
+  → merge verificado da PR #29
+  → CI da main
 ```
 
-O ciclo deve permanecer sem secrets versionados, sem CD e sem qualquer deployment Vercel automático. O Incremento 0 só pode ser declarado concluído depois da confirmação pós-merge.
+A validação permaneceu sem secrets versionados, sem CD, sem mudança de banco/infraestrutura e sem qualquer deployment Vercel automático.
 
 ## 2. Baseline anterior à Story
 
-Estado recuperado antes de qualquer edição de `US-PLAT-010`:
+- branch padrão: `main`;
+- head inicial: `88dfde9abec1937c0366662a4ff34eeba0edf957`;
+- última Story concluída antes da auditoria: `US-PLAT-009`;
+- última PR anterior: `#27`;
+- CI integrada anterior: run `33549799028` — `PASS`;
+- nenhuma Issue/PR/branch de `US-PLAT-010` existia antes do início da Story.
 
-- branch padrão GitHub: `main`;
-- head inicial da `main`: `88dfde9abec1937c0366662a4ff34eeba0edf957`;
-- última Story concluída: `US-PLAT-009`;
-- última Issue concluída: `#26`;
-- última PR concluída: `#27`;
-- CI integrada da `main`: run `33549799028`, `PASS`;
-- nenhuma Issue/PR/branch de `US-PLAT-010` existia antes do início desta Story.
+## 3. Evidência da PR #29
 
-## 3. Contratos técnicos inspecionados
+Head final revisado:
 
-### CI
+```text
+935a7fb742b78bba0df97169366b4c7ce806977d
+```
 
-`.github/workflows/ci.yml` continua:
+CI permanente da PR:
 
-- acionado em PR para `main` e push integrado na `main`;
-- com `permissions: contents: read`;
-- sem Vercel, deploy hooks, tokens de publicação ou CD;
-- usando Node/npm pinados;
-- executando `npm ci`;
-- executando `npm run verify`;
-- provisionando PostgreSQL 18 efêmero;
-- executando `npm run verify:db` com `CALEIDA_DB_TARGET=ephemeral`.
+```text
+Run: 33560189535
+Job: Verify application and database
+Conclusão: success
+```
 
-### Vercel
+Passaram no head final:
 
-`vercel.json` continua contendo:
+- checkout/setup Node: `PASS`;
+- contrato Node/npm: `PASS`;
+- `npm ci`: `PASS`;
+- `npm run verify`: `PASS`;
+- PostgreSQL server 18.x: `PASS`;
+- `npm run verify:db`: `PASS`;
+- cleanup do runner/containers: `PASS`.
+
+Revisão técnica do mesmo head:
+
+- diff limitado a `docs/CHECKPOINT.md`, `docs/INCREMENT_0_VALIDATION.md` e `docs/PRODUCT_BACKLOG.md`;
+- nenhuma migration, dependência, código de produto ou workflow alterado;
+- nenhum secret, token ou connection string introduzido;
+- nenhuma review thread pendente;
+- PR mergeável sem conflito no estado revisado;
+- review registrada no GitHub antes do merge;
+- nenhum finding bloqueante.
+
+A PR `#29` foi mergeada por squash com verificação explícita do head `935a7fb742b78bba0df97169366b4c7ce806977d`.
+
+Merge integrado:
+
+```text
+4e0367957dc61b955e7b748244d50272b9209223
+```
+
+## 4. Gate pós-merge da main
+
+O push integrado da PR #29 acionou o CI permanente na `main`:
+
+```text
+Run: 33560364513
+Head: 4e0367957dc61b955e7b748244d50272b9209223
+Conclusão: success
+```
+
+Todos os passos passaram, incluindo:
+
+- runtime Node/npm;
+- `npm ci`;
+- `npm run verify`;
+- PostgreSQL 18;
+- `npm run verify:db`;
+- cleanup final.
+
+Isso comprova que o merge preservou a fundação executável e reproduzível.
+
+## 5. Vercel — ausência de deployment automático
+
+`vercel.json` continua com:
 
 ```json
 {
@@ -59,23 +112,19 @@ Estado recuperado antes de qualquer edição de `US-PLAT-010`:
 
 A documentação oficial corrente da Vercel foi revalidada em 01/09/2026: `git.deploymentEnabled: false` impede deployments disparados por Git.
 
-Estado remoto anterior à PR:
+A conta/team Vercel foi inspecionada:
 
-- conta/team conectada sem projeto Caleida;
-- somente outros projetos não relacionados presentes;
-- portanto nenhum Preview ou Production do Caleida existe para esta Story;
-- nenhum deployment será executado por IA durante a validação.
+- antes da PR: nenhum projeto Caleida;
+- durante a PR: nenhum projeto Caleida;
+- depois do merge da PR #29: nenhum projeto Caleida;
+- nenhum Preview/Production Caleida foi criado;
+- nenhum deployment, promote, rollback, redeploy ou Project Linking foi executado por IA.
 
-### Ambientes e secrets
+Resultado: merge e release permanecem operacionalmente separados conforme `ADR-007`.
 
-- `.env.example` permanece deliberadamente não executável e sem valores reais;
-- nenhuma variável `NEXT_PUBLIC_*` é necessária no estado atual;
-- connection strings/tokens/secrets permanecem proibidos no namespace público;
-- a CI não depende de repository secret externo.
+## 6. Neon e banco
 
-### Neon
-
-Estado remoto anterior à PR:
+Estado Neon confirmado após o merge:
 
 ```text
 Projeto: caleida-nonprod
@@ -86,58 +135,48 @@ Branches: 1
 Baseline: main / br-restless-cherry-awpcwy6r
 ```
 
-- `caleida-production`: ausente;
+- `caleida-production`: não provisionado;
 - Neon Auth/Data API/Object Storage: não implementados;
-- nenhum recurso Neon foi criado ou alterado nesta Story.
+- nenhuma branch ou recurso Neon foi criado/alterado por `US-PLAT-010`;
+- gate Neon-specific: `SKIPPED — a Story não depende de comportamento gerenciado do Neon`;
+- gate PostgreSQL portável: `PASS` na PR e na `main` via PostgreSQL 18 efêmero.
 
-## 4. Aplicabilidade dos gates
+## 7. Critérios de aceite de US-PLAT-010
 
-| Gate | Estado | Motivo |
+| # | Critério | Resultado |
 |---|---|---|
-| `npm run verify` no CI permanente | PENDING | obrigatório no head final da PR |
-| PostgreSQL 18 + `npm run verify:db` no CI | PENDING | obrigatório e portável |
-| Gate Neon-specific | SKIPPED | a Story não altera schema, Auth, Data API, roles, extensões ou comportamento gerenciado do Neon |
-| Deployment Vercel | SKIPPED/PROIBIDO | deployment é release exclusivamente humana/manual conforme `ADR-007` |
-| Inspeção Vercel pré/pós-merge | PRE-MERGE PASS / POST-MERGE PENDING | necessária para provar ausência de publicação automática |
+| 1 | Issue/branch/PR reais | `PASS` — #28 / branch dedicada / #29 |
+| 2 | CI permanente na PR | `PASS` — run `33560189535` |
+| 3 | Diff limitado à validação | `PASS` — somente documentação operacional/auditoria |
+| 4 | Sem secret real no Git/CI | `PASS` |
+| 5 | Sem Preview/Production Vercel por Git/merge | `PASS` |
+| 6 | Neon-specific somente quando aplicável | `PASS` — `SKIPPED` com motivo |
+| 7 | PR revisada e mergeada com head verificado | `PASS` |
+| 8 | CI da `main` pós-merge | `PASS` — run `33560364513` |
+| 9 | Documentos canônicos reconciliados e próxima ação real | `PASS` com a integração do fechamento documental |
 
-## 5. Evidência do ciclo da Story
+## 8. Encerramento do Incremento 0
 
-| Etapa | Evidência | Estado |
-|---|---|---|
-| Issue | `#28` | PASS |
-| Branch | `verify/us-plat-010-delivery-cycle` a partir de `88dfde9` | PASS |
-| Mudança limitada | somente documentação operacional/auditoria | PASS |
-| PR | `#29` | PASS |
-| CI da PR | head final ainda precisa concluir | PENDING |
-| Review/diff/threads | ainda não revisados no head final | PENDING |
-| Merge com head verificado | ainda não executado | PENDING |
-| CI pós-merge na `main` | ainda não executado | PENDING |
-| Vercel pós-merge sem Caleida | ainda não confirmado | PENDING |
+O Incremento 0 atende ao contrato de fundação:
 
-## 6. Critérios de encerramento do Incremento 0
-
-A fundação já possui, das Stories anteriores:
-
-- setup local documentado e aplicação instalável/executável;
-- lint, typecheck, testes e build canônicos;
-- fundação Neon non-production;
-- migrations e testes reconstruíveis em PostgreSQL 18 descartável;
+- aplicação instalável/executável e setup documentado;
+- lint, typecheck, testes e build reproduzíveis;
+- PostgreSQL 18 efêmero como gate portável;
+- fundação Neon non-production registrada;
+- migrations/testes de banco reproduzíveis;
 - contrato de ambientes e secrets;
 - CI permanente sem CD;
-- hosting Vercel preparado com Git deployments desabilitados;
-- runbook de release manual.
+- Vercel protegida contra Git deployments automáticos;
+- runbook de release manual;
+- ciclo `Issue → branch → CI → PR → review → merge → CI main` comprovado;
+- nenhum deployment real necessário para fechar o incremento.
 
-Permanecem para esta Story:
+**Conclusão:** `Incremento 0 — Fundação executável` está tecnicamente validado.
 
-- CI da PR em `PASS`;
-- revisão do diff, secrets, reviews/threads e mergeability;
-- merge do head verificado;
-- CI da `main` pós-merge em `PASS`;
-- confirmação Vercel pós-merge sem projeto/deployment Caleida;
-- reconciliação final de `CHECKPOINT`, `EXECUTION_PLAN`, backlog e changelog.
+## 9. Próximo horizonte
 
-## 7. Próximo horizonte
+O Project Design posiciona `EPIC-01 — Identidade e design system` após a fundação técnica. Como o backlog operacional ainda não contém Stories refinadas para esse horizonte, a próxima ação deve ser de planejamento/refino — não implementação antecipada.
 
-O Project Design posiciona `EPIC-01 — Identidade e design system` após a fundação técnica. O backlog operacional atual, porém, está refinado somente até o Incremento 0.
+A ação canônica seguinte é:
 
-Nenhuma feature de EPIC-01 será antecipada em `US-PLAT-010`. Após o encerramento verificável do Incremento 0, a próxima ação deve ser uma unidade de planejamento/refino que derive o próximo incremento e sua primeira Story limitada antes de qualquer implementação funcional.
+> `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`
