@@ -16,16 +16,21 @@ npm ci
 npm run dev
 ```
 
-Gates locais:
+Gate padrão do repositório:
 
 ```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm run verify
 ```
 
-O guia completo de clone limpo, variáveis, execução e troubleshooting está em [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
+Esse comando valida o manifesto de migrations e executa lint, typecheck, testes e build em ordem determinística.
+
+O gate integrado de banco permanece explícito e separado porque exige PostgreSQL 18 e variáveis de ambiente apropriadas:
+
+```bash
+npm run verify:db
+```
+
+O guia completo de clone limpo, variáveis, execução, gates e troubleshooting está em [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
 
 A aplicação usa Next.js App Router, React, TypeScript strict e Tailwind CSS.
 

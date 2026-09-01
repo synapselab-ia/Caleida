@@ -3,14 +3,14 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-PLAT-005 — Definir migrations, testes de banco e RLS`  
-**LAST_COMPLETED_ISSUE:** `#16`  
-**LAST_COMPLETED_PR:** `#19`  
+**LAST_COMPLETED_TASK:** `US-PLAT-006 — Configurar validações automatizadas`  
+**LAST_COMPLETED_ISSUE:** `#20`  
+**LAST_COMPLETED_PR:** `#21`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `US-PLAT-006 — Configurar validações automatizadas`  
+**NEXT_ACTION:** `US-PLAT-007 — Configurar integração contínua`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -30,11 +30,39 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 - Tailwind CSS 4;
 - Node `24.20.0` / npm `11.19.0`;
 - lockfile canônico;
-- lint, typecheck, test e build executáveis.
+- aplicação ainda inicia sem banco/secret externo.
+
+### Verificação canônica
+
+O repositório possui agora duas entradas explícitas:
+
+```text
+npm run verify
+  db:migrations:check
+  → lint
+  → typecheck
+  → test
+  → build
+
+npm run verify:db
+  db:migrate
+  → db:test
+```
+
+Contratos:
+
+- `verify` é o gate padrão e não exige banco nem credencial externa;
+- a composição usa `&&` e interrompe no primeiro gate inválido;
+- `verify:db` exige ambiente PostgreSQL já provisionado e respeita os guardrails de `CALEIDA_DB_TARGET`;
+- PostgreSQL portável usa PostgreSQL 18 descartável conforme `ADR-008`;
+- gate Neon-specific permanece adicional somente quando a mudança depender do serviço;
+- `tests/verification-contract.test.mjs` fixa a ordem/separação dos comandos;
+- nenhum framework ou dependência de orquestração foi introduzido;
+- CI permanente ainda **não existe**; pertence à `US-PLAT-007`.
 
 ### Banco versionado
 
-Existe agora:
+Permanece:
 
 ```text
 database/
@@ -50,73 +78,44 @@ database/
     000002_postgres_18.sql
 ```
 
-O tooling usa Node + `psql`, sem ORM introduzido apenas para migrations.
+Nenhuma migration ou entidade funcional foi alterada em `US-PLAT-006`.
 
-Contratos principais:
+## Verificação de US-PLAT-006
 
-- migrations ordenadas e imutáveis após aplicação;
-- SHA-256 detecta migration histórica alterada;
-- `db:migrations:check` valida manifesto sem banco;
-- `db:migrate` aplica apenas a URL direta fornecida pelo ambiente;
-- `db:test` executa a suíte SQL;
-- `CALEIDA_DB_TARGET=ephemeral` é o gate PostgreSQL portável;
-- `CALEIDA_DB_TARGET=neon-isolated` exige branch Neon descartável quando a mudança for Neon-specific;
-- baseline Neon exige branch ID canônico + `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES`;
-- `db:test` nunca aceita baseline.
+GitHub Actions descartável — run `33544713097` — usando Node `24.20.0`, npm `11.19.0` e service container `postgres:18`:
 
-Nenhuma entidade funcional de catálogo, biblioteca, perfil ou social foi criada.
-
-## Decisão arquitetural de US-PLAT-005
-
-`ADR-008 — PostgreSQL efêmero como gate primário de migrations e RLS` foi aceito.
-
-Neon continua a plataforma canônica conforme `ADR-005`.
-
-A verificação de banco agora distingue:
-
-1. **PostgreSQL portável:** PostgreSQL descartável da mesma versão major do Neon canônico; atual = PostgreSQL 18.
-2. **Neon-specific:** branch Neon descartável adicional quando a mudança depender de Auth/Data API, roles/permissões/extensões ou outro comportamento específico do serviço.
-
-O defeito atual do conector de branching Neon fica registrado como limitação da integração, mas não bloqueia SQL PostgreSQL portável. A baseline Neon `main` continua protegida e não foi usada como laboratório.
-
-## Verificação de US-PLAT-005
-
-Em GitHub Actions descartável com service container `postgres:18`:
-
-- PostgreSQL server 18.x: `PASS`;
 - `npm ci`: `PASS`;
-- `npm run db:migrations:check`: `PASS`;
-- primeira aplicação de `db:migrate`: `PASS`;
-- `db:test`: `PASS`;
-- segunda aplicação de `db:migrate` / ledger sem duplicação: `PASS`;
-- reconstrução do banco do zero + migrations + testes: `PASS`;
-- `npm run lint`: `PASS`;
-- `npm run typecheck`: `PASS`;
-- `npm test`: `PASS`;
-- `npm run build`: `PASS`;
+- `npm run verify`: `PASS`;
+- `db:migrations:check`: `PASS` como parte de `verify`;
+- lint: `PASS` como parte de `verify`;
+- typecheck: `PASS` como parte de `verify`;
+- testes Node, incluindo contrato de verificação: `PASS` como parte de `verify`;
+- build: `PASS` como parte de `verify`;
+- PostgreSQL server 18.x: `PASS`;
+- `npm run verify:db`: `PASS`;
 - secrets reais: `PASS — nenhum`;
-- workflow descartável na PR/main: `PASS — não integra`;
-- gate Neon-specific: `SKIPPED — a migration ledger usa somente primitives PostgreSQL portáveis`;
-- DDL na baseline Neon `main`: `SKIPPED — não necessário nesta Story`;
-- Production/Vercel/deployment: `SKIPPED — fora do escopo`.
-
-A primeira tentativa do gate PostgreSQL revelou um defeito real no runner (`PGDATABASE` recebia uma URL completa). O runner foi corrigido para usar `psql --dbname` e redigir a URL em mensagens de erro; a segunda execução passou integralmente.
-
-A PR Draft #17 foi fechada sem merge somente porque o conector GitHub falhou ao executar a transição `Ready for review`. A PR #19 reutiliza a mesma branch e é a PR final integrada da Story.
+- workflow descartável na branch/PR final: `PASS — branch de verificação resetada para o head da Story`;
+- workflow permanente em `.github/workflows`: `SKIPPED — pertence à US-PLAT-007`;
+- Neon-specific gate: `SKIPPED — nenhuma mudança dependente de Neon`;
+- Neon non-production: `SKIPPED — nenhuma alteração remota necessária`;
+- Vercel/deployment: `SKIPPED — fora do escopo`.
 
 ## Neon non-production
 
-O recurso remoto continua:
+Estado remoto revalidado antes de `US-PLAT-006`:
 
 ```text
 Projeto: caleida-nonprod
 Project ID: patient-glade-95136440
 Região: aws-us-east-1
 PostgreSQL: 18
+Branches: 1
 Baseline branch: main
 Branch ID: br-restless-cherry-awpcwy6r
 Database: neondb
 ```
+
+Nenhuma alteração Neon foi necessária nesta Story.
 
 Ainda não existe:
 
@@ -129,10 +128,10 @@ Ainda não existe:
 - projeto/conexão Vercel da execução canônica;
 - deployment.
 
-## Próxima ação — US-PLAT-006
+## Próxima ação — US-PLAT-007
 
 Executar somente:
 
-> `US-PLAT-006 — Configurar validações automatizadas`
+> `US-PLAT-007 — Configurar integração contínua`
 
-A próxima Story deve consolidar os gates técnicos em comandos reproduzíveis do repositório, sem criar CI permanente (`US-PLAT-007`) e sem deployment.
+A próxima Story deve materializar GitHub Actions permanente usando `npm run verify` e PostgreSQL 18 + `npm run verify:db`, com permissões mínimas e **sem qualquer CD/deployment Vercel**.

@@ -103,29 +103,44 @@ Interrompa o servidor com `Ctrl+C`.
 
 ## 5. Gates locais
 
-Antes de considerar uma mudança pronta para PR, execute:
+### Gate padrão
+
+Antes de considerar uma mudança pronta para PR, execute a entrada canônica:
 
 ```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm run verify
 ```
 
-Para validar apenas o manifesto de migrations, sem banco:
+Ela reutiliza os scripts existentes e para no primeiro gate inválido, nesta ordem:
+
+```text
+db:migrations:check
+→ lint
+→ typecheck
+→ test
+→ build
+```
+
+`verify` não exige banco nem credencial externa. Ele valida o manifesto de migrations, mas não aplica SQL.
+
+### Gate integrado de banco
+
+Quando a mudança exigir migrations/testes SQL, prepare um PostgreSQL 18 descartável com as variáveis do alvo `ephemeral` e execute:
 
 ```bash
-npm run db:migrations:check
+npm run verify:db
 ```
 
-Com PostgreSQL 18 descartável e as variáveis do gate `ephemeral`:
+Esse comando reutiliza, em ordem:
 
-```bash
-npm run db:migrate
-npm run db:test
+```text
+db:migrate
+→ db:test
 ```
 
-Quando uma mudança depender de Neon, repita os comandos em branch Neon descartável com `CALEIDA_DB_TARGET=neon-isolated`.
+O lifecycle do PostgreSQL descartável — criar, limpar, reconstruir quando necessário e remover — permanece responsabilidade do ambiente que fornece o banco. A futura CI (`US-PLAT-007`) poderá automatizar esse lifecycle; esta Story não cria workflow permanente.
+
+Quando uma mudança depender de Neon, execute o mesmo `verify:db` em branch Neon descartável com `CALEIDA_DB_TARGET=neon-isolated` depois do gate PostgreSQL portável.
 
 Nunca use a baseline Neon `main` como laboratório destrutivo.
 
@@ -148,13 +163,17 @@ O contrato completo de banco está em `database/README.md`.
 
 ## 7. Troubleshooting
 
+### `npm run verify` falha
+
+O comando para no primeiro gate inválido. Execute o script indicado pela saída (`db:migrations:check`, `lint`, `typecheck`, `test` ou `build`), corrija a causa e então repita `npm run verify` do início para provar o conjunto completo.
+
 ### Node ou npm em versão diferente
 
 Confirme `node --version` e `npm --version`. Troque para Node `24.20.0` e npm `11.19.0` antes de investigar erros do framework.
 
 ### `psql` não encontrado
 
-Esse requisito só afeta migrations/testes de banco. Instale um cliente PostgreSQL compatível e confirme `psql --version` antes de executar `db:migrate`/`db:test`.
+Esse requisito só afeta `verify:db`/migrations/testes de banco. Instale um cliente PostgreSQL compatível e confirme `psql --version` antes de executar o gate integrado.
 
 ### Teste rejeita a versão do servidor
 
