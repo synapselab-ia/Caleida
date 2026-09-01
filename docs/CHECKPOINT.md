@@ -1,14 +1,14 @@
 # Checkpoint — Caleida
 
-**PROJECT_STATUS:** READY  
+**PROJECT_STATUS:** IN_PROGRESS  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável  
 **PROTOCOL_VERSION:** 2  
 **LAST_COMPLETED_TASK:** `US-PLAT-009 — Separar variáveis por ambiente`  
 **LAST_COMPLETED_ISSUE:** `#26`  
 **LAST_COMPLETED_PR:** `#27`  
-**ACTIVE_TASK:** none  
-**ACTIVE_ISSUE:** none  
-**ACTIVE_BRANCH:** none  
+**ACTIVE_TASK:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
+**ACTIVE_ISSUE:** `#28`  
+**ACTIVE_BRANCH:** `verify/us-plat-010-delivery-cycle`  
 **ACTIVE_PR:** none  
 **NEXT_ACTION:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
 **BLOCKERS:** none  
@@ -34,97 +34,9 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 - CI permanente em `.github/workflows/ci.yml` usa PostgreSQL 18 efêmero e não possui CD;
 - aplicação ainda inicia sem banco ou secret externo.
 
-### Contrato de ambientes
+### Banco versionado
 
-Existe agora:
-
-```text
-.env.example
-docs/ENVIRONMENTS.md
-tests/environment-contract.test.mjs
-```
-
-Contrato canônico:
-
-```text
-local
-  ↓ somente recursos locais, descartáveis ou non-production
-non-production / staging
-  ↓ isolado de Production
-Production
-  ↓ recursos e secrets dedicados quando provisionados
-```
-
-Regras fixadas em `US-PLAT-009`:
-
-- `.env.example` é deliberadamente não executável e contém somente declarações comentadas/documentação;
-- `.env*` continua ignorado pelo Git, exceto `.env.example`;
-- `DATABASE_URL` é reservado ao runtime server-side pooled futuro;
-- `DATABASE_URL_UNPOOLED` permanece a conexão direta server-only do tooling de banco;
-- `CALEIDA_DB_TARGET` continua limitado aos alvos implementados: `ephemeral`, `neon-isolated` e `baseline`;
-- `baseline` significa somente a baseline Neon non-production e não pode ser reinterpretado como Production;
-- o tooling atual não possui alvo de migration Production;
-- nenhuma variável `NEXT_PUBLIC_*` é necessária no estado atual;
-- connection strings, tokens e secrets nunca usam `NEXT_PUBLIC_*`;
-- desenvolvimento local e futuro Preview usam somente recursos non-production/descartáveis;
-- Production não reutiliza credenciais non-production.
-
-`docs/LOCAL_DEVELOPMENT.md` e `docs/VERCEL_RELEASE.md` apontam para `docs/ENVIRONMENTS.md`.
-
-## Estado externo verificado em US-PLAT-009
-
-### Neon
-
-```text
-Projeto: caleida-nonprod
-Project ID: patient-glade-95136440
-Região: aws-us-east-1
-PostgreSQL: 18
-Branches: 1
-Baseline branch: main
-Branch ID: br-restless-cherry-awpcwy6r
-Database: neondb
-```
-
-- `caleida-production`: não provisionado;
-- Neon Auth/Data API: não implementados;
-- Object Storage: não escolhido;
-- nenhuma branch/recurso Neon foi criado ou alterado em `US-PLAT-009`.
-
-### Vercel
-
-- a conta conectada continua sem projeto Caleida;
-- nenhum Project Linking Caleida existe;
-- nenhum secret/variável Caleida foi configurado remotamente;
-- nenhum Preview ou Production foi executado;
-- `vercel.json` continua com `git.deploymentEnabled: false`;
-- release continua exclusivamente humana/manual conforme `ADR-007`.
-
-## Verificação de US-PLAT-009
-
-Issue `#26`, PR `#27`.
-
-No head de implementação `5b91c07d665b73a249a07665612bd4548fa888a1`, workflow permanente `CI`, run `33549192981`:
-
-- checkout/setup Node: `PASS`;
-- Node `24.20.0`: `PASS`;
-- npm `11.19.0`: `PASS`;
-- `npm ci`: `PASS`;
-- `npm run verify`: `PASS`;
-- contrato de ambientes: `PASS` dentro da suíte `node:test`;
-- PostgreSQL server 18.x: `PASS`;
-- `npm run verify:db`: `PASS`;
-- `.gitignore` mantém somente `.env.example` versionável entre `.env*`: `PASS`;
-- CI sem repository secrets externos e sem deployment surface: `PASS`;
-- diff sem migrations, dependências ou workflow alterados: `PASS`;
-- gate Neon-specific: `SKIPPED — Story não altera comportamento gerenciado do Neon`;
-- deployment Vercel: `SKIPPED/PROIBIDO — nenhum deployment executado`.
-
-O head documental final da PR #27 deve possuir CI `PASS` antes do merge; esse run posterior é evidência adicional e não exige novo commit apenas para registrar seu ID.
-
-## Banco versionado
-
-Permanece sem mudança funcional:
+Permanece sem mudança funcional em `US-PLAT-010`:
 
 ```text
 database/
@@ -140,12 +52,76 @@ database/
     000002_postgres_18.sql
 ```
 
-Nenhuma migration, entidade funcional ou política RLS foi alterada em `US-PLAT-009`.
+Nenhuma migration, entidade funcional ou política RLS foi adicionada nesta Story.
 
-## Próxima ação — US-PLAT-010
+### Contrato de ambientes e deployment
 
-Executar somente:
+- `.env.example` continua deliberadamente não executável e sem valores reais;
+- `DATABASE_URL`/`DATABASE_URL_UNPOOLED` permanecem server-only;
+- nenhuma variável `NEXT_PUBLIC_*` é necessária;
+- `vercel.json` mantém `git.deploymentEnabled: false`;
+- deployment continua exclusivamente humano/manual conforme `ADR-007`;
+- CI permanece sem Vercel, deploy hook, token de publicação ou CD.
 
-> `US-PLAT-010 — Validar o ciclo técnico de entrega`
+## US-PLAT-010 — estado recuperado e pré-validação
 
-A próxima Story deve validar o ciclo real `Issue → branch → CI → PR → review → merge`, provar que ele permanece sem deployment automático e fechar a evidência técnica do Incremento 0 sem inventar feature ou infraestrutura. O escopo refinado está em `docs/EXECUTION_PLAN.md`.
+Baseline antes da Story:
+
+```text
+main: 88dfde9abec1937c0366662a4ff34eeba0edf957
+última Story: US-PLAT-009
+última Issue: #26
+última PR: #27
+CI main: 33549799028 — PASS
+```
+
+A Story foi iniciada com:
+
+```text
+Issue: #28
+Branch: verify/us-plat-010-delivery-cycle
+Evidência: docs/INCREMENT_0_VALIDATION.md
+```
+
+### Neon verificado
+
+```text
+Projeto: caleida-nonprod
+Project ID: patient-glade-95136440
+Região: aws-us-east-1
+PostgreSQL: 18
+Branches: 1
+Baseline: main / br-restless-cherry-awpcwy6r
+```
+
+- `caleida-production`: não provisionado;
+- Neon Auth/Data API/Object Storage: não implementados;
+- nenhum recurso Neon foi criado ou alterado nesta Story;
+- gate Neon-specific: `SKIPPED — US-PLAT-010 não altera comportamento gerenciado do Neon`;
+- gate PostgreSQL portável permanece obrigatório via CI.
+
+### Vercel verificada antes da PR
+
+- a conta/team conectada não possui projeto Caleida;
+- nenhum Preview/Production do Caleida existe;
+- `git.deploymentEnabled: false` foi revalidado contra documentação oficial corrente em 01/09/2026;
+- nenhum deployment foi ou será executado por IA.
+
+## Verificação pendente de US-PLAT-010
+
+Ainda é necessário, nesta ordem operacional:
+
+1. abrir PR da branch ativa;
+2. obter CI permanente em `PASS` no head da PR, incluindo `npm run verify` e PostgreSQL 18 + `npm run verify:db`;
+3. revisar diff completo, secrets, reviews/threads e mergeability;
+4. confirmar ausência de projeto/deployment Caleida na Vercel durante a PR;
+5. mergear somente o head verificado;
+6. confirmar CI pós-merge na `main` em `PASS`;
+7. confirmar Vercel pós-merge sem projeto/deployment Caleida;
+8. reconciliar documentos canônicos e encerrar o Incremento 0 somente com todas as evidências satisfeitas.
+
+## Próximo horizonte
+
+O Project Design indica `EPIC-01 — Identidade e design system` após a fundação técnica, mas o backlog operacional está refinado somente até o Incremento 0.
+
+Nenhuma feature futura será antecipada nesta Story. A próxima ação após o encerramento verificável de `US-PLAT-010` deve ser um refino limitado do próximo incremento antes de qualquer implementação funcional.
