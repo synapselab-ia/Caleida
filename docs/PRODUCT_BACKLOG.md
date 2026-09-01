@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após OPS-004  
+**Status:** Backlog do Incremento 0 em execução  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -24,9 +24,8 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-001 — Inicializar a aplicação web
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** aplicação Next.js com TypeScript strict, estrutura mínima, runtime/package manager fixados, lockfile, lint, typecheck, teste básico e build.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
+- **Estado:** CONCLUÍDA
+- **Resultado:** aplicação Next.js com TypeScript strict, estrutura mínima, runtime/package manager fixados, lockfile, lint, typecheck, teste básico e build verificados.
 
 ### US-PLAT-002 — Organizar a estrutura documental
 
@@ -37,7 +36,7 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-003 — Configurar o ambiente local da aplicação
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Resultado:** instruções reproduzíveis para dependências, variáveis sem valores sensíveis e execução local.
 
 ### US-PLAT-004 — Configurar a fundação Neon de desenvolvimento
@@ -104,4 +103,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após OPS-004, o `CHECKPOINT` promove `US-PLAT-001 — Inicializar a aplicação web`, refinada em `docs/EXECUTION_PLAN.md`.
+Após a conclusão da US-PLAT-001, o `CHECKPOINT` promove `US-PLAT-003 — Configurar o ambiente local da aplicação`.
