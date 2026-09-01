@@ -55,14 +55,18 @@ Não use `npm install` apenas para contornar divergência de lockfile. Mudanças
 
 ## 3. Variáveis de ambiente
 
+O contrato canônico de ambientes e variáveis está em `docs/ENVIRONMENTS.md`. `.env.example` registra somente nomes e documentação segura; ele não contém assignments ativos nem valores reais.
+
 A aplicação ainda não exige nenhuma variável de ambiente para iniciar.
 
-`.env.example` é o contrato versionado. Regras:
+Regras locais:
 
-- nunca colocar secret ou credencial real em `.env.example`;
-- arquivos `.env*` locais são ignorados pelo Git, com exceção de `.env.example`;
-- nomes com `NEXT_PUBLIC_` são públicos no browser e só podem conter valores deliberadamente públicos;
-- `DATABASE_URL`/`DATABASE_URL_UNPOOLED` são server-side e nunca usam `NEXT_PUBLIC_`.
+- valores locais, quando necessários, ficam em `.env.local` ou outro `.env*` ignorado pelo Git;
+- desenvolvimento local usa somente recursos locais, descartáveis ou non-production;
+- nunca copie credenciais Production para `.env.local`;
+- nomes `NEXT_PUBLIC_*` são públicos no browser e só podem conter dados deliberadamente públicos;
+- `DATABASE_URL` e `DATABASE_URL_UNPOOLED` são server-only e nunca usam `NEXT_PUBLIC_`;
+- não crie um `.env.local` apenas para preencher variáveis que a aplicação ainda não consome.
 
 Para o gate PostgreSQL descartável:
 
@@ -79,7 +83,7 @@ CALEIDA_DB_TARGET=neon-isolated
 CALEIDA_NEON_BRANCH_ID=<branch id descartável>
 ```
 
-A promoção deliberada para a baseline non-production exige os guardrails adicionais documentados em `database/README.md`.
+A promoção deliberada para a baseline non-production exige os guardrails adicionais documentados em `database/README.md` e continua sendo **non-production**. O tooling atual não possui alvo Production e `baseline` não pode ser reutilizado para esse fim.
 
 ## 4. Executar a aplicação
 
@@ -138,7 +142,7 @@ db:migrate
 → db:test
 ```
 
-O lifecycle do PostgreSQL descartável — criar, limpar, reconstruir quando necessário e remover — permanece responsabilidade do ambiente que fornece o banco. A futura CI (`US-PLAT-007`) poderá automatizar esse lifecycle; esta Story não cria workflow permanente.
+O lifecycle do PostgreSQL descartável — criar, limpar, reconstruir quando necessário e remover — é automatizado pelo CI permanente e permanece responsabilidade do ambiente que fornece o banco em execução local.
 
 Quando uma mudança depender de Neon, execute o mesmo `verify:db` em branch Neon descartável com `CALEIDA_DB_TARGET=neon-isolated` depois do gate PostgreSQL portável.
 
@@ -153,7 +157,8 @@ tests/                 testes automatizados
 database/migrations/   migrations SQL versionadas
 database/scripts/      runner/guardrails de banco
 database/tests/        testes SQL de banco/RLS
-.env.example           contrato seguro de variáveis
+.env.example           nomes/contrato seguro de variáveis
+docs/ENVIRONMENTS.md   separação local/non-production/Production
 .nvmrc                 versão Node canônica
 package.json            scripts/runtime/dependências
 package-lock.json       resolução canônica do npm
@@ -215,8 +220,8 @@ Ainda não estão implementados:
 - schema funcional do produto;
 - Neon Auth/Data API na aplicação;
 - Object Storage;
-- Production;
-- Vercel project/integration;
+- projeto Neon Production;
+- projeto/conexão Vercel do Caleida;
 - Preview ou Production deployment.
 
-O gate PostgreSQL portável é independente do Neon. Gates Neon-specific seguem `ADR-008` e `database/README.md`.
+O gate PostgreSQL portável é independente do Neon. Gates Neon-specific seguem `ADR-008` e `database/README.md`. A separação de configuração segue `docs/ENVIRONMENTS.md`.
