@@ -3,14 +3,14 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-PLAT-007 — Configurar integração contínua`  
-**LAST_COMPLETED_ISSUE:** `#22`  
-**LAST_COMPLETED_PR:** `#23`  
+**LAST_COMPLETED_TASK:** `US-PLAT-008 — Preparar hosting Vercel para release manual`  
+**LAST_COMPLETED_ISSUE:** `#24`  
+**LAST_COMPLETED_PR:** `#25`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `US-PLAT-008 — Preparar hosting Vercel para release manual`  
+**NEXT_ACTION:** `US-PLAT-009 — Separar variáveis por ambiente`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -51,7 +51,7 @@ npm run verify:db
 
 ### CI permanente
 
-Existe agora:
+Permanece:
 
 ```text
 .github/workflows/ci.yml
@@ -77,25 +77,62 @@ Contrato:
 
 `docs/CI.md` é o runbook operacional do CI. `tests/ci-contract.test.mjs` protege o contrato mínimo e a ausência de superfície de deployment.
 
-## Verificação de US-PLAT-007
+## Hosting Vercel preparado
 
-PR `#23`, workflow permanente `CI`, run inicial `33545687786`:
+Existe agora no Git:
 
-- workflow/sintaxe aceitos pelo GitHub: `PASS`;
-- service container PostgreSQL: `PASS`;
+```text
+vercel.json
+docs/VERCEL_RELEASE.md
+tests/vercel-config-contract.test.mjs
+```
+
+Guardrail canônico:
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": false
+  }
+}
+```
+
+Estado operacional verificado em `US-PLAT-008`:
+
+- `git.deploymentEnabled: false` revalidado contra documentação oficial Vercel em 01/09/2026;
+- a chave legada `github.enabled` não é utilizada;
+- `.vercel/` permanece ignorado pelo Git;
+- a conta Vercel conectada não possui projeto Caleida;
+- nenhum projeto Caleida foi conectado/importado;
+- nenhum Preview ou Production foi criado;
+- nenhum deploy hook foi criado;
+- nenhum `VERCEL_TOKEN` foi introduzido no CI;
+- release continua exclusivamente humana/manual conforme `ADR-007`;
+- `docs/VERCEL_RELEASE.md` registra que o primeiro deployment de um projeto Vercel novo é Production mesmo sem `--prod`, exigindo decisão humana deliberada antes da primeira publicação.
+
+## Verificação de US-PLAT-008
+
+Issue `#24`, PR `#25`.
+
+No head `c967a544d0861647f4673eedd06101e3ec7d2555`, workflow permanente `CI`, run `33547497622`:
+
+- workflow/sintaxe: `PASS`;
 - checkout/setup Node: `PASS`;
 - Node `24.20.0`: `PASS`;
 - npm `11.19.0`: `PASS`;
 - `npm ci`: `PASS`;
 - `npm run verify`: `PASS`;
+- teste do guardrail Vercel: `PASS` dentro do gate de testes;
 - PostgreSQL server 18.x: `PASS`;
 - `npm run verify:db`: `PASS`;
-- permissões mínimas: `PASS — contents: read`;
-- secrets externos: `PASS — nenhum`;
-- Neon credential: `PASS — nenhuma`;
-- Vercel/deployment/CD: `PASS — ausente`.
+- CI sem superfície de deployment: `PASS`;
+- secrets/tokens/deploy hooks novos: `PASS — nenhum`;
+- gate Neon-specific: `SKIPPED — Story não toca comportamento gerenciado do Neon`;
+- deployment Vercel: `SKIPPED/PROIBIDO — nenhum deployment executado`;
+- verificação local no runner da sessão: `BLOCKED — ambiente sem resolução de github.com`; o CI permanente executou os gates canônicos com sucesso.
 
-A revisão final deve considerar também o run disparado pelo head documental final da PR antes do merge.
+O head documental final da PR deve possuir CI `PASS` antes do merge; esse run posterior é evidência adicional e não exige reabrir o checkpoint apenas para registrar seu ID.
 
 ## Banco versionado
 
@@ -115,7 +152,7 @@ database/
     000002_postgres_18.sql
 ```
 
-Nenhuma migration ou entidade funcional foi alterada em `US-PLAT-007`.
+Nenhuma migration, entidade funcional ou política RLS foi alterada em `US-PLAT-008`.
 
 ## Neon non-production
 
@@ -132,7 +169,7 @@ Branch ID: br-restless-cherry-awpcwy6r
 Database: neondb
 ```
 
-Nenhuma credencial Neon é necessária para o CI portável.
+Nenhuma mudança Neon foi necessária em `US-PLAT-008`.
 
 Ainda não existe:
 
@@ -141,13 +178,13 @@ Ainda não existe:
 - Neon Auth/Data API implementados;
 - Object Storage escolhido;
 - integração da aplicação com banco;
-- projeto/conexão Vercel da execução canônica;
-- deployment.
+- projeto/conexão Vercel para o Caleida;
+- deployment Vercel do Caleida.
 
-## Próxima ação — US-PLAT-008
+## Próxima ação — US-PLAT-009
 
 Executar somente:
 
-> `US-PLAT-008 — Preparar hosting Vercel para release manual`
+> `US-PLAT-009 — Separar variáveis por ambiente`
 
-A próxima Story deve preparar `vercel.json`/guardrails e runbook de release manual conforme `ADR-007`, sem conectar/publicar projeto e sem executar Preview ou Production.
+A próxima Story deve separar os contratos de configuração para local, non-production/staging e Production, sem versionar secrets, sem antecipar integrações funcionais e sem executar deployment. O escopo refinado está em `docs/EXECUTION_PLAN.md`.
