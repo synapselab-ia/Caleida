@@ -1,17 +1,17 @@
 # Checkpoint — Caleida
 
-**PROJECT_STATUS:** BLOCKED  
+**PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-PLAT-004 — Configurar a fundação Neon de desenvolvimento`  
-**LAST_COMPLETED_ISSUE:** `#14`  
-**LAST_COMPLETED_PR:** `#15`  
-**ACTIVE_TASK:** `US-PLAT-005 — Definir migrations, testes de banco e RLS`  
-**ACTIVE_ISSUE:** `#16`  
-**ACTIVE_BRANCH:** `infra/us-plat-005-db-foundation`  
-**ACTIVE_PR:** `#17 — DRAFT`  
-**NEXT_ACTION:** `US-PLAT-005 — revalidar branching Neon e concluir prova remota da fundação de banco`  
-**BLOCKERS:** `Neon create_branch: wrapper aceita camelCase, backend exige snake_case`  
+**LAST_COMPLETED_TASK:** `US-PLAT-005 — Definir migrations, testes de banco e RLS`  
+**LAST_COMPLETED_ISSUE:** `#16`  
+**LAST_COMPLETED_PR:** `#17`  
+**ACTIVE_TASK:** none  
+**ACTIVE_ISSUE:** none  
+**ACTIVE_BRANCH:** none  
+**ACTIVE_PR:** none  
+**NEXT_ACTION:** `US-PLAT-006 — Configurar validações automatizadas`  
+**BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
 
@@ -19,75 +19,118 @@
 
 > Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
 
-A próxima sessão deve reutilizar Issue #16, branch `infra/us-plat-005-db-foundation` e PR #17. Não recriar a Story.
+Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça Stories concluídas.
 
-## Estado técnico confirmado
+## Estado técnico atual
 
-### Base já concluída
+### Aplicação
 
-- aplicação Next.js/React/TypeScript reproduzível;
-- ambiente local documentado;
-- projeto Neon `caleida-nonprod` existente;
-- baseline Neon `main` (`br-restless-cherry-awpcwy6r`) intacta;
-- Production/Auth/Data API/Storage/Vercel continuam fora do escopo.
+- Next.js `16.3.3` / React `19.2.8`;
+- TypeScript strict;
+- Tailwind CSS 4;
+- Node `24.20.0` / npm `11.19.0`;
+- lockfile canônico;
+- lint, typecheck, test e build executáveis.
 
-### US-PLAT-005 implementada na branch ativa
+### Banco versionado
 
-A PR Draft #17 contém:
+Existe agora:
 
-- `database/migrations/000001_migration_ledger.sql` — somente infraestrutura técnica interna;
-- runner SQL via Node + `psql`, sem ORM/dependência npm adicional;
-- manifesto/checksums SHA-256 e detecção de migration aplicada alterada;
-- guardrail `CALEIDA_DB_TARGET` + `CALEIDA_NEON_BRANCH_ID`;
-- baseline Neon recusada como alvo `isolated`;
-- promoção baseline exige `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES`;
-- `database/tests/000001_migration_baseline.sql`;
-- contrato futuro de testes RLS owner/non-owner/anonymous/ownership forjado;
-- scripts npm `db:migrations:check`, `db:migrate`, `db:test`;
-- documentação local e `.env.example` sem secrets.
+```text
+database/
+  migrations/
+    000001_migration_ledger.sql
+  scripts/
+    lib.mjs
+    migrate.mjs
+    test.mjs
+    validate-migrations.mjs
+  tests/
+    000001_migration_baseline.sql
+    000002_postgres_18.sql
+```
 
-Nenhuma entidade funcional de catálogo/biblioteca/perfil/social foi criada.
+O tooling usa Node + `psql`, sem ORM introduzido apenas para migrations.
 
-## Verificação já concluída
+Contratos principais:
 
-Em runner GitHub Actions descartável:
+- migrations ordenadas e imutáveis após aplicação;
+- SHA-256 detecta migration histórica alterada;
+- `db:migrations:check` valida manifesto sem banco;
+- `db:migrate` aplica apenas a URL direta fornecida pelo ambiente;
+- `db:test` executa a suíte SQL;
+- `CALEIDA_DB_TARGET=ephemeral` é o gate PostgreSQL portável;
+- `CALEIDA_DB_TARGET=neon-isolated` exige branch Neon descartável quando a mudança for Neon-specific;
+- baseline Neon exige branch ID canônico + `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES`;
+- `db:test` nunca aceita baseline.
 
+Nenhuma entidade funcional de catálogo, biblioteca, perfil ou social foi criada.
+
+## Decisão arquitetural de US-PLAT-005
+
+`ADR-008 — PostgreSQL efêmero como gate primário de migrations e RLS` foi aceito.
+
+Neon continua a plataforma canônica conforme `ADR-005`.
+
+A verificação de banco agora distingue:
+
+1. **PostgreSQL portável:** PostgreSQL descartável da mesma versão major do Neon canônico; atual = PostgreSQL 18.
+2. **Neon-specific:** branch Neon descartável adicional quando a mudança depender de Auth/Data API, roles/permissões/extensões ou outro comportamento específico do serviço.
+
+O defeito atual do conector de branching Neon fica registrado como limitação da integração, mas não bloqueia SQL PostgreSQL portável. A baseline Neon `main` continua protegida e não foi usada como laboratório.
+
+## Verificação de US-PLAT-005
+
+Em GitHub Actions descartável com service container `postgres:18`:
+
+- PostgreSQL server 18.x: `PASS`;
 - `npm ci`: `PASS`;
 - `npm run db:migrations:check`: `PASS`;
+- primeira aplicação de `db:migrate`: `PASS`;
+- `db:test`: `PASS`;
+- segunda aplicação de `db:migrate` / ledger sem duplicação: `PASS`;
+- reconstrução do banco do zero + migrations + testes: `PASS`;
 - `npm run lint`: `PASS`;
 - `npm run typecheck`: `PASS`;
 - `npm test`: `PASS`;
 - `npm run build`: `PASS`;
-- secrets no Git: `PASS — nenhum`;
-- workflow de verificação na PR/main: `PASS — não integra`.
+- secrets reais: `PASS — nenhum`;
+- workflow descartável na PR/main: `PASS — não integra`;
+- gate Neon-specific: `SKIPPED — a migration ledger usa somente primitives PostgreSQL portáveis`;
+- DDL na baseline Neon `main`: `SKIPPED — não necessário nesta Story`;
+- Production/Vercel/deployment: `SKIPPED — fora do escopo`.
 
-## Bloqueio remoto
+A primeira tentativa do gate PostgreSQL revelou um defeito real no runner (`PGDATABASE` recebia uma URL completa). O runner foi corrigido para usar `psql --dbname` e redigir a URL em mensagens de erro; a segunda execução passou integralmente.
 
-A tentativa de criar `verify/us-plat-005-baseline` via conector Neon falha antes de criar recurso:
+## Neon non-production
+
+O recurso remoto continua:
 
 ```text
-wrapper: projectId / branchName
-backend: project_id / branch_name
+Projeto: caleida-nonprod
+Project ID: patient-glade-95136440
+Região: aws-us-east-1
+PostgreSQL: 18
+Baseline branch: main
+Branch ID: br-restless-cherry-awpcwy6r
+Database: neondb
 ```
 
-O contrato da ferramenta não permite enviar as chaves que o backend solicita.
+Ainda não existe:
 
-Por segurança:
+- projeto Neon Production;
+- schema funcional de produto na baseline Neon;
+- Neon Auth/Data API implementados;
+- Object Storage escolhido;
+- integração da aplicação com banco;
+- CI permanente;
+- projeto/conexão Vercel da execução canônica;
+- deployment.
 
-- nenhum DDL foi executado na baseline Neon `main`;
-- nenhuma migration foi promovida;
-- `db:migrate` e `db:test` ainda não foram provados contra Neon real;
-- PR #17 permanece Draft e não deve ser mergeada enquanto esse gate não passar.
+## Próxima ação — US-PLAT-006
 
-## Próxima ação — continuação de US-PLAT-005
+Executar somente:
 
-1. revalidar `create_branch` no projeto `patient-glade-95136440`;
-2. se funcionar, criar `verify/us-plat-005-baseline`;
-3. obter a direct connection string da branch de forma segura/efêmera;
-4. executar o runner versionado com `CALEIDA_DB_TARGET=isolated` e branch ID explícito;
-5. executar `db:test` e inspecionar a baseline técnica;
-6. limpar a branch descartável;
-7. somente depois decidir promoção da migration versionada para a baseline non-production;
-8. concluir docs/PR/Issue e promover a próxima Story.
+> `US-PLAT-006 — Configurar validações automatizadas`
 
-Se `create_branch` continuar incompatível, manter `BLOCKED`; não usar a baseline `main` como laboratório e não pedir ao usuário para contornar com credenciais manuais apenas por conveniência.
+A próxima Story deve consolidar os gates técnicos em comandos reproduzíveis do repositório, sem criar CI permanente (`US-PLAT-007`) e sem deployment.
