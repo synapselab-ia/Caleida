@@ -32,24 +32,41 @@ Gates de aplicação ainda inexistentes devem ser marcados `SKIPPED — aplicaç
 
 ## 3. Banco de dados
 
-Quando houver banco ativo, a verificação deve ser reproduzível a partir do Git.
+Quando houver banco ativo, a verificação deve ser reproduzível a partir do Git e seguir `ADR-004` + `ADR-008`.
 
-Para tarefas de schema/autorização, use ambiente isolado e descartável compatível com a plataforma canônica vigente. A sequência deve ser equivalente a:
+### 3.1 Gate PostgreSQL portável
+
+Para migrations, constraints e RLS que dependam apenas de comportamento PostgreSQL padrão, use banco isolado e descartável da mesma versão major do Neon canônico.
+
+A sequência deve ser equivalente a:
 
 ```text
-criar ou resetar ambiente isolado
+criar PostgreSQL descartável limpo
 aplicar migrations desde baseline conhecida
 executar testes de banco
 inspecionar schema, constraints e autorização
-reconstruir do zero quando a mudança exigir prova de reprodutibilidade
+reconstruir do zero quando a mudança exigir prova adicional
 limpar o ambiente descartável
 ```
 
-Nunca use produção como laboratório destrutivo.
+No estado atual, o gate usa PostgreSQL 18.
+
+### 3.2 Gate Neon-specific
+
+Além do gate PostgreSQL, use branch Neon descartável quando a mudança depender de comportamento específico do serviço, incluindo Neon Auth/Data API, roles/permissões gerenciadas, extensões ou outras diferenças documentadas do Neon.
+
+Se esse gate for necessário e o branching Neon estiver indisponível, registre `BLOCKED`. Não substitua a branch isolada pela baseline Neon `main`.
+
+Falha ou indisponibilidade do plano de controle Neon não bloqueia SQL puramente PostgreSQL que já possa ser provado no gate portável.
+
+### 3.3 Regras comuns
+
+Nunca use Production como laboratório destrutivo.
 
 Verifique, quando aplicável:
 
 - migrations aplicam na ordem correta;
+- migrations históricas alteradas são detectadas;
 - constraints e FKs impedem estados inválidos;
 - índices necessários existem sem duplicação prematura;
 - RLS/autorização está habilitada nas tabelas expostas;

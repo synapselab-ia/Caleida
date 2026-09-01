@@ -4,7 +4,7 @@
 **Data:** 2026-08-03  
 **Migrado para ADR em:** 2026-08-31  
 **Supersedes:** none  
-**Superseded by:** none
+**Superseded by:** `ADR-008` somente quanto ao ambiente mínimo obrigatório de verificação destrutiva; a regra de migrations no Git permanece vigente
 
 ## Contexto
 
@@ -35,4 +35,5 @@ Na arquitetura Neon vigente:
 
 - Origem histórica: `DEC-006`.
 - Plataforma atual: `ADR-005` e `docs/NEON_PLATFORM.md`.
+- Ambiente de verificação atual: `ADR-008` substitui apenas a exigência de branch Neon para SQL PostgreSQL portável; o texto original acima é preservado como histórico da decisão aceita em 2026-08-03.
 - Protocolo: `00_SYSTEM/VERIFICATION_PROTOCOL.md`.

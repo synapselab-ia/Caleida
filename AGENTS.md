@@ -57,7 +57,8 @@ ADRs vigentes principais:
 - `ADR-004` — mudanças de banco somente por migrations;
 - `ADR-005` — Neon Postgres/Auth/Data API/RLS;
 - `ADR-006` — Object Storage provider-independent e ainda não escolhido;
-- `ADR-007` — deployment Vercel exclusivamente humano/manual.
+- `ADR-007` — deployment Vercel exclusivamente humano/manual;
+- `ADR-008` — PostgreSQL efêmero como gate primário para migrations/RLS portáveis, com gate Neon adicional quando houver dependência específica do serviço.
 
 Histórico relevante:
 
@@ -70,7 +71,7 @@ Mudanças materiais de plataforma, autenticação, banco, Storage, hosting, auto
 
 ## 5. Banco de dados
 
-Quando a implementação de banco começar:
+Quando houver trabalho de banco:
 
 - migrations canônicas ficam em `database/migrations/`;
 - testes de banco ficam em `database/tests/`;
@@ -80,7 +81,9 @@ Quando a implementação de banco começar:
 - cada migration deve considerar constraints, índices, autorização, testes e recuperação;
 - RLS deve existir desde a primeira tabela privada/user-scoped exposta relevante;
 - nunca use Production para testes destrutivos;
-- use branch Neon isolada e descartável do projeto non-production para verificação de schema/RLS quando aplicável;
+- SQL/RLS PostgreSQL portável usa PostgreSQL descartável da mesma versão major do Neon canônico como gate primário, conforme `ADR-008`;
+- use branch Neon isolada e descartável adicional quando a mudança depender de comportamento específico do Neon;
+- nunca use a baseline Neon `main` como substituto de um gate Neon-specific indisponível;
 - credencial owner/BYPASSRLS não serve para provar autorização normal de usuário;
 - autenticação pelo papel `authenticated` não substitui predicados de ownership/visibilidade;
 - helper, roles, grants e APIs da Neon Data API devem ser revalidados contra documentação oficial atual na tarefa que os implementar.

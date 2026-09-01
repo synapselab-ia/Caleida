@@ -1,6 +1,6 @@
 # Arquitetura técnica
 
-**Status:** arquitetura de referência vigente após OPS-003; aplicação ainda não inicializada.
+**Status:** arquitetura de referência vigente após US-PLAT-005.
 
 ## 1. Visão geral
 
@@ -45,7 +45,7 @@ Os amendments ativos são:
 - GitHub Actions para CI/validação, sem CD;
 - Object Storage provider-independent, a decidir em Story própria.
 
-As versões exatas serão registradas quando cada componente for implementado e devem ser conferidas na documentação oficial corrente.
+Versões implementadas ficam registradas no repositório e tecnologias externas devem ser conferidas na documentação oficial corrente quando a tarefa depender delas.
 
 ## 3. Ambientes
 
@@ -56,14 +56,27 @@ As versões exatas serão registradas quando cada componente for implementado e 
 - dados exclusivamente fictícios ou anonimizados;
 - integração real de banco/Auth contra ambiente Neon não produtivo quando necessária.
 
+### PostgreSQL descartável de verificação
+
+Para migrations, constraints e RLS portáveis:
+
+- PostgreSQL da mesma versão major do projeto Neon atual;
+- banco efêmero criado limpo para cada verificação;
+- sem credencial Neon;
+- migrations aplicadas desde a baseline conhecida;
+- testes de banco executados antes do merge.
+
+Em `US-PLAT-005`, a referência é PostgreSQL 18 conforme `ADR-008`.
+
 ### Neon Non-Production
 
-Projeto Neon dedicado a staging e verificação.
+Projeto Neon dedicado a staging e integração com o serviço gerenciado.
 
 - branch canônica de staging/homologação;
-- branches temporárias para migrations, RLS, testes e desenvolvimento integrado;
+- branches temporárias para verificação Neon-specific e desenvolvimento integrado quando necessárias;
 - branches descartáveis devem ser resetadas/removidas após uso;
-- nenhuma branch temporária é fonte canônica de schema.
+- nenhuma branch temporária é fonte canônica de schema;
+- baseline `main` não é laboratório destrutivo.
 
 ### Neon Production
 
@@ -72,7 +85,7 @@ Projeto Neon separado do non-production.
 - utilizado pelo beta real e futura operação pública;
 - secrets próprios;
 - sem testes destrutivos;
-- migrations chegam a partir do Git depois de verificação em ambiente isolado.
+- migrations chegam a partir do Git depois dos gates aplicáveis.
 
 ### Vercel Preview
 
@@ -140,10 +153,11 @@ Operações server-side confiáveis podem usar conexão direta ao Postgres com l
 
 ## 7. Estratégia de banco
 
-Layout canônico planejado:
+Layout canônico:
 
 ```text
 database/migrations/
+database/scripts/
 database/tests/
 ```
 
@@ -152,9 +166,11 @@ database/tests/
 - migrations aplicadas não são reescritas;
 - correções usam novas migrations;
 - testes de constraints e RLS devem ser executáveis;
-- mudanças destrutivas/verificação ocorrem em branch Neon descartável, nunca em Production.
+- SQL PostgreSQL portável é verificado primeiro em PostgreSQL 18 descartável;
+- comportamento específico do Neon exige verificação adicional em branch Neon isolada quando aplicável;
+- Production nunca é ambiente de teste destrutivo.
 
-O runner e tooling exatos serão definidos na Story de fundação do banco.
+O tooling usa Node.js + `psql`, sem ORM introduzido apenas para migrations. A política de ambientes de teste segue `ADR-008`.
 
 ## 8. Estratégia de integração externa
 
@@ -167,7 +183,6 @@ O cliente não recebe chaves privadas. Resultados são normalizados antes de che
 - capas externas permanecem por URL quando os termos permitirem;
 - conteúdo próprio como avatar/banner exige Object Storage privado e controlado;
 - o provedor de Storage ainda não foi escolhido;
-- Neon Object Storage não é dependência canônica enquanto permanecer beta;
 - uploads futuros terão validação, compressão, limites e limpeza de órfãos;
 - metadados de arquivo devem permanecer desacoplados do provedor.
 
@@ -214,8 +229,7 @@ IA não executa Preview, Production, promote, rollback ou redeploy.
 
 Serão decididas em tarefas específicas:
 
-- tooling de migrations/testes de banco;
-- ferramenta de testes unitários;
+- ferramenta de testes unitários além do runner nativo atual, se houver necessidade;
 - ferramenta de testes end-to-end;
 - biblioteca de componentes acessíveis, se utilizada;
 - provedor de Object Storage;

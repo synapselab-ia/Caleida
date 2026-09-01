@@ -1,12 +1,12 @@
 # Neon Platform — Caleida
 
-**Status:** arquitetura canônica de plataforma após OPS-002  
-**Decisão relacionada:** `docs/adr/ADR-005-neon-data-identity-platform.md`  
+**Status:** arquitetura canônica de plataforma após US-PLAT-005  
+**Decisões relacionadas:** `ADR-005` e `ADR-008`  
 **Project Design:** `PROJECT_DESIGN.md` + `PROJECT_DESIGN_PLATFORM_AMENDMENT.md`
 
 ## 1. Escopo
 
-Este documento define como o Caleida utilizará Neon para banco, identidade, API de dados, RLS e ambientes. Recursos remotos existentes são registrados em `NEON_NONPROD.md`; schema persistente continua pertencendo às migrations futuras.
+Este documento define como o Caleida utilizará Neon para banco, identidade, API de dados, RLS e ambientes. Recursos remotos existentes são registrados em `NEON_NONPROD.md`; schema persistente pertence às migrations versionadas no Git.
 
 ## 2. Topologia planejada
 
@@ -49,7 +49,7 @@ O branch Neon `main` não é a branch Git `main`.
 
 A baseline `main` foi adotada como estado integrado de non-production porque é o branch default criado pelo Neon. Um branch adicional chamado `staging` não é necessário apenas para duplicar a mesma função.
 
-Branches temporárias devem ser curtas, resetáveis e removidas ao fim da tarefa. Migrations destrutivas e testes de RLS não devem ser experimentados diretamente na baseline.
+Branches temporárias devem ser curtas, resetáveis e removidas ao fim da tarefa. Alterações Neon-specific e verificações destrutivas que realmente dependam do serviço não devem ser experimentadas diretamente na baseline.
 
 O estado remoto e os IDs não sensíveis são registrados em `docs/NEON_NONPROD.md`.
 
@@ -62,47 +62,75 @@ caleida-production
   └── production
 ```
 
-Production não serve como parent operacional de branches de teste e não recebe resets destrutivos.
+Production não serve como ambiente de teste destrutivo.
 
 A separação por projeto é intencional para reduzir blast radius e impedir mistura acidental de secrets, usuários e dados reais com homologação.
 
-## 4. Migrations
+## 4. Migrations e verificação
 
-Schema é propriedade do Git e segue `ADR-004`.
+Schema é propriedade do Git e segue `ADR-004`. O ambiente de verificação segue `ADR-008`.
 
-Layout canônico planejado:
+Layout canônico:
 
 ```text
 database/
   migrations/
+  scripts/
   tests/
 ```
 
 Cada alteração persistente deve poder ser reconstruída a partir da sequência de migrations.
 
-Fluxo esperado para mudança de banco:
+### Gate primário — PostgreSQL 18 descartável
+
+Para SQL, constraints e RLS que dependam apenas de comportamento PostgreSQL portável:
 
 ```text
 migration no Git
   ↓
-branch Neon descartável
+PostgreSQL 18 descartável
   ↓
-aplicar desde baseline conhecida
+aplicar migrations desde banco limpo
   ↓
-testes de integridade/RLS
+testes de banco/RLS aplicáveis
   ↓
-rebuild/reset quando necessário
+reconstrução/segunda aplicação quando necessário
+  ↓
+review
+```
+
+Esse gate não exige credencial Neon e não depende do plano de controle de branching do provedor.
+
+### Gate adicional — Neon
+
+Branch Neon descartável continua necessária quando a mudança depender de comportamento específico do Neon, como:
+
+- papéis/permissões gerenciados pelo Neon;
+- `neon_superuser`;
+- extensões cujo suporte seja específico do serviço;
+- Neon Auth, Data API, schemas/helpers gerenciados;
+- comportamento de branching, compute, pooling ou conexão específico do Neon;
+- outras diferenças documentadas entre Neon e PostgreSQL standalone.
+
+Fluxo adicional quando aplicável:
+
+```text
+gates PostgreSQL portáveis em PASS
+  ↓
+branch Neon verify/<task-id>
+  ↓
+verificação Neon-specific
   ↓
 review
   ↓
-aplicar na baseline non-production
-  ↓
-aplicar em production somente após gates
+promoção deliberada para baseline non-production
 ```
 
-O tooling exato será implementado em Story própria. Não introduzir ORM apenas para administrar migrations.
+Se branching Neon estiver indisponível, somente a mudança que **necessita** desse gate adicional fica `BLOCKED`. A baseline `main` não é usada como laboratório para contornar indisponibilidade do serviço.
 
-Se o tooling de branching estiver indisponível, a tarefa que exige verificação destrutiva deve ficar `BLOCKED`; não usar a baseline non-production como substituto de branch descartável.
+A versão major do PostgreSQL descartável deve acompanhar a versão major do projeto Neon. Em `US-PLAT-005`, ambos são PostgreSQL 18.
+
+Não introduzir ORM apenas para administrar migrations.
 
 ## 5. Neon Auth
 
@@ -129,9 +157,11 @@ Guardrails:
 - JWT deve representar a sessão real do usuário;
 - `authenticated` é apenas papel de autenticação, não ownership;
 - políticas devem comparar identidade com ownership/visibilidade real;
-- o helper de identidade deve seguir a API oficial vigente; em OPS-002, a documentação atual usa `auth.user_id()`;
+- o helper de identidade deve seguir a API oficial vigente;
 - `anonymous` recebe somente acesso explicitamente público;
 - grants e RLS são controles separados e ambos devem ser considerados.
+
+Políticas dependentes de identidade/roles específicos de Neon Auth/Data API exigem o gate Neon adicional definido no `ADR-008`.
 
 ## 7. Conexão direta ao Postgres
 
@@ -147,9 +177,9 @@ Regras:
 - connection string é secret;
 - nunca usar credencial privilegiada no browser;
 - não usar owner/BYPASSRLS para CRUD comum;
-- testes de autorização devem usar papéis e JWT equivalentes aos usuários reais.
+- testes de autorização devem usar papéis equivalentes aos usuários reais.
 
-Para tooling futuro, `DATABASE_URL` representa a conexão pooled e `DATABASE_URL_UNPOOLED` a conexão direta, conforme o contrato atual do Neon. Nenhum valor real é versionado.
+`DATABASE_URL_UNPOOLED` é o contrato do tooling para uma conexão PostgreSQL direta, seja no banco efêmero de testes ou no Neon quando aplicável. `DATABASE_URL` permanece reservado ao runtime server-side pooled futuro.
 
 ## 8. RLS
 
@@ -165,11 +195,13 @@ Testes mínimos futuros para tabelas user-scoped:
 - políticas públicas concedem somente o que o Project Design permite;
 - papel administrativo não é inferido por dados editáveis pelo usuário.
 
+RLS puramente PostgreSQL pode ser provada no gate efêmero. RLS acoplada a Neon Auth/Data API também exige gate Neon-specific.
+
 ## 9. Storage
 
 Object Storage não faz parte da plataforma canônica nesta fase conforme `ADR-006`.
 
-Neon Object Storage estava em beta em 31/08/2026. A decisão futura deve verificar novamente maturidade, regiões, pricing, lifecycle, backup, privacidade, integração com Auth/RLS e compatibilidade S3.
+A decisão futura deve verificar novamente maturidade, regiões, pricing, lifecycle, backup, privacidade, integração com Auth/RLS e compatibilidade S3 do provedor considerado.
 
 Até essa decisão, o domínio de arquivos deve permanecer desacoplado do banco e do provedor.
 
@@ -224,3 +256,12 @@ A infraestrutura mínima non-production passou a existir:
 - nenhum Neon Auth/Data API/Storage provisionado;
 - Production continua não provisionada;
 - detalhes operacionais em `docs/NEON_NONPROD.md`.
+
+## 14. Estado após US-PLAT-005
+
+A fundação versionada de migrations/testes usa SQL + Node + `psql` e separa:
+
+- gate primário reproduzível em PostgreSQL 18 descartável;
+- gate adicional Neon quando houver dependência real do serviço.
+
+Essa separação evita transformar indisponibilidade do conector de branching em bloqueio para SQL PostgreSQL portável, sem reduzir os gates de compatibilidade quando Neon-specific.

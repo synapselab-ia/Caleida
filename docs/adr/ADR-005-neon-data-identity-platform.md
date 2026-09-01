@@ -3,7 +3,7 @@
 **Status:** Accepted  
 **Data:** 2026-08-31  
 **Supersedes:** `ADR-003` e a parte Supabase de `ADR-002`  
-**Superseded by:** none
+**Superseded by:** `ADR-008` somente quanto à obrigatoriedade de branch Neon para toda verificação PostgreSQL portável; Neon permanece a plataforma canônica
 
 ## Contexto
 
@@ -45,6 +45,7 @@ Conexões privilegiadas ao Postgres ficam restritas a contextos server-side conf
 
 - Origem histórica: `DEC-007`.
 - Supersedes `ADR-003` e parte de `ADR-002`.
+- `ADR-008` substitui somente o requisito operacional de branch Neon como gate mínimo para SQL PostgreSQL portável; branches Neon continuam obrigatórias quando a mudança depender de comportamento específico do serviço.
 - Amendment: `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`.
 - Especificação: `docs/NEON_PLATFORM.md`.
 
