@@ -112,19 +112,23 @@ export function assertPsqlAvailable() {
   return result.stdout.trim();
 }
 
+function redactDatabaseUrl(detail, databaseUrl) {
+  return String(detail).replaceAll(databaseUrl, "[REDACTED_DATABASE_URL]");
+}
+
 export function runPsql({ databaseUrl, sql, tuplesOnly = false }) {
-  const args = ["--no-psqlrc", "--set", "ON_ERROR_STOP=1", "--quiet"];
+  const args = ["--dbname", databaseUrl, "--no-psqlrc", "--set", "ON_ERROR_STOP=1", "--quiet"];
   if (tuplesOnly) args.push("--tuples-only", "--no-align");
 
   const result = spawnSync("psql", args, {
     input: sql,
     encoding: "utf8",
-    env: { ...process.env, PGDATABASE: databaseUrl },
+    env: { ...process.env },
   });
 
   if (result.error || result.status !== 0) {
-    const detail = (result.stderr || result.stdout || result.error?.message || "erro desconhecido").trim();
-    throw new Error(`psql falhou: ${detail}`);
+    const rawDetail = (result.stderr || result.stdout || result.error?.message || "erro desconhecido").trim();
+    throw new Error(`psql falhou: ${redactDatabaseUrl(rawDetail, databaseUrl)}`);
   }
 
   return result.stdout.trim();
