@@ -20,6 +20,9 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `ADR-005` — Neon como plataforma canônica de dados/identidade.
 - `ADR-006` — Object Storage desacoplado e decisão adiada.
 - `ADR-007` — deployment Vercel exclusivamente humano/manual.
+- Fundação Next.js 16.3.3 com React 19.2.8, App Router, TypeScript strict e Tailwind CSS 4.
+- Runtime Node 24.20.0, npm 11.19.0 e `package-lock.json` canônico.
+- Scripts `dev`, `lint`, `typecheck`, `test` e `build` e smoke test mínimo com `node:test`.
 
 ### Alterado
 
@@ -28,15 +31,16 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `AGENTS.md` e `AI_WORK_PROTOCOL.md` passaram a ler índice/ADRs aplicáveis antes do registro legado.
 - Novas decisões arquiteturais materiais passam a exigir ADR, com supersessão explícita em vez de reescrita histórica.
 - Referências operacionais de deployment passam a apontar `ADR-007` como decisão arquitetural canônica.
-- `US-PLAT-001` foi refinada no Execution Plan e marcada `PRONTA` no backlog.
-- `docs/EXECUTION_PLAN.md` concluiu OPS-004 e promoveu `US-PLAT-001 — Inicializar a aplicação web`.
-- `docs/CHECKPOINT.md` encerrou a fase de reconciliação operacional e abriu o início técnico do Incremento 0.
+- `US-PLAT-001` foi concluída após `npm ci`, lint, typecheck, test e build em PASS.
+- README passou a documentar os comandos locais do bootstrap.
+- `docs/EXECUTION_PLAN.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-003 — Configurar o ambiente local da aplicação` como próxima ação.
 
 ### Corrigido
 
 - Eliminada a possibilidade de duas fontes concorrentes para decisões arquiteturais (`DECISIONS.md` × ADR).
 - Preservadas explicitamente as escolhas históricas Supabase/stack original sem fazê-las governar trabalho novo.
 - Separadas decisões de produto/processo das decisões arquiteturais.
+- Resolvido o bloqueio de verificação da US-PLAT-001 sem introduzir CI permanente ou deployment.
 
 ### Segurança e operação
 
@@ -45,8 +49,10 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Production e non-production Neon permanecem separados.
 - Deployment continua exclusivamente humano/manual; IA e CI não publicam.
 - Nenhum token Vercel deve ser mantido no CI para publicação automática.
+- Nenhum Neon/Auth/Storage/Vercel/deployment foi criado na US-PLAT-001.
 
 ### Observação operacional
 
-- OPS-002, OPS-003 e OPS-004 foram mudanças documentais/arquiteturais; não criaram aplicação, projeto Neon, integração Vercel ou deployment.
-- A próxima ação canônica é `US-PLAT-001 — Inicializar a aplicação web`.
+- OPS-002, OPS-003 e OPS-004 foram mudanças documentais/arquiteturais.
+- A US-PLAT-001 usou workflow GitHub Actions descartável somente para verificação; esse workflow não integra a Story nem a `main`.
+- A próxima ação canônica é `US-PLAT-003 — Configurar o ambiente local da aplicação`.

@@ -2,12 +2,30 @@
 
 Plataforma pública para organização, acompanhamento e descoberta cultural.
 
-O Caleida reúne livros, mangás, manhwas, manhuas, filmes, séries e animes em um catálogo global, permitindo que cada usuário construa e preserve sua própria trajetória cultural.
+## Desenvolvimento local
 
-> Cada história muda o desenho.
+Requisitos:
 
-## Estado do projeto
+- Node.js 24.20.0 (`.nvmrc`);
+- npm 11.19.0.
 
-Projeto em fase inicial de estruturação.
+Comandos principais:
 
-A especificação oficial do produto está disponível na pasta `/docs`.
+```bash
+npm ci
+npm run dev
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+A aplicação usa Next.js App Router, React, TypeScript strict e Tailwind CSS.
+
+## Documentação
+
+A especificação, arquitetura, decisões e estado operacional canônico estão em `/docs` e `/00_SYSTEM`.
+
+## Deployment
+
+Deploy Vercel não é automático e permanece exclusivamente manual conforme a política canônica do projeto.
