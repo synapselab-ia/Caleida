@@ -4,6 +4,7 @@
 **Story:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
 **Issue:** `#28`  
 **Branch:** `verify/us-plat-010-delivery-cycle`  
+**PR:** `#29`  
 **Escopo:** auditoria e evidência de encerramento do Incremento 0; nenhuma funcionalidade de produto
 
 ## 1. Objetivo
@@ -93,7 +94,7 @@ Baseline: main / br-restless-cherry-awpcwy6r
 
 | Gate | Estado | Motivo |
 |---|---|---|
-| `npm run verify` no CI permanente | PENDING | obrigatório no head da PR |
+| `npm run verify` no CI permanente | PENDING | obrigatório no head final da PR |
 | PostgreSQL 18 + `npm run verify:db` no CI | PENDING | obrigatório e portável |
 | Gate Neon-specific | SKIPPED | a Story não altera schema, Auth, Data API, roles, extensões ou comportamento gerenciado do Neon |
 | Deployment Vercel | SKIPPED/PROIBIDO | deployment é release exclusivamente humana/manual conforme `ADR-007` |
@@ -105,9 +106,9 @@ Baseline: main / br-restless-cherry-awpcwy6r
 |---|---|---|
 | Issue | `#28` | PASS |
 | Branch | `verify/us-plat-010-delivery-cycle` a partir de `88dfde9` | PASS |
-| Mudança limitada | este documento + estado operacional canônico | IN_PROGRESS |
-| PR | ainda não aberta | PENDING |
-| CI da PR | ainda não executado no head final | PENDING |
+| Mudança limitada | somente documentação operacional/auditoria | PASS |
+| PR | `#29` | PASS |
+| CI da PR | head final ainda precisa concluir | PENDING |
 | Review/diff/threads | ainda não revisados no head final | PENDING |
 | Merge com head verificado | ainda não executado | PENDING |
 | CI pós-merge na `main` | ainda não executado | PENDING |
