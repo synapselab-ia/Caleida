@@ -3,14 +3,14 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-PLAT-006 — Configurar validações automatizadas`  
-**LAST_COMPLETED_ISSUE:** `#20`  
-**LAST_COMPLETED_PR:** `#21`  
+**LAST_COMPLETED_TASK:** `US-PLAT-007 — Configurar integração contínua`  
+**LAST_COMPLETED_ISSUE:** `#22`  
+**LAST_COMPLETED_PR:** `#23`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `US-PLAT-007 — Configurar integração contínua`  
+**NEXT_ACTION:** `US-PLAT-008 — Preparar hosting Vercel para release manual`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -34,8 +34,6 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 
 ### Verificação canônica
 
-O repositório possui agora duas entradas explícitas:
-
 ```text
 npm run verify
   db:migrations:check
@@ -49,20 +47,59 @@ npm run verify:db
   → db:test
 ```
 
-Contratos:
+`tests/verification-contract.test.mjs` fixa a composição dos comandos.
 
-- `verify` é o gate padrão e não exige banco nem credencial externa;
-- a composição usa `&&` e interrompe no primeiro gate inválido;
-- `verify:db` exige ambiente PostgreSQL já provisionado e respeita os guardrails de `CALEIDA_DB_TARGET`;
-- PostgreSQL portável usa PostgreSQL 18 descartável conforme `ADR-008`;
-- gate Neon-specific permanece adicional somente quando a mudança depender do serviço;
-- `tests/verification-contract.test.mjs` fixa a ordem/separação dos comandos;
-- nenhum framework ou dependência de orquestração foi introduzido;
-- CI permanente ainda **não existe**; pertence à `US-PLAT-007`.
+### CI permanente
 
-### Banco versionado
+Existe agora:
 
-Permanece:
+```text
+.github/workflows/ci.yml
+```
+
+Contrato:
+
+- `pull_request` para `main`;
+- `push` na `main`;
+- `permissions: contents: read`;
+- `actions/checkout@v7`;
+- `actions/setup-node@v7` lendo `.nvmrc`;
+- Node `24.20.0` e npm `11.19.0` validados;
+- `npm ci`;
+- `npm run verify`;
+- service container `postgres:18`;
+- PostgreSQL server 18.x confirmado;
+- `CALEIDA_DB_TARGET=ephemeral`;
+- `npm run verify:db`;
+- nenhum secret externo;
+- nenhum cache enquanto não houver benefício demonstrado;
+- nenhum Vercel/CD/deployment.
+
+`docs/CI.md` é o runbook operacional do CI. `tests/ci-contract.test.mjs` protege o contrato mínimo e a ausência de superfície de deployment.
+
+## Verificação de US-PLAT-007
+
+PR `#23`, workflow permanente `CI`, run inicial `33545687786`:
+
+- workflow/sintaxe aceitos pelo GitHub: `PASS`;
+- service container PostgreSQL: `PASS`;
+- checkout/setup Node: `PASS`;
+- Node `24.20.0`: `PASS`;
+- npm `11.19.0`: `PASS`;
+- `npm ci`: `PASS`;
+- `npm run verify`: `PASS`;
+- PostgreSQL server 18.x: `PASS`;
+- `npm run verify:db`: `PASS`;
+- permissões mínimas: `PASS — contents: read`;
+- secrets externos: `PASS — nenhum`;
+- Neon credential: `PASS — nenhuma`;
+- Vercel/deployment/CD: `PASS — ausente`.
+
+A revisão final deve considerar também o run disparado pelo head documental final da PR antes do merge.
+
+## Banco versionado
+
+Permanece sem mudança funcional:
 
 ```text
 database/
@@ -78,31 +115,11 @@ database/
     000002_postgres_18.sql
 ```
 
-Nenhuma migration ou entidade funcional foi alterada em `US-PLAT-006`.
-
-## Verificação de US-PLAT-006
-
-GitHub Actions descartável — run `33544713097` — usando Node `24.20.0`, npm `11.19.0` e service container `postgres:18`:
-
-- `npm ci`: `PASS`;
-- `npm run verify`: `PASS`;
-- `db:migrations:check`: `PASS` como parte de `verify`;
-- lint: `PASS` como parte de `verify`;
-- typecheck: `PASS` como parte de `verify`;
-- testes Node, incluindo contrato de verificação: `PASS` como parte de `verify`;
-- build: `PASS` como parte de `verify`;
-- PostgreSQL server 18.x: `PASS`;
-- `npm run verify:db`: `PASS`;
-- secrets reais: `PASS — nenhum`;
-- workflow descartável na branch/PR final: `PASS — branch de verificação resetada para o head da Story`;
-- workflow permanente em `.github/workflows`: `SKIPPED — pertence à US-PLAT-007`;
-- Neon-specific gate: `SKIPPED — nenhuma mudança dependente de Neon`;
-- Neon non-production: `SKIPPED — nenhuma alteração remota necessária`;
-- Vercel/deployment: `SKIPPED — fora do escopo`.
+Nenhuma migration ou entidade funcional foi alterada em `US-PLAT-007`.
 
 ## Neon non-production
 
-Estado remoto revalidado antes de `US-PLAT-006`:
+Permanece:
 
 ```text
 Projeto: caleida-nonprod
@@ -115,7 +132,7 @@ Branch ID: br-restless-cherry-awpcwy6r
 Database: neondb
 ```
 
-Nenhuma alteração Neon foi necessária nesta Story.
+Nenhuma credencial Neon é necessária para o CI portável.
 
 Ainda não existe:
 
@@ -124,14 +141,13 @@ Ainda não existe:
 - Neon Auth/Data API implementados;
 - Object Storage escolhido;
 - integração da aplicação com banco;
-- CI permanente;
 - projeto/conexão Vercel da execução canônica;
 - deployment.
 
-## Próxima ação — US-PLAT-007
+## Próxima ação — US-PLAT-008
 
 Executar somente:
 
-> `US-PLAT-007 — Configurar integração contínua`
+> `US-PLAT-008 — Preparar hosting Vercel para release manual`
 
-A próxima Story deve materializar GitHub Actions permanente usando `npm run verify` e PostgreSQL 18 + `npm run verify:db`, com permissões mínimas e **sem qualquer CD/deployment Vercel**.
+A próxima Story deve preparar `vercel.json`/guardrails e runbook de release manual conforme `ADR-007`, sem conectar/publicar projeto e sem executar Preview ou Production.
