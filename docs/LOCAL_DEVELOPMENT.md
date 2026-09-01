@@ -14,7 +14,8 @@ Use exatamente a linha de runtime definida pelo repositório:
 
 Para tarefas que executam migrations/testes de banco, também é necessário:
 
-- PostgreSQL client `psql` 18.x disponível no `PATH`.
+- cliente PostgreSQL `psql` compatível disponível no `PATH`;
+- um PostgreSQL 18 descartável para o gate primário, localmente ou via CI.
 
 A aplicação web continua podendo iniciar sem `psql` e sem conexão com banco.
 
@@ -37,6 +38,8 @@ Para trabalho de banco, confirme também:
 ```bash
 psql --version
 ```
+
+A suíte SQL valida que o **servidor** usado no gate primário é PostgreSQL 18.x.
 
 ## 2. Clone limpo e instalação
 
@@ -61,11 +64,18 @@ A aplicação ainda não exige nenhuma variável de ambiente para iniciar.
 - nomes com `NEXT_PUBLIC_` são públicos no browser e só podem conter valores deliberadamente públicos;
 - `DATABASE_URL`/`DATABASE_URL_UNPOOLED` são server-side e nunca usam `NEXT_PUBLIC_`.
 
-Para tooling de banco em branch isolada, o contrato é:
+Para o gate PostgreSQL descartável:
 
 ```text
-DATABASE_URL_UNPOOLED=<direct connection string da branch descartável>
-CALEIDA_DB_TARGET=isolated
+DATABASE_URL_UNPOOLED=<conexão direta para o banco efêmero>
+CALEIDA_DB_TARGET=ephemeral
+```
+
+Quando uma mudança exigir gate Neon-specific:
+
+```text
+DATABASE_URL_UNPOOLED=<conexão direta da branch Neon descartável>
+CALEIDA_DB_TARGET=neon-isolated
 CALEIDA_NEON_BRANCH_ID=<branch id descartável>
 ```
 
@@ -108,12 +118,14 @@ Para validar apenas o manifesto de migrations, sem banco:
 npm run db:migrations:check
 ```
 
-Quando houver uma branch Neon descartável e credenciais locais corretas:
+Com PostgreSQL 18 descartável e as variáveis do gate `ephemeral`:
 
 ```bash
 npm run db:migrate
 npm run db:test
 ```
+
+Quando uma mudança depender de Neon, repita os comandos em branch Neon descartável com `CALEIDA_DB_TARGET=neon-isolated`.
 
 Nunca use a baseline Neon `main` como laboratório destrutivo.
 
@@ -142,7 +154,11 @@ Confirme `node --version` e `npm --version`. Troque para Node `24.20.0` e npm `1
 
 ### `psql` não encontrado
 
-Esse requisito só afeta migrations/testes de banco. Instale PostgreSQL client 18.x e confirme `psql --version` antes de executar `db:migrate`/`db:test`.
+Esse requisito só afeta migrations/testes de banco. Instale um cliente PostgreSQL compatível e confirme `psql --version` antes de executar `db:migrate`/`db:test`.
+
+### Teste rejeita a versão do servidor
+
+O projeto Neon atual usa PostgreSQL 18. O gate descartável deve usar a mesma versão major; não reduza o teste para fazer outra versão passar.
 
 ### `npm ci` falha por divergência do lockfile
 
@@ -184,4 +200,4 @@ Ainda não estão implementados:
 - Vercel project/integration;
 - Preview ou Production deployment.
 
-Migrations/testes remotos só podem ser executados em branch isolada, conforme `database/README.md` e o `CHECKPOINT`.
+O gate PostgreSQL portável é independente do Neon. Gates Neon-specific seguem `ADR-008` e `database/README.md`.
