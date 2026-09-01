@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 em validação final por US-PLAT-010  
+**Status:** Incremento 0 concluído e validado por US-PLAT-010  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -83,34 +83,41 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 ### US-PLAT-010 — Validar o ciclo técnico de entrega
 
 - **Prioridade:** P0
-- **Estado:** EM ANDAMENTO
+- **Estado:** CONCLUÍDA
 - **Issue:** `#28`
-- **Branch:** `verify/us-plat-010-delivery-cycle`
-- **Resultado esperado:** ciclo real `Issue → branch → CI → PR → review → merge` validado de ponta a ponta com gates canônicos em PASS, ausência de deployment automático comprovada e evidência final do Incremento 0 registrada sem criar feature artificial.
+- **PR:** `#29`
+- **Resultado:** ciclo real `Issue → branch → CI → PR → review → merge → CI main` validado com todos os gates aplicáveis em PASS; ausência de deployment automático comprovada; gate Neon-specific corretamente `SKIPPED`; nenhuma feature artificial, secret, migration ou infraestrutura introduzida.
 - **Evidência:** `docs/INCREMENT_0_VALIDATION.md`.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ---
 
 # Critério de encerramento do Incremento 0
 
-- clone/execução documentados;
-- lint, typecheck, testes e build passando;
-- fundação Neon non-production reproduzível;
-- migrations reconstruindo baseline esperada;
-- testes de banco/RLS em PostgreSQL descartável e gate Neon adicional quando aplicável;
-- nenhuma credencial versionada;
-- contratos local/non-production/Production explícitos;
-- PRs executando CI sem CD;
-- hosting preparado contra Git deployments automáticos;
-- runbook de release manual;
-- ciclo `PR → CI → review → merge` funcionando sem deployment;
-- documentos refletindo estado real.
+- clone/execução documentados: `PASS`;
+- lint, typecheck, testes e build passando: `PASS`;
+- fundação Neon non-production reproduzível: `PASS`;
+- migrations reconstruindo baseline esperada: `PASS`;
+- testes de banco/RLS em PostgreSQL descartável e gate Neon adicional quando aplicável: `PASS`;
+- nenhuma credencial versionada: `PASS`;
+- contratos local/non-production/Production explícitos: `PASS`;
+- PRs executando CI sem CD: `PASS`;
+- hosting preparado contra Git deployments automáticos: `PASS`;
+- runbook de release manual: `PASS`;
+- ciclo `PR → CI → review → merge` funcionando sem deployment: `PASS`;
+- documentos refletindo estado real: `PASS` após integração do fechamento documental.
 
 Deployment Vercel real não é obrigatório para fechar o incremento.
+
+**Incremento 0: CONCLUÍDO.**
+
+# Próximo horizonte
+
+O Project Design posiciona `EPIC-01 — Identidade e design system` após a fundação técnica. O backlog ainda não deve antecipar Stories de implementação sem refino explícito do próximo incremento.
 
 # Próxima ação operacional
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Enquanto `US-PLAT-010` estiver ativa, o `CHECKPOINT` mantém essa Story como única ação operacional. Depois do encerramento verificável do Incremento 0, o próximo trabalho deve refinar o horizonte `EPIC-01 — Identidade e design system` antes de iniciar funcionalidades.
+A próxima ação canônica, registrada no `CHECKPOINT` e refinada em `docs/EXECUTION_PLAN.md`, é:
+
+> `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`
