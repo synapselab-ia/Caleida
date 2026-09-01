@@ -5,6 +5,7 @@ import path from "node:path";
 
 export const MIGRATION_FILENAME = /^(\d{6})_([a-z0-9]+(?:_[a-z0-9]+)*)\.sql$/;
 export const TEST_FILENAME = /^(\d{6})_([a-z0-9]+(?:_[a-z0-9]+)*)\.sql$/;
+export const NONPROD_BASELINE_BRANCH_ID = "br-restless-cherry-awpcwy6r";
 
 export function sha256(content) {
   return createHash("sha256").update(content, "utf8").digest("hex");
@@ -56,20 +57,34 @@ export async function loadSqlManifest(directory, pattern, label) {
 
 export function requireDatabaseTarget({ testsOnly = false } = {}) {
   const target = process.env.CALEIDA_DB_TARGET;
+  const branchId = process.env.CALEIDA_NEON_BRANCH_ID;
 
-  if (testsOnly && target !== "isolated") {
-    throw new Error("Database tests exigem CALEIDA_DB_TARGET=isolated.");
+  if (!branchId) {
+    throw new Error("CALEIDA_NEON_BRANCH_ID é obrigatório para tooling de banco.");
   }
 
-  if (target === "isolated") return target;
+  if (testsOnly && target !== "isolated") {
+    throw new Error("Testes de banco exigem CALEIDA_DB_TARGET=isolated.");
+  }
 
-  if (target === "baseline" && process.env.CALEIDA_ALLOW_BASELINE_MIGRATIONS === "YES") {
+  if (target === "isolated") {
+    if (branchId === NONPROD_BASELINE_BRANCH_ID) {
+      throw new Error("A baseline Neon main não pode ser usada como alvo isolated.");
+    }
     return target;
   }
 
-  throw new Error(
-    "Defina CALEIDA_DB_TARGET=isolated. Promoção para baseline exige também CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES.",
-  );
+  if (target === "baseline") {
+    if (branchId !== NONPROD_BASELINE_BRANCH_ID) {
+      throw new Error("Promoção baseline exige o branch ID canônico non-production.");
+    }
+    if (process.env.CALEIDA_ALLOW_BASELINE_MIGRATIONS !== "YES") {
+      throw new Error("Promoção baseline exige CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES.");
+    }
+    return target;
+  }
+
+  throw new Error("Defina CALEIDA_DB_TARGET=isolated ou baseline com os guardrails documentados.");
 }
 
 export function requireDirectDatabaseUrl() {
