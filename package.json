@@ -15,7 +15,9 @@
     "test": "node --test tests/*.test.mjs",
     "db:migrations:check": "node database/scripts/validate-migrations.mjs",
     "db:migrate": "node database/scripts/migrate.mjs",
-    "db:test": "node database/scripts/test.mjs"
+    "db:test": "node database/scripts/test.mjs",
+    "verify": "npm run db:migrations:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "verify:db": "npm run db:migrate && npm run db:test"
   },
   "dependencies": {
     "next": "16.3.3",
