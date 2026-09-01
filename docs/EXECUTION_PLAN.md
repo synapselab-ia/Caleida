@@ -243,65 +243,104 @@ Na PR #23, run permanente `33545687786`:
 
 # US-PLAT-008 — Preparar hosting Vercel para release manual
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO  
 **Backlog:** `US-PLAT-008` / EPIC-00  
-**Tipo:** preparação de hosting sem publicação
+**Issue:** `#24`  
+**PR:** `#25`
+
+## Resultado
+
+- criado `vercel.json` com `$schema` oficial e `git.deploymentEnabled: false`;
+- configuração revalidada contra documentação oficial Vercel corrente em 01/09/2026;
+- criado `tests/vercel-config-contract.test.mjs` para proteger o guardrail e rejeitar a chave legada `github`;
+- criado `docs/VERCEL_RELEASE.md` como runbook separado do CI;
+- runbook registra pré-condições, fluxo manual, proibições de automação e tratamento de falha;
+- alerta operacional documentado: o primeiro deployment de um projeto Vercel novo é Production mesmo sem `--prod`;
+- `.vercel/` permanece ignorado;
+- `.github/workflows/ci.yml` permaneceu sem Vercel, deploy hooks, tokens de publicação ou CD;
+- nenhum projeto Caleida foi conectado/importado na Vercel;
+- nenhum deployment Preview/Production foi executado;
+- nenhuma mudança de banco, migration ou recurso Neon foi necessária.
+
+## Verificação
+
+Na PR #25:
+
+- configuração `git.deploymentEnabled: false`: `PASS — coerente com documentação oficial corrente`;
+- `github.enabled` legado: `PASS — ausente`;
+- runbook de release manual: `PASS — somente usuário publica`;
+- CI sem deployment surface: `PASS — protegido por teste existente`;
+- secrets/tokens/deploy hooks: `PASS — nenhum introduzido`;
+- Neon-specific gate: `SKIPPED — Story não toca Neon/banco`;
+- deployment Vercel: `SKIPPED/PROIBIDO — nenhum deployment executado`;
+- verificação local no runner da sessão: `BLOCKED — ambiente sem resolução de github.com`; CI permanente permanece gate autoritativo;
+- CI permanente do head final da PR deve estar `PASS` antes do merge.
+
+---
+
+# US-PLAT-009 — Separar variáveis por ambiente
+
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-PLAT-009` / EPIC-00  
+**Tipo:** contrato/configuração de ambientes sem versionar secrets
 
 ## Objetivo
 
-Preparar o repositório para um futuro hosting Vercel deliberadamente manual, materializando guardrails contra Git deployments automáticos e documentando o runbook de release, sem conectar/importar/publicar o projeto.
+Definir e materializar a separação de configuração entre desenvolvimento local, non-production/staging e Production, mantendo valores sensíveis fora do Git e preservando o fluxo de release Vercel exclusivamente manual.
 
 ## Dependências
 
-- `US-PLAT-007` concluída;
-- CI permanente em PASS e sem CD;
-- `ADR-007` vigente;
-- `00_SYSTEM/DEPLOYMENT_POLICY.md` e `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` vigentes.
+- `US-PLAT-008` concluída;
+- `ADR-005` vigente para Neon;
+- `ADR-007` vigente para release Vercel manual;
+- `.env.example` existente como contrato seguro;
+- `docs/VERCEL_RELEASE.md` existente como runbook de release.
 
 ## Inspecionar antes de editar
 
-1. documentação oficial atual da Vercel sobre `vercel.json`, Git configuration e deployment manual;
-2. `ADR-007`, Deployment Policy e deployment amendment;
-3. estado real de integração/projeto Vercel conectado, sem criar deployment;
-4. `.env.example` e contratos de variáveis já existentes;
-5. CI permanente para confirmar que nenhuma configuração nova introduz CD.
+1. `.env.example`, `.gitignore`, documentação local e runbook Vercel;
+2. variáveis realmente exigidas pelo código e tooling atual;
+3. estado real dos projetos/ambientes Vercel e Neon quando aplicável, sem criar deployment;
+4. documentação oficial corrente de Vercel/Neon para escopo, nomes e exposição de variáveis;
+5. CI para garantir que secrets externos não sejam introduzidos sem necessidade.
 
 ## Escopo esperado
 
-- criar `vercel.json` com configuração corrente que desabilite Git deployments automáticos;
-- validar a configuração contra documentação oficial atual;
-- documentar um runbook de release manual separado do CI;
-- documentar pré-condições e variáveis necessárias sem valores sensíveis;
-- preservar CI sem CD;
-- não conectar/importar o repositório se isso puder disparar publicação;
-- não executar Preview, Production, promote, rollback, redeploy ou deploy hook.
+- separar contratos de variáveis para local, non-production/staging e Production;
+- documentar quais variáveis são server-only e quais podem ser públicas;
+- manter `.env.example` sem valores sensíveis;
+- impedir reutilização acidental de credenciais Production em Preview/non-production;
+- documentar onde o usuário configurará secrets externos quando uma futura release exigir;
+- não criar valores fictícios que pareçam credenciais reais;
+- não antecipar Auth/Data API/schema funcional que ainda não existe;
+- não executar deployment.
 
 ## Critérios de aceite
 
-1. guardrail contra Git deployments automáticos existe no Git;
-2. configuração Vercel é válida e coerente com documentação oficial corrente;
-3. runbook deixa explícito que somente o usuário publica;
-4. CI continua sem comandos/tokens de deployment;
-5. nenhum secret real é versionado;
-6. nenhum deployment real é exigido ou executado;
-7. documentação/checkpoint refletem o estado real.
+1. existe contrato claro de variáveis por ambiente;
+2. nenhum secret real está no Git;
+3. nenhuma variável sensível usa `NEXT_PUBLIC_*`;
+4. non-production e Production ficam explicitamente separados;
+5. CI continua sem secrets externos desnecessários e sem CD;
+6. documentação de desenvolvimento/release aponta o contrato correto;
+7. checkpoint reflete o estado real.
 
 ## Verificação obrigatória
 
 - `npm run verify` via CI permanente;
-- revisar `vercel.json` e runbook;
-- confirmar ausência de Vercel token/deploy hooks/CLI de publicação no CI;
-- confirmar que push/PR da Story não gerou deployment;
-- revisar diff e secrets.
+- revisar `.env.example`, `.gitignore` e documentação alterada;
+- revisar diff por tokens, senhas, connection strings e IDs sensíveis indevidos;
+- confirmar ausência de deployment/CD;
+- usar gate Neon-specific somente se a Story passar a depender de comportamento gerenciado do Neon; caso contrário registrar `SKIPPED`.
 
 ## Non-goals
 
-- criar deployment Preview/Production;
-- conectar projeto Vercel quando isso implicar publicação automática;
-- Production Neon;
-- Auth/Data API;
-- schema funcional;
-- configuração completa de secrets por ambiente (`US-PLAT-009`).
+- implementar Neon Auth/Data API;
+- criar schema funcional;
+- provisionar Production Neon sem Story/autorização correspondente;
+- escolher Object Storage;
+- executar Preview/Production Vercel;
+- adicionar CD.
 
 ---
 
