@@ -133,7 +133,7 @@ Database default: neondb
 **Estado:** CONCLUÍDO  
 **Backlog:** `US-PLAT-005` / EPIC-00  
 **Issue:** `#16`  
-**PR:** `#19` (`#17` preservada como Draft histórica, fechada sem merge por falha do conector na transição Ready for review)
+**PR:** `#19`
 
 ## Resultado
 
@@ -149,8 +149,6 @@ Database default: neondb
 - nenhuma entidade funcional do produto foi antecipada.
 
 ## ADR-008
-
-Durante a Story, o endpoint de branching do conector Neon permaneceu incompatível. A estratégia foi formalizada no `ADR-008`:
 
 - SQL/RLS PostgreSQL portável usa PostgreSQL descartável da mesma versão major do Neon como gate primário;
 - comportamento específico do Neon exige gate adicional em branch Neon isolada quando aplicável;
@@ -168,13 +166,9 @@ Em GitHub Actions descartável com `postgres:18`:
 - testes SQL: `PASS`;
 - segunda aplicação sem duplicar ledger: `PASS`;
 - drop/recreate + migrations + testes desde zero: `PASS`;
-- lint: `PASS`;
-- typecheck: `PASS`;
-- testes Node: `PASS`;
-- build: `PASS`;
+- lint/typecheck/test/build: `PASS`;
 - secrets reais: `PASS — nenhum`;
 - Neon-specific gate: `SKIPPED — migration técnica usa somente primitives PostgreSQL portáveis`;
-- baseline Neon: `SKIPPED — nenhuma promoção necessária nesta Story`;
 - Production/Vercel/deployment: `SKIPPED — fora do escopo`.
 
 ---
@@ -190,104 +184,124 @@ Em GitHub Actions descartável com `postgres:18`:
 
 - criado `npm run verify` como entrada canônica de verificação padrão;
 - ordem do gate: `db:migrations:check → lint → typecheck → test → build`;
-- composição usa `&&`, portanto interrompe no primeiro gate inválido;
 - criado `npm run verify:db` como gate integrado separado: `db:migrate → db:test`;
-- o gate padrão não exige banco nem credencial externa;
-- o gate de banco exige ambiente PostgreSQL já provisionado e guardrails existentes;
 - teste `tests/verification-contract.test.mjs` fixa o contrato e a ordem dos comandos;
-- README, guia local e Verification Protocol foram reconciliados;
 - nenhuma dependência ou alteração de lockfile foi necessária;
-- nenhum workflow permanente foi criado.
+- nenhum workflow permanente foi criado nessa Story.
 
 ## Verificação
 
-Em GitHub Actions descartável com Node `24.20.0`, npm `11.19.0` e service container `postgres:18`:
-
 - `npm ci`: `PASS`;
 - `npm run verify`: `PASS`;
-- teste do contrato de verificação: `PASS` como parte de `npm test`;
-- servidor PostgreSQL 18.x: `PASS`;
+- PostgreSQL server 18.x: `PASS`;
 - `npm run verify:db`: `PASS`;
-- secrets: `PASS — nenhum`;
-- workflow descartável na branch/PR final: `PASS — não integra`;
-- Neon non-production: `SKIPPED — nenhuma mudança remota necessária`;
 - Vercel/deployment: `SKIPPED — fora do escopo`.
 
 ---
 
 # US-PLAT-007 — Configurar integração contínua
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO  
 **Backlog:** `US-PLAT-007` / EPIC-00  
-**Tipo:** CI permanente sem CD
+**Issue:** `#22`  
+**PR:** `#23`
+
+## Resultado
+
+- criado `.github/workflows/ci.yml` como CI permanente;
+- triggers: pull requests para `main` e pushes integrados na `main`;
+- `permissions: contents: read` como única permissão do `GITHUB_TOKEN`;
+- `actions/checkout@v7` e `actions/setup-node@v7`;
+- Node lido de `.nvmrc` e contrato npm `11.19.0` verificado;
+- `npm ci` + `npm run verify` executados;
+- service container `postgres:18` provisionado sem credencial Neon;
+- versão major do servidor PostgreSQL verificada antes do gate de banco;
+- `npm run verify:db` executado com `CALEIDA_DB_TARGET=ephemeral`;
+- `tests/ci-contract.test.mjs` protege comandos, PostgreSQL, permissões e ausência de superfície de deployment;
+- `docs/CI.md` documenta o contrato operacional;
+- nenhum cache foi adicionado sem benefício demonstrado;
+- nenhum secret externo ou CD foi introduzido.
+
+## Verificação
+
+Na PR #23, run permanente `33545687786`:
+
+- sintaxe/workflow carregado pelo GitHub: `PASS`;
+- service container PostgreSQL: `PASS`;
+- checkout/setup Node: `PASS`;
+- Node `24.20.0`: `PASS`;
+- npm `11.19.0`: `PASS`;
+- `npm ci`: `PASS`;
+- `npm run verify`: `PASS`;
+- PostgreSQL server 18.x: `PASS`;
+- `npm run verify:db`: `PASS`;
+- permissões: `PASS — contents: read`;
+- secrets externos: `PASS — nenhum`;
+- Vercel/deployment/CD: `PASS — ausente`.
+
+---
+
+# US-PLAT-008 — Preparar hosting Vercel para release manual
+
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-PLAT-008` / EPIC-00  
+**Tipo:** preparação de hosting sem publicação
 
 ## Objetivo
 
-Materializar GitHub Actions permanente para validar mudanças do Caleida usando os comandos canônicos já provados, sem qualquer job, token ou chamada de deployment.
-
-Ao final, pull requests devem receber checks reproduzíveis para a aplicação e para o gate PostgreSQL portável.
+Preparar o repositório para um futuro hosting Vercel deliberadamente manual, materializando guardrails contra Git deployments automáticos e documentando o runbook de release, sem conectar/importar/publicar o projeto.
 
 ## Dependências
 
-- `US-PLAT-006` concluída;
-- `npm run verify` e `npm run verify:db` em PASS;
-- `ADR-007` — deployment exclusivamente manual;
-- `ADR-008` — PostgreSQL efêmero como gate primário para SQL portável;
-- `00_SYSTEM/DEPLOYMENT_POLICY.md` vigente.
+- `US-PLAT-007` concluída;
+- CI permanente em PASS e sem CD;
+- `ADR-007` vigente;
+- `00_SYSTEM/DEPLOYMENT_POLICY.md` e `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` vigentes.
 
 ## Inspecionar antes de editar
 
-1. documentação oficial atual do GitHub Actions para workflow syntax, permissions, Node e service containers;
-2. `.nvmrc`, `package.json` e `package-lock.json`;
-3. `00_SYSTEM/VERIFICATION_PROTOCOL.md` e `00_SYSTEM/DEPLOYMENT_POLICY.md`;
-4. `database/README.md` e `ADR-008`;
-5. estado real de workflows/checks no repositório;
-6. necessidade de cache — não adicionar se não houver benefício demonstrado.
+1. documentação oficial atual da Vercel sobre `vercel.json`, Git configuration e deployment manual;
+2. `ADR-007`, Deployment Policy e deployment amendment;
+3. estado real de integração/projeto Vercel conectado, sem criar deployment;
+4. `.env.example` e contratos de variáveis já existentes;
+5. CI permanente para confirmar que nenhuma configuração nova introduz CD.
 
 ## Escopo esperado
 
-- criar workflow permanente de CI em `.github/workflows/`;
-- usar Node `24.20.0` e npm `11.19.0` conforme o repositório;
-- executar `npm ci`;
-- executar `npm run verify`;
-- fornecer PostgreSQL 18 descartável e executar `npm run verify:db`;
-- usar permissões mínimas, preferencialmente `contents: read` salvo necessidade demonstrada;
-- executar em pull requests e na integração da `main` quando coerente com a configuração final;
-- reutilizar comandos do `package.json`, sem duplicar a lógica interna dos gates no YAML;
-- não usar Neon credential para SQL portável;
-- não conter qualquer passo de Vercel/deployment.
+- criar `vercel.json` com configuração corrente que desabilite Git deployments automáticos;
+- validar a configuração contra documentação oficial atual;
+- documentar um runbook de release manual separado do CI;
+- documentar pré-condições e variáveis necessárias sem valores sensíveis;
+- preservar CI sem CD;
+- não conectar/importar o repositório se isso puder disparar publicação;
+- não executar Preview, Production, promote, rollback, redeploy ou deploy hook.
 
 ## Critérios de aceite
 
-1. workflow permanente existe e é legível/reproduzível;
-2. clean install usa `npm ci`;
-3. `npm run verify` é executado;
-4. PostgreSQL 18 descartável é usado para `npm run verify:db`;
-5. o workflow produz check de sucesso em uma PR real da Story;
-6. permissões são mínimas e nenhum secret externo é necessário para os gates atuais;
-7. não existe job/comando/token/deploy hook Vercel;
-8. documentação/checkpoint refletem o CI real;
-9. nenhum deployment ocorre em consequência de push/PR/merge.
+1. guardrail contra Git deployments automáticos existe no Git;
+2. configuração Vercel é válida e coerente com documentação oficial corrente;
+3. runbook deixa explícito que somente o usuário publica;
+4. CI continua sem comandos/tokens de deployment;
+5. nenhum secret real é versionado;
+6. nenhum deployment real é exigido ou executado;
+7. documentação/checkpoint refletem o estado real.
 
 ## Verificação obrigatória
 
-- validar sintaxe do workflow pela própria execução no GitHub Actions;
-- confirmar Node/npm esperados no runner;
-- confirmar `npm ci`, `npm run verify` e `npm run verify:db` em `PASS`;
-- confirmar PostgreSQL server 18.x;
-- revisar permissions e ausência de secrets/deployment;
-- revisar diff completo;
-- após merge, confirmar workflow presente em `main` e sem execução de deployment.
+- `npm run verify` via CI permanente;
+- revisar `vercel.json` e runbook;
+- confirmar ausência de Vercel token/deploy hooks/CLI de publicação no CI;
+- confirmar que push/PR da Story não gerou deployment;
+- revisar diff e secrets.
 
 ## Non-goals
 
-- CD/deployment;
-- Vercel project/integration (`US-PLAT-008`);
-- branch protection/ruleset além do necessário para materializar o CI, salvo decisão separada;
-- Neon-specific gate sem mudança que o exija;
+- criar deployment Preview/Production;
+- conectar projeto Vercel quando isso implicar publicação automática;
+- Production Neon;
 - Auth/Data API;
-- schema funcional do produto;
-- Production.
+- schema funcional;
+- configuração completa de secrets por ambiente (`US-PLAT-009`).
 
 ---
 
