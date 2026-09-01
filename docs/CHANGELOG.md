@@ -15,6 +15,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/LOCAL_DEVELOPMENT.md` como guia canônico de setup local, execução, gates e troubleshooting.
 - `docs/CI.md` como contrato operacional da integração contínua permanente.
 - `docs/VERCEL_RELEASE.md` como runbook de release Vercel exclusivamente humana/manual.
+- `docs/ENVIRONMENTS.md` como contrato canônico de configuração para local, non-production/staging e Production.
 - `docs/adr/README.md` como índice canônico de Architecture Decision Records.
 - `docs/adr/TEMPLATE.md` como formato mínimo de ADR.
 - `ADR-001` — catálogo global separado da biblioteca pessoal.
@@ -40,6 +41,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `tests/ci-contract.test.mjs` para proteger permissões, comandos, PostgreSQL 18 e ausência de superfície de deployment no CI.
 - `vercel.json` com `git.deploymentEnabled: false` para impedir Git deployments automáticos enquanto `ADR-007` estiver vigente.
 - `tests/vercel-config-contract.test.mjs` para proteger o guardrail Vercel e impedir retorno à chave legada `github`.
+- `tests/environment-contract.test.mjs` para proteger o contrato de variáveis, `.gitignore`, ausência de secrets públicos e CI sem repository secrets/CD.
 
 ### Alterado
 
@@ -49,7 +51,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Referências operacionais de deployment apontam `ADR-007` como decisão arquitetural canônica.
 - `US-PLAT-001` foi concluída após `npm ci`, lint, typecheck, test e build em PASS.
 - README passou a usar `docs/LOCAL_DEVELOPMENT.md` como referência completa para desenvolvimento local.
-- `.env.example` explicita somente nomes/contratos seguros e guardrails de banco, sem valores reais.
+- `.env.example` agora é deliberadamente não executável e documenta somente nomes, classes e guardrails por ambiente, sem assignments ativos ou valores reais.
 - `US-PLAT-003` foi concluída com verificação de runtime, instalação, dev server HTTP, lint, typecheck, test e build.
 - O branch Neon default `main` de `caleida-nonprod` foi adotado como baseline canônica non-production/staging.
 - A estratégia de verificação de banco foi separada em gate PostgreSQL portável e gate Neon-specific conforme `ADR-008`.
@@ -58,7 +60,9 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - O Verification Protocol passou a reconhecer `.github/workflows/ci.yml` como CI permanente e `docs/CI.md` como contrato operacional.
 - `US-PLAT-007` foi concluída com CI sem CD, permissões mínimas e PostgreSQL 18 descartável.
 - `US-PLAT-008` foi concluída com hosting Vercel preparado para release manual, sem conexão/importação do projeto e sem deployment.
-- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-009 — Separar variáveis por ambiente` como próxima ação.
+- `US-PLAT-009` foi concluída com separação explícita entre local, non-production/staging e Production, sem provisionar ou simular Production.
+- `docs/LOCAL_DEVELOPMENT.md` e `docs/VERCEL_RELEASE.md` passaram a apontar `docs/ENVIRONMENTS.md` como contrato de configuração.
+- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-010 — Validar o ciclo técnico de entrega` como próxima ação.
 
 ### Corrigido
 
@@ -72,6 +76,8 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - A ordem dos gates padrão deixou de depender de memória/documentação dispersa e passou a ser executável por um único comando versionado.
 - PRs agora recebem um check permanente que executa os mesmos comandos canônicos provados localmente, sem duplicar a lógica dos gates no YAML.
 - O risco de Git Integration publicar o Caleida automaticamente passou a ter guardrail versionado antes de qualquer conexão Vercel do projeto.
+- `baseline` deixou explícito em todos os runbooks que representa somente a baseline Neon non-production e não é um caminho implícito para Production.
+- O guia local deixou de referir a CI permanente como futura e passou a refletir o workflow já implementado.
 
 ### Segurança e operação
 
@@ -80,12 +86,16 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - PostgreSQL 18 descartável é o gate primário para SQL portável; branch Neon isolada continua obrigatória quando houver comportamento específico do Neon.
 - A baseline Neon `main` não é usada como laboratório destrutivo.
 - Production e non-production Neon permanecem separados por decisão; Production ainda não foi provisionada.
+- `DATABASE_URL` e `DATABASE_URL_UNPOOLED` são server-only; nenhum secret de banco pode usar `NEXT_PUBLIC_*`.
+- O tooling atual não possui alvo Production e nenhum alvo fictício foi criado em US-PLAT-009.
+- Desenvolvimento local e futuro Preview não podem reutilizar credenciais Production; futura Production deve possuir recursos e secrets próprios.
 - Deployment continua exclusivamente humano/manual; IA e CI não publicam.
-- O CI permanente usa somente `permissions: contents: read` e não necessita secrets externos.
+- O CI permanente usa somente `permissions: contents: read`, PostgreSQL efêmero e não necessita repository secrets externos.
 - Nenhum token Vercel, deploy hook ou `id-token: write` foi introduzido no CI.
 - Git deployments Vercel ficam desabilitados por `vercel.json`; `.vercel/` permanece ignorado e não há Project Linking versionado.
-- A conta Vercel verificada durante US-PLAT-008 não possuía projeto Caleida; nenhum projeto foi importado/conectado e nenhum Preview/Production foi executado.
-- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-007 ou na US-PLAT-008.
+- A conta Vercel verificada durante US-PLAT-009 continuava sem projeto Caleida; nenhum projeto foi importado/conectado e nenhum Preview/Production foi executado.
+- Neon permaneceu com apenas `caleida-nonprod` no escopo Caleida; `caleida-production` não foi provisionado.
+- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-009.
 - Nenhuma connection string, senha, Neon API key ou Vercel token foi versionada.
 
 ### Observação operacional
@@ -97,6 +107,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Em US-PLAT-006, `npm ci`, `npm run verify` e `npm run verify:db` contra PostgreSQL 18 passaram em runner descartável.
 - Em US-PLAT-007, o workflow permanente `CI` passou na PR #23 com runtime pinado, `npm ci`, `verify`, PostgreSQL 18 e `verify:db`.
 - Em US-PLAT-008, a documentação oficial Vercel foi revalidada em 01/09/2026: `git.deploymentEnabled: false` desabilita Git deployments e o primeiro deployment de um projeto novo é Production mesmo sem `--prod`.
-- Na PR #25, o run `33547497622` passou `npm ci`, `npm run verify`, PostgreSQL 18 e `npm run verify:db`; o runner local da sessão ficou `BLOCKED` por indisponibilidade de resolução de `github.com`.
-- O head documental final da PR #25 deve estar em CI `PASS` antes do merge.
-- A próxima ação canônica é `US-PLAT-009 — Separar variáveis por ambiente`.
+- Em US-PLAT-009, Vercel Development/Preview/Production e o contrato Neon de `DATABASE_URL` pooled / `DATABASE_URL_UNPOOLED` direta foram revalidados contra documentação corrente.
+- Na PR #27, o run `33549192981` passou `npm ci`, `npm run verify`, PostgreSQL 18 e `npm run verify:db` no head de implementação.
+- O head documental final da PR #27 deve estar em CI `PASS` antes do merge.
+- A próxima ação canônica é `US-PLAT-010 — Validar o ciclo técnico de entrega`.
