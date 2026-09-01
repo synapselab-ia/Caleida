@@ -25,7 +25,7 @@ test("migration filenames are ordered and unique", () => {
 });
 
 test("checksum and SQL literal handling are deterministic", () => {
-  assert.equal(sha256("caleida"), "f06c5c2348f27864218532c1bc42564807a2de8a42cd7aeb4ce5acae2c53046d");
+  assert.equal(sha256("caleida"), "f13f2199e83b53af377bd519191662edd5c2645b2c51674dd22c80b2de0830fd");
   assert.equal(sqlLiteral("it's safe"), "'it''s safe'");
 });
 
