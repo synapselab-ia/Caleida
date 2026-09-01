@@ -6,7 +6,7 @@ Uma tarefa não está concluída porque o código parece correto. A verificaçã
 
 ## 1. Gates gerais
 
-Depois que a aplicação existir, manter comandos equivalentes a:
+A aplicação mantém comandos reais equivalentes a:
 
 ```text
 lint
@@ -15,7 +15,31 @@ test
 build
 ```
 
-Use os comandos reais definidos pelo repositório. Não invente scripts sem inspecionar o `package.json` e a documentação oficial das ferramentas instaladas.
+A partir de `US-PLAT-006`, o gate padrão do repositório é:
+
+```bash
+npm run verify
+```
+
+Ele reutiliza scripts existentes e para no primeiro gate inválido, na ordem:
+
+```text
+db:migrations:check
+→ lint
+→ typecheck
+→ test
+→ build
+```
+
+Esse gate padrão não exige banco nem credencial externa. A validação integrada que aplica migrations e executa testes SQL permanece explícita e separada:
+
+```bash
+npm run verify:db
+```
+
+`verify:db` exige um ambiente de banco já provisionado corretamente e reutiliza `db:migrate` seguido de `db:test`. O lifecycle do PostgreSQL descartável pertence ao ambiente de execução; CI permanente só será definida em `US-PLAT-007`.
+
+Use os comandos reais definidos no `package.json`. Não invente scripts sem inspecionar o repositório e, quando houver dependência de comportamento corrente da ferramenta, sua documentação oficial.
 
 ## 2. Tarefas somente documentais
 
@@ -49,7 +73,7 @@ reconstruir do zero quando a mudança exigir prova adicional
 limpar o ambiente descartável
 ```
 
-No estado atual, o gate usa PostgreSQL 18.
+No estado atual, o gate usa PostgreSQL 18. Com o banco já disponível e as variáveis corretas, `npm run verify:db` executa a parte versionada de migration + testes SQL.
 
 ### 3.2 Gate Neon-specific
 
