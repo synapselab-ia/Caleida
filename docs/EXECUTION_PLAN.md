@@ -273,73 +273,144 @@ Na PR #25:
 - secrets/tokens/deploy hooks: `PASS — nenhum introduzido`;
 - Neon-specific gate: `SKIPPED — Story não toca Neon/banco`;
 - deployment Vercel: `SKIPPED/PROIBIDO — nenhum deployment executado`;
-- verificação local no runner da sessão: `BLOCKED — ambiente sem resolução de github.com`; CI permanente permanece gate autoritativo;
-- CI permanente do head final da PR deve estar `PASS` antes do merge.
+- CI permanente do head final da PR: `PASS` antes do merge.
 
 ---
 
 # US-PLAT-009 — Separar variáveis por ambiente
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO  
 **Backlog:** `US-PLAT-009` / EPIC-00  
-**Tipo:** contrato/configuração de ambientes sem versionar secrets
+**Issue:** `#26`  
+**PR:** `#27`
+
+## Resultado
+
+- criado `docs/ENVIRONMENTS.md` como contrato canônico de configuração;
+- local, non-production/staging e Production foram separados explicitamente;
+- Vercel Development/local mapeia para recursos locais/descartáveis/non-production;
+- Vercel Preview futuro representa publicação non-production/staging e não pode receber secrets Production;
+- Vercel Production futuro exige recursos/secrets Production dedicados;
+- `.env.example` passou a ser deliberadamente não executável, com somente declarações comentadas e documentação;
+- `DATABASE_URL` foi classificada como conexão pooled server-only de runtime futuro;
+- `DATABASE_URL_UNPOOLED` permanece conexão direta server-only do tooling;
+- `CALEIDA_DB_TARGET`, `CALEIDA_NEON_BRANCH_ID` e `CALEIDA_ALLOW_BASELINE_MIGRATIONS` foram documentados conforme comportamento realmente implementado;
+- `baseline` permanece exclusivamente non-production;
+- o tooling atual não possui alvo de migration Production e nenhum alvo fictício foi criado;
+- nenhuma variável `NEXT_PUBLIC_*` é necessária nesta fase e secrets permanecem proibidos nesse namespace;
+- criado `tests/environment-contract.test.mjs` para proteger `.env.example`, `.gitignore`, exposição pública e ausência de repository secrets/CD na CI;
+- `docs/LOCAL_DEVELOPMENT.md` e `docs/VERCEL_RELEASE.md` foram reconciliados com o novo contrato;
+- nenhum recurso/secret Neon ou Vercel foi criado ou alterado.
+
+## Estado externo
+
+Neon verificado em 01/09/2026:
+
+```text
+caleida-nonprod
+PostgreSQL 18
+baseline main / br-restless-cherry-awpcwy6r
+```
+
+- projeto `caleida-production`: ausente;
+- Neon Auth/Data API/Object Storage: não implementados nesta Story.
+
+Vercel verificada em 01/09/2026:
+
+- nenhum projeto Caleida conectado;
+- nenhuma variável Caleida remota configurada;
+- nenhum Preview/Production executado.
+
+## Verificação
+
+Na PR #27, head de implementação `5b91c07d665b73a249a07665612bd4548fa888a1`, run `33549192981`:
+
+- Node/npm pinados: `PASS`;
+- `npm ci`: `PASS`;
+- `npm run verify`: `PASS`;
+- teste de contrato de ambientes: `PASS`;
+- PostgreSQL server 18.x: `PASS`;
+- `npm run verify:db`: `PASS`;
+- `.env.example` sem assignments ativos: `PASS`;
+- `.gitignore` mantém `.env*` ignorado exceto `.env.example`: `PASS`;
+- variáveis sensíveis em `NEXT_PUBLIC_*`: `PASS — ausentes`;
+- CI com repository secrets externos: `PASS — ausentes`;
+- CI/CD/deployment surface: `PASS — ausente`;
+- diff sem migration, dependência ou workflow alterado: `PASS`;
+- gate Neon-specific: `SKIPPED — Story não depende de comportamento gerenciado do Neon`;
+- deployment Vercel: `SKIPPED/PROIBIDO — nenhum deployment executado`;
+- CI permanente do head documental final da PR deve estar `PASS` antes do merge.
+
+---
+
+# US-PLAT-010 — Validar o ciclo técnico de entrega
+
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-PLAT-010` / EPIC-00  
+**Tipo:** auditoria/validação final do Incremento 0 sem feature artificial
 
 ## Objetivo
 
-Definir e materializar a separação de configuração entre desenvolvimento local, non-production/staging e Production, mantendo valores sensíveis fora do Git e preservando o fluxo de release Vercel exclusivamente manual.
+Validar de ponta a ponta que a fundação do Caleida consegue percorrer o ciclo real de entrega `Issue → branch → implementação/documentação necessária → CI → PR → review → merge`, permanecendo reproduzível, sem secrets e sem qualquer deployment automático, e registrar a evidência final necessária para encerrar o Incremento 0 quando todos os critérios estiverem satisfeitos.
 
 ## Dependências
 
-- `US-PLAT-008` concluída;
-- `ADR-005` vigente para Neon;
-- `ADR-007` vigente para release Vercel manual;
-- `.env.example` existente como contrato seguro;
-- `docs/VERCEL_RELEASE.md` existente como runbook de release.
+- `US-PLAT-009` concluída;
+- CI permanente em funcionamento;
+- `vercel.json` com Git deployments desabilitados;
+- contrato de ambientes concluído;
+- migrations/testes de banco existentes e reproduzíveis;
+- `ADR-007` vigente.
 
 ## Inspecionar antes de editar
 
-1. `.env.example`, `.gitignore`, documentação local e runbook Vercel;
-2. variáveis realmente exigidas pelo código e tooling atual;
-3. estado real dos projetos/ambientes Vercel e Neon quando aplicável, sem criar deployment;
-4. documentação oficial corrente de Vercel/Neon para escopo, nomes e exposição de variáveis;
-5. CI para garantir que secrets externos não sejam introduzidos sem necessidade.
+1. estado real de `main`, Issues, branches, PRs e último CI integrado;
+2. critérios de encerramento do Incremento 0 no backlog/Project Design amendments;
+3. CI, contratos de verificação, `vercel.json`, `.env.example` e `docs/ENVIRONMENTS.md`;
+4. estado Vercel para confirmar que Git/merge não publicou o Caleida;
+5. estado Neon somente para confirmar topologia e identificar se algum gate Neon-specific é realmente aplicável;
+6. documentação canônica por inconsistências residuais que impeçam declarar o incremento validado.
 
 ## Escopo esperado
 
-- separar contratos de variáveis para local, non-production/staging e Production;
-- documentar quais variáveis são server-only e quais podem ser públicas;
-- manter `.env.example` sem valores sensíveis;
-- impedir reutilização acidental de credenciais Production em Preview/non-production;
-- documentar onde o usuário configurará secrets externos quando uma futura release exigir;
-- não criar valores fictícios que pareçam credenciais reais;
-- não antecipar Auth/Data API/schema funcional que ainda não existe;
-- não executar deployment.
+- usar a própria Story como ciclo real de entrega, sem criar PR ou feature de demonstração separada;
+- criar somente a evidência/documentação mínima necessária para registrar a auditoria do Incremento 0;
+- executar CI no head da PR e revisar todos os gates;
+- confirmar ausência de secrets, CD e deployment automático;
+- confirmar que merge continua separado de release;
+- reconciliar eventuais inconsistências documentais limitadas ao Incremento 0;
+- depois do merge, confirmar CI da `main` em PASS e ausência de deployment Caleida;
+- marcar o Incremento 0 como encerrado somente se todos os critérios estiverem realmente satisfeitos.
 
 ## Critérios de aceite
 
-1. existe contrato claro de variáveis por ambiente;
-2. nenhum secret real está no Git;
-3. nenhuma variável sensível usa `NEXT_PUBLIC_*`;
-4. non-production e Production ficam explicitamente separados;
-5. CI continua sem secrets externos desnecessários e sem CD;
-6. documentação de desenvolvimento/release aponta o contrato correto;
-7. checkpoint reflete o estado real.
+1. existe Issue/branch/PR reais para `US-PLAT-010`;
+2. PR executa o CI permanente e todos os gates aplicáveis passam;
+3. diff é limitado à validação/fechamento do Incremento 0;
+4. não há secret real no Git/CI;
+5. nenhum Vercel Preview/Production é criado por branch, PR ou merge;
+6. Neon-specific é executado somente se houver dependência real do serviço, caso contrário `SKIPPED` com motivo;
+7. PR é revisada e mergeada com head verificado;
+8. push integrado na `main` recebe CI `PASS`;
+9. documentos canônicos refletem o estado integrado e apontam a próxima fase/ação real, sem depender do chat.
 
 ## Verificação obrigatória
 
-- `npm run verify` via CI permanente;
-- revisar `.env.example`, `.gitignore` e documentação alterada;
-- revisar diff por tokens, senhas, connection strings e IDs sensíveis indevidos;
-- confirmar ausência de deployment/CD;
-- usar gate Neon-specific somente se a Story passar a depender de comportamento gerenciado do Neon; caso contrário registrar `SKIPPED`.
+- `npm run verify` via CI permanente na PR;
+- PostgreSQL 18 efêmero + `npm run verify:db` via CI;
+- revisar diff completo e secrets;
+- revisar reviews/threads/mergeability;
+- confirmar estado Vercel antes e depois do merge sem executar deployment;
+- confirmar CI pós-merge na `main`;
+- confirmar Issue/PR encerradas e checkpoint integrado.
 
 ## Non-goals
 
-- implementar Neon Auth/Data API;
-- criar schema funcional;
-- provisionar Production Neon sem Story/autorização correspondente;
-- escolher Object Storage;
-- executar Preview/Production Vercel;
+- criar funcionalidade de produto apenas para gerar atividade;
+- provisionar Production Neon;
+- implementar Auth/Data API/schema funcional;
+- conectar/importar projeto Vercel;
+- executar Preview/Production/promote/rollback/redeploy;
 - adicionar CD.
 
 ---
