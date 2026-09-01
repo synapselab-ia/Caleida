@@ -1,52 +1,54 @@
-# Changelog
+# Changelog — Caleida
 
-Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
+Registro resumido das mudanças relevantes do projeto.
 
-## [Não lançado]
+## 2026-09-01
 
-### Adicionado
+### US-PLAT-001 — Inicializar a aplicação web
 
-- Repositório, Project Design v1.0 e identidade visual inicial.
-- Protocolo canônico v2 em `00_SYSTEM/`.
-- `docs/EXECUTION_PLAN.md` e `docs/CHECKPOINT.md`.
-- Amendments de plataforma e deployment.
-- `docs/NEON_PLATFORM.md` para a plataforma Neon.
-- `docs/adr/README.md` como índice canônico de Architecture Decision Records.
-- `docs/adr/TEMPLATE.md` como formato mínimo de ADR.
-- `ADR-001` — catálogo global separado da biblioteca pessoal.
-- `ADR-002` — stack técnica original, preservada como histórica/superseded em partes.
-- `ADR-003` — Supabase Free temporário, preservado como superseded.
-- `ADR-004` — mudanças de banco somente por migrations.
-- `ADR-005` — Neon como plataforma canônica de dados/identidade.
-- `ADR-006` — Object Storage desacoplado e decisão adiada.
-- `ADR-007` — deployment Vercel exclusivamente humano/manual.
+- inicializada a fundação Next.js 16.3.3 com App Router;
+- React/React DOM 19.2.8;
+- TypeScript strict;
+- Tailwind CSS 4 via PostCSS;
+- Node 24.20.0 e npm 11.19.0 fixados como linha de runtime/package manager;
+- adicionado `package-lock.json` gerado e validado no npm 11.19.0;
+- adicionados scripts `dev`, `lint`, `typecheck`, `test` e `build`;
+- adicionado smoke test mínimo com `node:test`;
+- README atualizado com execução local;
+- verificação executável concluída em runner GitHub Actions descartável: `npm ci`, lint, typecheck, test e build em PASS;
+- nenhum Neon/Auth/Storage/Vercel/deployment incluído;
+- workflow temporário de verificação não integra a Story nem a `main`.
 
-### Alterado
+## 2026-08-31
 
-- `docs/DECISIONS.md` passou a ser índice/histórico legado e deixou de competir com ADRs arquiteturais.
-- `00_SYSTEM/SOURCE_OF_TRUTH.md` passou a dar precedência explícita a ADRs `Accepted` para arquitetura.
-- `AGENTS.md` e `AI_WORK_PROTOCOL.md` passaram a ler índice/ADRs aplicáveis antes do registro legado.
-- Novas decisões arquiteturais materiais passam a exigir ADR, com supersessão explícita em vez de reescrita histórica.
-- Referências operacionais de deployment passam a apontar `ADR-007` como decisão arquitetural canônica.
-- `US-PLAT-001` foi refinada no Execution Plan e marcada `PRONTA` no backlog.
-- `docs/EXECUTION_PLAN.md` concluiu OPS-004 e promoveu `US-PLAT-001 — Inicializar a aplicação web`.
-- `docs/CHECKPOINT.md` encerrou a fase de reconciliação operacional e abriu o início técnico do Incremento 0.
+### OPS-004 — Evoluir o registro de decisões para ADRs
 
-### Corrigido
+- criada autoridade arquitetural em `docs/adr/`;
+- migradas decisões arquiteturais relevantes para ADRs;
+- relações de supersessão preservadas;
+- `DECISIONS.md` convertido em índice/histórico legado;
+- protocolos e documentação operacional reconciliados;
+- `US-PLAT-001` refinada como primeira Story técnica.
 
-- Eliminada a possibilidade de duas fontes concorrentes para decisões arquiteturais (`DECISIONS.md` × ADR).
-- Preservadas explicitamente as escolhas históricas Supabase/stack original sem fazê-las governar trabalho novo.
-- Separadas decisões de produto/processo das decisões arquiteturais.
+### OPS-003 — Reconciliar a política de deployment
 
-### Segurança e operação
+- deployment Vercel formalizado como humano/manual;
+- removida exigência de Preview automática por branch/PR;
+- CI separada de CD;
+- backlog e Project Design reconciliados.
 
-- Secrets continuam proibidos no Git.
-- Banco continua regido por migrations e verificação isolada.
-- Production e non-production Neon permanecem separados.
-- Deployment continua exclusivamente humano/manual; IA e CI não publicam.
-- Nenhum token Vercel deve ser mantido no CI para publicação automática.
+### OPS-002 — Formalizar o pivot Supabase → Neon
 
-### Observação operacional
+- Neon formalizado como plataforma de dados/identidade;
+- ambientes e branches isoladas definidos;
+- estrutura futura de migrations/testes movida para `database/`;
+- Object Storage desacoplado/adiado.
 
-- OPS-002, OPS-003 e OPS-004 foram mudanças documentais/arquiteturais; não criaram aplicação, projeto Neon, integração Vercel ou deployment.
-- A próxima ação canônica é `US-PLAT-001 — Inicializar a aplicação web`.
+### OPS-001 — Modernizar o protocolo canônico
+
+- adicionados Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Execution Plan e Checkpoint;
+- continuação entre chats passou a depender do repositório, não da memória conversacional.
+
+## Histórico anterior
+
+Mudanças anteriores permanecem preservadas no histórico Git e nos documentos legados do projeto.
