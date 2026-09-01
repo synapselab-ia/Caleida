@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-004  
+**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-005  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -43,26 +43,27 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Resultado:** projeto Neon `caleida-nonprod` provisionado; branch Neon `main` adotada como baseline canônica non-production/staging; convenção `verify/<task-id>`/`dev/<task-id>` documentada; Production/Auth/Data API/Storage/schema de produto não provisionados.
+- **Resultado:** projeto Neon `caleida-nonprod` provisionado; branch Neon `main` adotada como baseline canônica non-production/staging; convenção de branches temporárias documentada; Production/Auth/Data API/Storage/schema de produto não provisionados.
 
 ### US-PLAT-005 — Definir migrations, testes de banco e RLS
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** `database/migrations/` e `database/tests/` com runner reproduzível, baseline mínima e convenções de autorização.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
+- **Estado:** CONCLUÍDA
+- **Resultado:** `database/migrations/`, runner Node + `psql`, ledger/checksums, `database/tests/`, guardrails de alvo e contrato de testes RLS; migrations portáveis verificadas em PostgreSQL 18 descartável.
+- **Decisão:** `ADR-008` separa gate PostgreSQL portável de gate Neon-specific sem alterar Neon como plataforma canônica.
 
 ### US-PLAT-006 — Configurar validações automatizadas
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
-- **Resultado:** comandos reais de lint, typecheck, testes e build executáveis consistentemente.
+- **Estado:** PRONTA
+- **Resultado:** comandos reais de lint, typecheck, testes, validação de migrations e build executáveis consistentemente por uma entrada canônica de verificação.
+- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ### US-PLAT-007 — Configurar integração contínua
 
 - **Prioridade:** P0
 - **Estado:** A FAZER
-- **Resultado:** GitHub Actions validando PRs com lint/typecheck/test/build, sem jobs de deployment Vercel.
+- **Resultado:** GitHub Actions validando PRs com gates técnicos, incluindo banco descartável quando aplicável, sem jobs de deployment Vercel.
 
 ### US-PLAT-008 — Preparar hosting Vercel para release manual
 
@@ -80,7 +81,7 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 
 - **Prioridade:** P0
 - **Estado:** A FAZER
-- **Resultado:** PR de teste passa por CI, review e merge; banco quando aplicável usa branch Neon isolada; nenhum deployment decorre do fluxo.
+- **Resultado:** PR de teste passa por CI, review e merge; banco usa PostgreSQL descartável como gate portável e branch Neon adicional quando houver requisito Neon-specific; nenhum deployment decorre do fluxo.
 
 ---
 
@@ -90,7 +91,7 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 - lint, typecheck, testes e build passando;
 - fundação Neon non-production reproduzível;
 - migrations reconstruindo baseline esperada;
-- testes de banco/RLS em branch isolada;
+- testes de banco/RLS em PostgreSQL descartável e gate Neon adicional quando aplicável;
 - nenhuma credencial versionada;
 - PRs executando CI sem CD;
 - hosting preparado contra Git deployments automáticos;
@@ -104,4 +105,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após US-PLAT-004, o `CHECKPOINT` promove `US-PLAT-005 — Definir migrations, testes de banco e RLS`, refinada em `docs/EXECUTION_PLAN.md`.
+Após US-PLAT-005, o `CHECKPOINT` promove `US-PLAT-006 — Configurar validações automatizadas`, refinada em `docs/EXECUTION_PLAN.md`.
