@@ -9,7 +9,7 @@
 **ACTIVE_TASK:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
 **ACTIVE_ISSUE:** `#28`  
 **ACTIVE_BRANCH:** `verify/us-plat-010-delivery-cycle`  
-**ACTIVE_PR:** none  
+**ACTIVE_PR:** `#29`  
 **NEXT_ACTION:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
@@ -75,11 +75,12 @@ main: 88dfde9abec1937c0366662a4ff34eeba0edf957
 CI main: 33549799028 — PASS
 ```
 
-A Story foi iniciada com:
+A Story está materializada como:
 
 ```text
 Issue: #28
 Branch: verify/us-plat-010-delivery-cycle
+PR: #29
 Evidência: docs/INCREMENT_0_VALIDATION.md
 ```
 
@@ -111,14 +112,13 @@ Baseline: main / br-restless-cherry-awpcwy6r
 
 Ainda é necessário, nesta ordem operacional:
 
-1. abrir PR da branch ativa;
-2. obter CI permanente em `PASS` no head da PR, incluindo `npm run verify` e PostgreSQL 18 + `npm run verify:db`;
-3. revisar diff completo, secrets, reviews/threads e mergeability;
-4. confirmar ausência de projeto/deployment Caleida na Vercel durante a PR;
-5. mergear somente o head verificado;
-6. confirmar CI pós-merge na `main` em `PASS`;
-7. confirmar Vercel pós-merge sem projeto/deployment Caleida;
-8. reconciliar documentos canônicos e encerrar o Incremento 0 somente com todas as evidências satisfeitas.
+1. obter CI permanente em `PASS` no head final da PR #29, incluindo `npm run verify` e PostgreSQL 18 + `npm run verify:db`;
+2. revisar diff completo, secrets, reviews/threads e mergeability;
+3. confirmar ausência de projeto/deployment Caleida na Vercel durante a PR;
+4. mergear somente o head verificado;
+5. confirmar CI pós-merge na `main` em `PASS`;
+6. confirmar Vercel pós-merge sem projeto/deployment Caleida;
+7. reconciliar documentos canônicos e encerrar o Incremento 0 somente com todas as evidências satisfeitas.
 
 ## Próximo horizonte
 
