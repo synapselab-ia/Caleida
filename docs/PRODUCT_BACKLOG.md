@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-004  
+**Status:** Backlog do Incremento 0 — US-PLAT-005 bloqueada em branching Neon  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -48,9 +48,10 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-005 — Definir migrations, testes de banco e RLS
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** `database/migrations/` e `database/tests/` com runner reproduzível, baseline mínima e convenções de autorização.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
+- **Estado:** BLOQUEADA
+- **Progresso:** estrutura/runner/guardrails/testes offline implementados na PR Draft #17 e gates offline em PASS.
+- **Bloqueio:** criação de branch Neon descartável falha por incompatibilidade de contrato no conector; nenhum DDL foi aplicado à baseline.
+- **Retomada:** Issue #16 / branch `infra/us-plat-005-db-foundation` / PR #17.
 
 ### US-PLAT-006 — Configurar validações automatizadas
 
@@ -104,4 +105,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após US-PLAT-004, o `CHECKPOINT` promove `US-PLAT-005 — Definir migrations, testes de banco e RLS`, refinada em `docs/EXECUTION_PLAN.md`.
+O `CHECKPOINT` mantém `US-PLAT-005` como tarefa ativa: revalidar branching Neon e concluir a prova remota antes de qualquer avanço para outra Story.
