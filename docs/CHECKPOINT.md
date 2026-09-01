@@ -3,13 +3,13 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 0 — Fundação executável  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-PLAT-001 — Inicializar a aplicação web`  
-**LAST_COMPLETED_ISSUE:** `#8`  
-**LAST_COMPLETED_PR:** `#11`  
+**LAST_COMPLETED_TASK:** `US-PLAT-003 — Configurar o ambiente local da aplicação`  
+**LAST_COMPLETED_ISSUE:** `#12`  
+**LAST_COMPLETED_PR:** `#13`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
-**NEXT_ACTION:** `US-PLAT-003 — Configurar o ambiente local da aplicação`  
+**NEXT_ACTION:** `US-PLAT-004 — Configurar a fundação Neon de desenvolvimento`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -22,7 +22,7 @@ Recupere o estado pelo GitHub e pelos documentos canônicos. Não peça ao usuá
 
 ## Estado técnico atual
 
-A primeira base executável do Caleida está concluída.
+A aplicação e o ambiente local mínimo estão reproduzíveis.
 
 Existe:
 
@@ -35,13 +35,15 @@ Existe:
 - npm `11.19.0` declarado como package manager;
 - `package-lock.json` canônico;
 - scripts `dev`, `lint`, `typecheck`, `test`, `build`;
-- smoke test mínimo com `node:test`;
-- README com comandos locais;
+- `docs/LOCAL_DEVELOPMENT.md` com clone, instalação, execução, variáveis, gates e troubleshooting;
+- `.env.example` como contrato seguro, atualmente sem variáveis obrigatórias;
+- README com entrada rápida para desenvolvimento local;
 - assets preexistentes preservados.
 
 Ainda não existe:
 
-- projeto Neon do Caleida;
+- projeto Neon non-production do Caleida;
+- branch Neon canônica de desenvolvimento/staging;
 - schema/migrations/RLS de produto;
 - Neon Auth/Data API implementados;
 - Object Storage escolhido;
@@ -49,24 +51,24 @@ Ainda não existe:
 - projeto/conexão Vercel da execução canônica;
 - deployment.
 
-## Verificação de US-PLAT-001
+## Verificação de US-PLAT-003
 
-Em runner GitHub Actions descartável, Node `24.20.0` e npm `11.19.0`:
+Em runner GitHub Actions descartável, usando a branch de verificação `verify/us-plat-003-local-environment`:
 
-- runner/checkout/setup Node: `PASS`;
-- geração de `package-lock.json`: `PASS`;
+- Node `24.20.0`: `PASS`;
+- npm `11.19.0`: `PASS`;
 - `npm ci`: `PASS`;
+- `npm run dev` + resposta HTTP em localhost: `PASS`;
 - `npm run lint`: `PASS`;
 - `npm run typecheck`: `PASS`;
 - `npm test`: `PASS`;
 - `npm run build`: `PASS`;
-- secrets: `PASS — nenhum`;
+- contrato `.env.example` sem secret: `PASS`;
+- diff limitado a ambiente local/documentação: `PASS`;
 - Neon/Auth/Storage: `SKIPPED — fora do escopo`;
 - Vercel/deployment: `SKIPPED — fora do escopo e deployment proibido para IA`.
 
-O workflow temporário usado para desbloquear a verificação não integra a Story nem deve permanecer na `main`.
-
-A PR #9 preserva o histórico da tentativa original em Draft; a PR #11 a substituiu exclusivamente porque o comando do conector para retirar o estado Draft falhou por erro interno.
+O workflow temporário de verificação não integra a PR #13 nem deve permanecer na `main`.
 
 ## Plataforma vigente
 
@@ -80,12 +82,12 @@ Next.js / React / TypeScript
 
 Banco segue `ADR-004`; Neon segue `ADR-005`; Storage segue `ADR-006`; deployment segue `ADR-007`.
 
-## Próxima ação — US-PLAT-003
+## Próxima ação — US-PLAT-004
 
 Executar somente:
 
-> `US-PLAT-003 — Configurar o ambiente local da aplicação`
+> `US-PLAT-004 — Configurar a fundação Neon de desenvolvimento`
 
 A especificação executável está em `docs/EXECUTION_PLAN.md`.
 
-Não provisionar Neon ou Vercel nesta Story.
+A próxima Story pode criar infraestrutura Neon non-production, mas não deve criar schema de negócio prematuro, Production por conveniência, Vercel ou deployment.

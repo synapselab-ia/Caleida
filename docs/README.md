@@ -11,6 +11,7 @@ Esta pasta reúne os documentos oficiais de produto, arquitetura, execução, de
 - `adr/TEMPLATE.md` — formato mínimo para novos ADRs.
 - `ARCHITECTURE.md` — arquitetura técnica vigente.
 - `NEON_PLATFORM.md` — topologia/guardrails Neon.
+- `LOCAL_DEVELOPMENT.md` — setup local, variáveis, execução, gates e troubleshooting.
 - `PRODUCT_BACKLOG.md` — roadmap macro de épicos/User Stories.
 - `EXECUTION_PLAN.md` — ordem operacional e tarefas executáveis.
 - `CHECKPOINT.md` — cursor atual e `NEXT_ACTION`.
@@ -43,6 +44,12 @@ Next.js / React / TypeScript
 ```
 
 Object Storage permanece provider-independent.
+
+## Desenvolvimento local
+
+O ambiente local canônico está documentado em `LOCAL_DEVELOPMENT.md` e usa Node `24.20.0`, npm `11.19.0` e instalação por `npm ci` a partir do lockfile.
+
+Nenhum serviço remoto é necessário para iniciar a aplicação no estado atual.
 
 ## Hosting e release
 

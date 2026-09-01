@@ -9,16 +9,23 @@ Requisitos:
 - Node.js 24.20.0 (`.nvmrc`);
 - npm 11.19.0.
 
-Comandos principais:
+Setup mínimo:
 
 ```bash
 npm ci
 npm run dev
+```
+
+Gates locais:
+
+```bash
 npm run lint
 npm run typecheck
 npm test
 npm run build
 ```
+
+O guia completo de clone limpo, variáveis, execução e troubleshooting está em [`docs/LOCAL_DEVELOPMENT.md`](docs/LOCAL_DEVELOPMENT.md).
 
 A aplicação usa Next.js App Router, React, TypeScript strict e Tailwind CSS.
 
