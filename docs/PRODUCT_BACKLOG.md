@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-007  
+**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-008  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -68,15 +68,17 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 ### US-PLAT-008 — Preparar hosting Vercel para release manual
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado:** configuração compatível com Vercel, Git deployments automáticos desabilitados conforme documentação corrente, contrato de variáveis e runbook manual. Não exige conexão/publicação.
+- **Estado:** CONCLUÍDA
+- **Resultado:** `vercel.json` desabilita todos os Git deployments automáticos com `git.deploymentEnabled: false`; `tests/vercel-config-contract.test.mjs` protege o guardrail; `docs/VERCEL_RELEASE.md` documenta release manual, pré-condições, alertas e ausência de CD.
+- **Operação:** nenhum projeto Caleida foi conectado/importado na Vercel e nenhum Preview/Production foi executado.
 - **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ### US-PLAT-009 — Separar variáveis por ambiente
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
-- **Resultado:** local, non-production/staging e production com secrets separados; nenhum valor sensível versionado.
+- **Estado:** PRONTA
+- **Resultado esperado:** local, non-production/staging e production com contratos e secrets separados; nenhum valor sensível versionado; configuração compatível com o fluxo manual de release.
+- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ### US-PLAT-010 — Validar o ciclo técnico de entrega
 
@@ -106,4 +108,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após US-PLAT-007, o `CHECKPOINT` promove `US-PLAT-008 — Preparar hosting Vercel para release manual`, refinada em `docs/EXECUTION_PLAN.md`.
+Após US-PLAT-008, o `CHECKPOINT` promove `US-PLAT-009 — Separar variáveis por ambiente`, refinada em `docs/EXECUTION_PLAN.md`.
