@@ -16,6 +16,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/CI.md` como contrato operacional da integração contínua permanente.
 - `docs/VERCEL_RELEASE.md` como runbook de release Vercel exclusivamente humana/manual.
 - `docs/ENVIRONMENTS.md` como contrato canônico de configuração para local, non-production/staging e Production.
+- `docs/INCREMENT_0_VALIDATION.md` como evidência verificável do ciclo técnico de entrega e encerramento do Incremento 0.
 - `docs/adr/README.md` como índice canônico de Architecture Decision Records.
 - `docs/adr/TEMPLATE.md` como formato mínimo de ADR.
 - `ADR-001` — catálogo global separado da biblioteca pessoal.
@@ -62,7 +63,9 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-PLAT-008` foi concluída com hosting Vercel preparado para release manual, sem conexão/importação do projeto e sem deployment.
 - `US-PLAT-009` foi concluída com separação explícita entre local, non-production/staging e Production, sem provisionar ou simular Production.
 - `docs/LOCAL_DEVELOPMENT.md` e `docs/VERCEL_RELEASE.md` passaram a apontar `docs/ENVIRONMENTS.md` como contrato de configuração.
-- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-010 — Validar o ciclo técnico de entrega` como próxima ação.
+- `US-PLAT-010` foi concluída com validação do ciclo real `Issue → branch → CI → PR → review → merge → CI main`, sem feature artificial ou deployment.
+- O Incremento 0 foi encerrado após a PR #29, CI da PR `33560189535` e CI integrada da `main` `33560364513` em PASS.
+- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md` e `docs/CHECKPOINT.md` passam a promover `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)` como próxima ação, sem antecipar implementação.
 
 ### Corrigido
 
@@ -78,6 +81,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - O risco de Git Integration publicar o Caleida automaticamente passou a ter guardrail versionado antes de qualquer conexão Vercel do projeto.
 - `baseline` deixou explícito em todos os runbooks que representa somente a baseline Neon non-production e não é um caminho implícito para Production.
 - O guia local deixou de referir a CI permanente como futura e passou a refletir o workflow já implementado.
+- O estado canônico deixou de apontar US-PLAT-010 como pendente após sua validação e agora exige refino explícito antes de iniciar EPIC-01.
 
 ### Segurança e operação
 
@@ -93,9 +97,10 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - O CI permanente usa somente `permissions: contents: read`, PostgreSQL efêmero e não necessita repository secrets externos.
 - Nenhum token Vercel, deploy hook ou `id-token: write` foi introduzido no CI.
 - Git deployments Vercel ficam desabilitados por `vercel.json`; `.vercel/` permanece ignorado e não há Project Linking versionado.
-- A conta Vercel verificada durante US-PLAT-009 continuava sem projeto Caleida; nenhum projeto foi importado/conectado e nenhum Preview/Production foi executado.
-- Neon permaneceu com apenas `caleida-nonprod` no escopo Caleida; `caleida-production` não foi provisionado.
-- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-009.
+- A Vercel foi verificada antes, durante e depois do merge de US-PLAT-010 e permaneceu sem projeto Caleida; nenhum Preview/Production foi executado.
+- Neon permaneceu com apenas `caleida-nonprod/main`, PostgreSQL 18 e uma branch; `caleida-production` não foi provisionado.
+- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-010.
+- Gate Neon-specific de US-PLAT-010 foi `SKIPPED` porque a Story não alterou comportamento gerenciado do Neon; o gate PostgreSQL portável passou na PR e na `main`.
 - Nenhuma connection string, senha, Neon API key ou Vercel token foi versionada.
 
 ### Observação operacional
@@ -109,5 +114,6 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Em US-PLAT-008, a documentação oficial Vercel foi revalidada em 01/09/2026: `git.deploymentEnabled: false` desabilita Git deployments e o primeiro deployment de um projeto novo é Production mesmo sem `--prod`.
 - Em US-PLAT-009, Vercel Development/Preview/Production e o contrato Neon de `DATABASE_URL` pooled / `DATABASE_URL_UNPOOLED` direta foram revalidados contra documentação corrente.
 - Na PR #27, o run `33549192981` passou `npm ci`, `npm run verify`, PostgreSQL 18 e `npm run verify:db` no head de implementação.
-- O head documental final da PR #27 deve estar em CI `PASS` antes do merge.
-- A próxima ação canônica é `US-PLAT-010 — Validar o ciclo técnico de entrega`.
+- Na PR #29, o run `33560189535` passou todos os gates no head final `935a7fb742b78bba0df97169366b4c7ce806977d`; a review técnica não encontrou finding bloqueante.
+- O merge verificado de #29 gerou `4e0367957dc61b955e7b748244d50272b9209223`; o push correspondente na `main` passou no run `33560364513`.
+- A próxima ação canônica é `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`.

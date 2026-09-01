@@ -1,16 +1,16 @@
 # Checkpoint — Caleida
 
-**PROJECT_STATUS:** IN_PROGRESS  
-**CURRENT_PHASE:** Incremento 0 — Fundação executável  
+**PROJECT_STATUS:** READY  
+**CURRENT_PHASE:** Planejamento do Incremento 1 — EPIC-01 Identidade e design system  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-PLAT-009 — Separar variáveis por ambiente`  
-**LAST_COMPLETED_ISSUE:** `#26`  
-**LAST_COMPLETED_PR:** `#27`  
-**ACTIVE_TASK:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
-**ACTIVE_ISSUE:** `#28`  
-**ACTIVE_BRANCH:** `verify/us-plat-010-delivery-cycle`  
-**ACTIVE_PR:** `#29`  
-**NEXT_ACTION:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
+**LAST_COMPLETED_TASK:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
+**LAST_COMPLETED_ISSUE:** `#28`  
+**LAST_COMPLETED_PR:** `#30`  
+**ACTIVE_TASK:** none  
+**ACTIVE_ISSUE:** none  
+**ACTIVE_BRANCH:** none  
+**ACTIVE_PR:** none  
+**NEXT_ACTION:** `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -21,9 +21,53 @@
 
 Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça Stories concluídas.
 
-## Estado técnico atual
+## Incremento 0 — encerramento integrado
 
-### Aplicação e gates
+`US-PLAT-010` validou o ciclo técnico real do Incremento 0 sem criar feature artificial:
+
+```text
+Issue #28
+  → branch verify/us-plat-010-delivery-cycle
+  → CI da PR
+  → PR #29
+  → review
+  → merge verificado
+  → CI pós-merge na main
+  → reconciliação documental PR #30
+```
+
+### Evidência da validação
+
+```text
+Issue: #28
+Validation branch: verify/us-plat-010-delivery-cycle
+Validation PR: #29
+Head validado: 935a7fb742b78bba0df97169366b4c7ce806977d
+CI PR #29: 33560189535 — PASS
+Merge da PR #29: 4e0367957dc61b955e7b748244d50272b9209223
+CI main pós-merge #29: 33560364513 — PASS
+Closure PR: #30
+Evidência detalhada: docs/INCREMENT_0_VALIDATION.md
+```
+
+Na PR #29 e no push integrado correspondente passaram:
+
+- runtime Node/npm pinado;
+- `npm ci`;
+- `npm run verify`;
+- PostgreSQL server 18.x;
+- `npm run verify:db`;
+- cleanup do runner.
+
+A review do head final da PR #29 confirmou:
+
+- diff limitado à auditoria/documentação do Incremento 0;
+- nenhuma migration, dependência, mudança de workflow ou código de produto;
+- nenhum secret, token ou connection string real;
+- nenhuma thread pendente ou finding bloqueante;
+- merge executado somente com o head verificado.
+
+## Estado técnico preservado
 
 - Next.js `16.3.3` / React `19.2.8`;
 - TypeScript strict;
@@ -31,60 +75,11 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 - Node `24.20.0` / npm `11.19.0`;
 - `npm run verify` executa `db:migrations:check → lint → typecheck → test → build`;
 - `npm run verify:db` executa `db:migrate → db:test`;
-- CI permanente em `.github/workflows/ci.yml` usa PostgreSQL 18 efêmero e não possui CD;
-- aplicação ainda inicia sem banco ou secret externo.
+- CI permanente em `.github/workflows/ci.yml` usa PostgreSQL 18 efêmero;
+- CI permanece sem CD e sem repository secrets externos;
+- aplicação ainda não exige banco/secret externo para iniciar.
 
-### Banco versionado
-
-Permanece sem mudança funcional em `US-PLAT-010`:
-
-```text
-database/
-  migrations/
-    000001_migration_ledger.sql
-  scripts/
-    lib.mjs
-    migrate.mjs
-    test.mjs
-    validate-migrations.mjs
-  tests/
-    000001_migration_baseline.sql
-    000002_postgres_18.sql
-```
-
-Nenhuma migration, entidade funcional ou política RLS foi adicionada nesta Story.
-
-### Contrato de ambientes e deployment
-
-- `.env.example` continua deliberadamente não executável e sem valores reais;
-- `DATABASE_URL`/`DATABASE_URL_UNPOOLED` permanecem server-only;
-- nenhuma variável `NEXT_PUBLIC_*` é necessária;
-- `vercel.json` mantém `git.deploymentEnabled: false`;
-- deployment continua exclusivamente humano/manual conforme `ADR-007`;
-- CI permanece sem Vercel, deploy hook, token de publicação ou CD.
-
-## US-PLAT-010 — estado recuperado e pré-validação
-
-Baseline antes da Story:
-
-```text
-main: 88dfde9abec1937c0366662a4ff34eeba0edf957
-última Story: US-PLAT-009
-última Issue: #26
-última PR: #27
-CI main: 33549799028 — PASS
-```
-
-A Story está materializada como:
-
-```text
-Issue: #28
-Branch: verify/us-plat-010-delivery-cycle
-PR: #29
-Evidência: docs/INCREMENT_0_VALIDATION.md
-```
-
-### Neon verificado
+## Neon verificado em US-PLAT-010
 
 ```text
 Projeto: caleida-nonprod
@@ -97,31 +92,43 @@ Baseline: main / br-restless-cherry-awpcwy6r
 
 - `caleida-production`: não provisionado;
 - Neon Auth/Data API/Object Storage: não implementados;
-- nenhum recurso Neon foi criado ou alterado nesta Story;
-- gate Neon-specific: `SKIPPED — US-PLAT-010 não altera comportamento gerenciado do Neon`;
-- gate PostgreSQL portável permanece obrigatório via CI.
+- nenhum recurso Neon foi criado ou alterado por US-PLAT-010;
+- gate Neon-specific: `SKIPPED — a Story não depende de comportamento gerenciado do Neon`;
+- gate PostgreSQL portável: `PASS` via PostgreSQL 18 efêmero na PR e na `main`.
 
-### Vercel verificada antes da PR
+## Vercel verificada em US-PLAT-010
 
-- a conta/team conectada não possui projeto Caleida;
-- nenhum Preview/Production do Caleida existe;
-- `git.deploymentEnabled: false` foi revalidado contra documentação oficial corrente em 01/09/2026;
-- nenhum deployment foi ou será executado por IA.
+- `vercel.json` continua com `git.deploymentEnabled: false`;
+- a conta/team foi inspecionada antes, durante e depois do merge da PR #29;
+- nenhum projeto Caleida existe na Vercel;
+- nenhum Preview/Production Caleida foi criado;
+- nenhum Project Linking, deployment, promote, rollback ou redeploy foi executado por IA;
+- release continua exclusivamente humana/manual conforme `ADR-007`.
 
-## Verificação pendente de US-PLAT-010
+## Resultado do Incremento 0
 
-Ainda é necessário, nesta ordem operacional:
+Critérios de fundação satisfeitos:
 
-1. obter CI permanente em `PASS` no head final da PR #29, incluindo `npm run verify` e PostgreSQL 18 + `npm run verify:db`;
-2. revisar diff completo, secrets, reviews/threads e mergeability;
-3. confirmar ausência de projeto/deployment Caleida na Vercel durante a PR;
-4. mergear somente o head verificado;
-5. confirmar CI pós-merge na `main` em `PASS`;
-6. confirmar Vercel pós-merge sem projeto/deployment Caleida;
-7. reconciliar documentos canônicos e encerrar o Incremento 0 somente com todas as evidências satisfeitas.
+- setup local documentado e reproduzível;
+- lint, typecheck, testes e build em gates executáveis;
+- migrations/testes de banco reproduzíveis;
+- PostgreSQL 18 descartável como gate portável;
+- fundação Neon non-production registrada;
+- ambientes e secrets explicitamente separados;
+- CI permanente sem CD;
+- hosting protegido contra Git deployments automáticos;
+- runbook de release manual;
+- ciclo `Issue → branch → CI → PR → review → merge → CI main` comprovado;
+- documentos reconciliados pelo fechamento de US-PLAT-010.
 
-## Próximo horizonte
+**Incremento 0 — Fundação executável: CONCLUÍDO.**
 
-O Project Design indica `EPIC-01 — Identidade e design system` após a fundação técnica, mas o backlog operacional está refinado somente até o Incremento 0.
+## Próxima ação — OPS-005
 
-Nenhuma feature futura será antecipada nesta Story. A próxima ação após o encerramento verificável de `US-PLAT-010` deve ser um refino limitado do próximo incremento antes de qualquer implementação funcional.
+Executar somente:
+
+> `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`
+
+Essa ação é exclusivamente de planejamento/refino. Deve ler o Project Design e decisões vigentes, delimitar o Incremento 1, decompor EPIC-01 em Stories pequenas e promover exatamente uma primeira Story técnica. Não deve implementar componentes, telas ou features durante o refino.
+
+O escopo detalhado está em `docs/EXECUTION_PLAN.md`.
