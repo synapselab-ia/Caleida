@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-008  
+**Status:** Backlog do Incremento 0 reconciliado após US-PLAT-009  
 **Escopo detalhado:** Incremento 0 — Fundação executável
 
 ## Convenções
@@ -17,7 +17,7 @@ Estados: `A FAZER`, `PRONTA`, `EM ANDAMENTO`, `EM REVISÃO`, `CONCLUÍDA`, `BLOQ
 
 Criar aplicação vazia, instalável, testável, documentada e deployable, com fundação Neon reproduzível e sem iniciar funcionalidades de negócio.
 
-Deployment real não é gate técnico. Vercel será preparada para release manual do usuário, sem Git deployments automáticos.
+Deployment real não é gate técnico. Vercel permanece preparada para release manual do usuário, sem Git deployments automáticos.
 
 ## EPIC-00 — Fundação técnica
 
@@ -71,20 +71,21 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 - **Estado:** CONCLUÍDA
 - **Resultado:** `vercel.json` desabilita todos os Git deployments automáticos com `git.deploymentEnabled: false`; `tests/vercel-config-contract.test.mjs` protege o guardrail; `docs/VERCEL_RELEASE.md` documenta release manual, pré-condições, alertas e ausência de CD.
 - **Operação:** nenhum projeto Caleida foi conectado/importado na Vercel e nenhum Preview/Production foi executado.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ### US-PLAT-009 — Separar variáveis por ambiente
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado esperado:** local, non-production/staging e production com contratos e secrets separados; nenhum valor sensível versionado; configuração compatível com o fluxo manual de release.
-- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
+- **Estado:** CONCLUÍDA
+- **Resultado:** `docs/ENVIRONMENTS.md` formaliza local, non-production/staging e Production; `.env.example` permanece sem valores ativos/sensíveis; variáveis de banco são server-only; Production não reutiliza non-production e o tooling não inventa alvo Production inexistente.
+- **Guardrail:** `tests/environment-contract.test.mjs` protege `.env.example`, `.gitignore`, ausência de `NEXT_PUBLIC_*` sensível e CI sem repository secrets/CD.
+- **Operação:** nenhum secret remoto, projeto Neon Production, projeto Vercel Caleida ou deployment foi criado.
 
 ### US-PLAT-010 — Validar o ciclo técnico de entrega
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
-- **Resultado:** PR de teste passa por CI, review e merge; banco usa PostgreSQL descartável como gate portável e branch Neon adicional quando houver requisito Neon-specific; nenhum deployment decorre do fluxo.
+- **Estado:** PRONTA
+- **Resultado esperado:** ciclo real `Issue → branch → CI → PR → review → merge` validado de ponta a ponta com gates canônicos em PASS, ausência de deployment automático comprovada e evidência final do Incremento 0 registrada sem criar feature artificial.
+- **Execução refinada:** `docs/EXECUTION_PLAN.md`.
 
 ---
 
@@ -96,6 +97,7 @@ Deployment real não é gate técnico. Vercel será preparada para release manua
 - migrations reconstruindo baseline esperada;
 - testes de banco/RLS em PostgreSQL descartável e gate Neon adicional quando aplicável;
 - nenhuma credencial versionada;
+- contratos local/non-production/Production explícitos;
 - PRs executando CI sem CD;
 - hosting preparado contra Git deployments automáticos;
 - runbook de release manual;
@@ -108,4 +110,4 @@ Deployment Vercel real não é obrigatório para fechar o incremento.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após US-PLAT-008, o `CHECKPOINT` promove `US-PLAT-009 — Separar variáveis por ambiente`, refinada em `docs/EXECUTION_PLAN.md`.
+Após US-PLAT-009, o `CHECKPOINT` promove `US-PLAT-010 — Validar o ciclo técnico de entrega`, refinada em `docs/EXECUTION_PLAN.md`.
