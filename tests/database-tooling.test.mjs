@@ -30,7 +30,7 @@ test("checksum and SQL literal handling are deterministic", () => {
   assert.equal(sqlLiteral("it's safe"), "'it''s safe'");
 });
 
-test("database target guard rejects implicit or unsafe baseline access", () => {
+test("database target guard allows ephemeral PostgreSQL without Neon metadata", () => {
   const original = {
     target: process.env.CALEIDA_DB_TARGET,
     allow: process.env.CALEIDA_ALLOW_BASELINE_MIGRATIONS,
@@ -38,17 +38,46 @@ test("database target guard rejects implicit or unsafe baseline access", () => {
   };
 
   try {
-    delete process.env.CALEIDA_DB_TARGET;
     delete process.env.CALEIDA_ALLOW_BASELINE_MIGRATIONS;
     delete process.env.CALEIDA_NEON_BRANCH_ID;
+    process.env.CALEIDA_DB_TARGET = "ephemeral";
+
+    assert.equal(requireDatabaseTarget(), "ephemeral");
+    assert.equal(requireDatabaseTarget({ testsOnly: true }), "ephemeral");
+  } finally {
+    for (const [key, envName] of [
+      ["target", "CALEIDA_DB_TARGET"],
+      ["allow", "CALEIDA_ALLOW_BASELINE_MIGRATIONS"],
+      ["branchId", "CALEIDA_NEON_BRANCH_ID"],
+    ]) {
+      if (original[key] === undefined) delete process.env[envName];
+      else process.env[envName] = original[key];
+    }
+  }
+});
+
+test("database target guard protects Neon isolated and baseline targets", () => {
+  const original = {
+    target: process.env.CALEIDA_DB_TARGET,
+    allow: process.env.CALEIDA_ALLOW_BASELINE_MIGRATIONS,
+    branchId: process.env.CALEIDA_NEON_BRANCH_ID,
+  };
+
+  try {
+    delete process.env.CALEIDA_ALLOW_BASELINE_MIGRATIONS;
+    delete process.env.CALEIDA_NEON_BRANCH_ID;
+    delete process.env.CALEIDA_DB_TARGET;
+    assert.throws(() => requireDatabaseTarget(), /CALEIDA_DB_TARGET/);
+
+    process.env.CALEIDA_DB_TARGET = "neon-isolated";
     assert.throws(() => requireDatabaseTarget(), /CALEIDA_NEON_BRANCH_ID/);
 
     process.env.CALEIDA_NEON_BRANCH_ID = "br-disposable-test";
-    process.env.CALEIDA_DB_TARGET = "isolated";
-    assert.equal(requireDatabaseTarget(), "isolated");
+    assert.equal(requireDatabaseTarget(), "neon-isolated");
+    assert.equal(requireDatabaseTarget({ testsOnly: true }), "neon-isolated");
 
     process.env.CALEIDA_NEON_BRANCH_ID = NONPROD_BASELINE_BRANCH_ID;
-    assert.throws(() => requireDatabaseTarget(), /não pode ser usada como alvo isolated/);
+    assert.throws(() => requireDatabaseTarget(), /não pode ser usada como alvo neon-isolated/);
 
     process.env.CALEIDA_DB_TARGET = "baseline";
     assert.throws(() => requireDatabaseTarget(), /CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES/);
