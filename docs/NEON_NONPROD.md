@@ -31,14 +31,12 @@ Responsabilidades:
 
 - receber somente mudanças persistentes de banco aprovadas e versionadas por migrations;
 - representar o estado integrado de non-production;
-- servir de referência para branches descartáveis de desenvolvimento/verificação quando o tooling de branching estiver disponível;
+- servir de referência para branches descartáveis de desenvolvimento/verificação;
 - nunca receber experimentos destrutivos diretamente.
-
-Não foi criado um branch adicional chamado `staging` nesta Story. O branch default criado pelo Neon foi adotado como baseline canônica para evitar uma camada nominal sem benefício técnico.
 
 ## 3. Convenção de branches temporárias
 
-Quando a Story de migrations introduzir o tooling executável, use branches curtas e descartáveis, preferencialmente:
+Use branches curtas e descartáveis:
 
 ```text
 verify/<task-id>
@@ -53,41 +51,52 @@ Regras:
 - não usar Production como parent operacional de testes;
 - não manter branches temporárias como ambientes permanentes.
 
-## 4. Estado do conector Neon em 2026-09-01
+A documentação Neon vigente continua tratando branches como ambientes isolados adequados para testes e desenvolvimento branch-first.
 
-O projeto foi provisionado normalmente pelo conector Neon.
+## 4. Estado do conector Neon em US-PLAT-005
 
-As ações de criação/descrição de branch e execução SQL apresentam, nesta sessão, uma inconsistência de contrato entre o schema público do tool (`projectId`, `branchName`, `branchId`) e o backend, que exige nomes snake_case. Por isso:
+A leitura/provisionamento do projeto funciona normalmente pelo conector Neon.
 
-- nenhuma branch temporária foi criada artificialmente por workaround;
-- nenhum SQL foi executado;
-- nenhuma migration foi aplicada;
-- a próxima Story deve revalidar o tooling antes de depender de branches descartáveis.
+A ação exposta de criação de branch, porém, continua com incompatibilidade entre o contrato público do wrapper e o backend:
 
-Se branching isolado continuar indisponível, uma Story de migration que dependa dessa verificação deve ficar `BLOCKED`; não se deve usar a baseline `main` como laboratório destrutivo.
+- wrapper expõe `projectId` e `branchName`;
+- backend rejeita essas chaves e solicita `project_id` e `branch_name`;
+- o wrapper não permite enviar as chaves snake_case.
+
+A tentativa de criar `verify/us-plat-005-baseline` falhou antes de criar qualquer recurso.
+
+Consequências de segurança:
+
+- nenhum DDL de US-PLAT-005 foi executado remotamente;
+- a baseline `main` não foi usada como laboratório;
+- a infraestrutura Git de migrations/testes pode ser desenvolvida e validada offline;
+- a prova remota e a conclusão da Story permanecem bloqueadas até que uma branch descartável possa ser criada de forma suportada.
+
+Não usar credenciais/API paralelas como workaround apenas para contornar o conector.
 
 ## 5. Credenciais e connection strings
 
 Nenhum valor real é versionado.
 
-Quando a aplicação/tooling passar a usar o banco, o contrato esperado é:
+Contrato atual:
 
 - `DATABASE_URL` — conexão pooled para runtime server-side quando apropriado;
-- `DATABASE_URL_UNPOOLED` — conexão direta para migrations/manutenção que exigem sessão direta;
-- Neon API key — somente para automação administrativa explicitamente autorizada; nunca no browser;
-- credenciais de owner/admin — somente em contexto administrativo confiável e nunca como prova de autorização de usuário.
+- `DATABASE_URL_UNPOOLED` — conexão direta para migrations/manutenção;
+- `CALEIDA_DB_TARGET` — guardrail operacional (`isolated` ou promoção explícita `baseline`);
+- `CALEIDA_NEON_BRANCH_ID` — ID não secreto do branch-alvo, usado pelo guardrail;
+- `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES` — segundo sinal obrigatório para promoção deliberada à baseline.
 
-No estado atual, a aplicação continua sem exigir essas variáveis para iniciar localmente.
+Neon API key e credenciais owner/admin continuam fora do Git e do browser.
 
 ## 6. Serviços deliberadamente não provisionados
 
-Nesta Story não foram provisionados:
+Ainda não foram provisionados:
 
 - Neon Auth;
 - Neon Data API;
 - Object Storage;
 - projeto Neon de Production;
-- schema/tabelas/RLS de produto;
+- schema funcional/tabelas/RLS de produto;
 - integração do Next.js com o banco;
 - CI permanente;
 - Vercel/deployment.
@@ -97,18 +106,3 @@ Nesta Story não foram provisionados:
 `caleida-production` **não existe por decisão deliberada nesta fase**.
 
 Production será um projeto Neon separado quando uma Story futura exigir ambiente real de produção. Non-production não deve compartilhar secrets, usuários ou dados reais com Production.
-
-## 8. Verificação desta fundação
-
-Confirmado via Neon conectado:
-
-- projeto `caleida-nonprod`: `PASS`;
-- região `aws-us-east-1`: `PASS`;
-- PostgreSQL 18: `PASS`;
-- branch default `main` pronta: `PASS`;
-- ausência de SQL/migrations executados nesta Story: `PASS`;
-- Auth/Data API/Storage não provisionados: `PASS`;
-- Production não provisionada: `PASS`;
-- secrets versionados: `PASS — nenhum`;
-- criação de branch adicional `staging`: `SKIPPED — baseline default main adotada`;
-- criação de branch descartável de prova: `BLOCKED — inconsistência atual do conector; deve ser revalidada antes de US-PLAT-005 executar migrations`.
