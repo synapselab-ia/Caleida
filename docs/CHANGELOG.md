@@ -31,6 +31,9 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `database/scripts/` com validação, migration runner e test runner usando Node + `psql`.
 - `database/tests/` com prova da baseline de migrations e exigência de PostgreSQL 18.x.
 - Scripts `db:migrations:check`, `db:migrate` e `db:test`.
+- `npm run verify` como entrada canônica para manifesto de migrations, lint, typecheck, testes e build.
+- `npm run verify:db` como entrada separada para aplicar migrations e executar testes SQL em ambiente de banco apropriado.
+- `tests/verification-contract.test.mjs` para fixar a ordem e separação dos gates canônicos.
 
 ### Alterado
 
@@ -44,8 +47,9 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-PLAT-003` foi concluída com verificação de runtime, instalação, dev server HTTP, lint, typecheck, test e build.
 - O branch Neon default `main` de `caleida-nonprod` foi adotado como baseline canônica non-production/staging.
 - A estratégia de verificação de banco foi separada em gate PostgreSQL portável e gate Neon-specific conforme `ADR-008`.
-- `00_SYSTEM/VERIFICATION_PROTOCOL.md`, `docs/ARCHITECTURE.md`, `docs/NEON_PLATFORM.md`, `docs/NEON_NONPROD.md` e `docs/LOCAL_DEVELOPMENT.md` foram reconciliados com essa estratégia.
-- `docs/EXECUTION_PLAN.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-006 — Configurar validações automatizadas` como próxima ação.
+- `00_SYSTEM/VERIFICATION_PROTOCOL.md`, `README.md` e `docs/LOCAL_DEVELOPMENT.md` passaram a apontar os comandos `verify` e `verify:db` como entradas canônicas em vez de exigir montagem manual da sequência de gates.
+- `US-PLAT-006` foi concluída sem framework, dependência ou workflow CI permanente adicional.
+- `docs/EXECUTION_PLAN.md` e `docs/CHECKPOINT.md` promovem `US-PLAT-007 — Configurar integração contínua` como próxima ação.
 
 ### Corrigido
 
@@ -56,6 +60,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Topologia Neon documental reconciliada com o recurso remoto realmente provisionado, sem inventar branch `staging` inexistente.
 - O runner de migrations deixou de passar uma URL completa via `PGDATABASE`; conexões passam por `psql --dbname` e a URL é redigida em mensagens de erro.
 - A indisponibilidade do endpoint de branching Neon deixou de bloquear migrations que dependem apenas de comportamento PostgreSQL portável, sem reduzir gates Neon-specific.
+- A ordem dos gates padrão deixou de depender de memória/documentação dispersa e passou a ser executável por um único comando versionado.
 
 ### Segurança e operação
 
@@ -66,13 +71,14 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Production e non-production Neon permanecem separados por decisão; Production ainda não foi provisionada.
 - Deployment continua exclusivamente humano/manual; IA e CI não publicam.
 - Nenhum token Vercel deve ser mantido no CI para publicação automática.
-- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-005.
+- Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-006.
 - Nenhuma connection string, senha ou Neon API key foi versionada.
 
 ### Observação operacional
 
 - OPS-002, OPS-003 e OPS-004 foram mudanças documentais/arquiteturais.
-- Workflows GitHub Actions usados em US-PLAT-001, US-PLAT-003 e US-PLAT-005 foram descartáveis para verificação e não integram a `main`.
+- Workflows GitHub Actions usados em US-PLAT-001, US-PLAT-003, US-PLAT-005 e US-PLAT-006 foram descartáveis para verificação e não integram a `main`.
 - Em US-PLAT-005, as rotas de branching/migration temporária do conector Neon apresentaram incompatibilidade camelCase/snake_case; a limitação fica registrada para gates Neon-specific futuros.
 - A fundação de migrations foi provada em PostgreSQL 18 descartável com aplicação, testes, reaplicação do ledger e reconstrução do zero em PASS.
-- A próxima ação canônica é `US-PLAT-006 — Configurar validações automatizadas`.
+- Em US-PLAT-006, `npm ci`, `npm run verify` e `npm run verify:db` contra PostgreSQL 18 passaram em runner descartável.
+- A próxima ação canônica é `US-PLAT-007 — Configurar integração contínua`.
