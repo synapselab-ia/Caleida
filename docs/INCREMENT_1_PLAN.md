@@ -1,6 +1,6 @@
 # Incremento 1 — Fundação visual do Caleida
 
-**Status:** em execução — `US-DS-001` concluída após integração  
+**Status:** em execução — `US-DS-001` e `US-DS-002` concluídas após integração  
 **Épico:** `EPIC-01 — Identidade e design system`  
 **Issue de refino:** `#31`  
 **Natureza:** incremento operacional de interface; nenhuma funcionalidade de domínio
@@ -109,7 +109,7 @@ Dos protocolos vigentes:
 5. combinações normais de texto e superfície atendem WCAG 2.2 AA quando aplicável: `PASS` por contrato automatizado;
 6. nenhuma dependência npm, componente, theme switch persistido ou lógica de produto: `PASS`;
 7. contrato automatizado protege tokens essenciais: `PASS`;
-8. `npm run verify`/CI: `PASS` no head de implementação; head documental final deve passar antes do merge;
+8. `npm run verify`/CI: `PASS`;
 9. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
 10. deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
 
@@ -118,24 +118,47 @@ Dos protocolos vigentes:
 ### US-DS-002 — Integrar tipografia e assinatura de marca
 
 - **Prioridade:** P0
-- **Estado:** PRONTA / `NEXT_ACTION` após integração de `US-DS-001`
+- **Estado:** CONCLUÍDA após integração da PR `#36`
+- **Issue:** `#35`
+- **PR:** `#36`
 - **Dependência:** `US-DS-001`.
 
 **Objetivo:** materializar Manrope/Newsreader e o uso da marca já disponível sem inventar variantes ausentes.
 
-**Critérios principais:**
+**Resultado:**
 
-- Manrope é a fonte padrão de interface e Newsreader possui papel editorial explícito;
-- carregamento segue mecanismo suportado pelo Next.js vigente e não expõe dependência remota em runtime desnecessária;
-- fallbacks, pesos e rendering evitam layout shift indevido;
-- o logo horizontal existente recebe regras de uso e apresentação responsiva;
-- variantes de marca ainda ausentes são registradas como pendência real, não fabricadas para fechar a Story;
-- acessibilidade e `npm run verify` permanecem gates.
+- `src/app/fonts.ts` centraliza Manrope e Newsreader por `next/font/google`;
+- Manrope é aplicada como tipografia padrão de interface;
+- Newsreader possui token editorial separado e não substitui a fonte global;
+- `src/app/layout.tsx` instala as variáveis tipográficas e `src/app/globals.css` expõe `font-sans` / `font-editorial`;
+- `docs/BRAND_TYPOGRAPHY.md` documenta carregamento, fallbacks, papel editorial e regras da marca;
+- `src/components/brand/CaleidaLogo.tsx` integra somente `public/brand/caleida-logo-horizontal.png` por `next/image`, com caixa responsiva estável e `object-contain`;
+- `public/brand/README.md` foi reconciliado com o inventário real;
+- variantes clara/escura, símbolo, favicon, vetor e ícones permanecem pendências reais;
+- `tests/brand-typography-contract.test.mjs` protege fontes, tokens tipográficos, ativo oficial e ausência de variantes fabricadas;
+- `src/app/page.tsx` permanece técnica e sem redesign, preservando US-DS-004;
+- nenhuma dependência npm, migration, banco, Auth, Storage ou superfície de deployment foi adicionada.
+
+**Critérios de aceite:**
+
+1. Manrope é a fonte padrão de interface e possui fallback adequado: `PASS`;
+2. Newsreader está disponível para contexto editorial sem substituir a fonte global: `PASS`;
+3. carregamento usa `next/font` e não depende de stylesheet remota do Google no browser: `PASS`;
+4. estilos/rendering estão limitados ao papel atual, com Newsreader sem preload global: `PASS`;
+5. o logo horizontal existente possui componente responsivo sem fabricar ativo: `PASS`;
+6. variantes ausentes permanecem explicitamente pendentes: `PASS`;
+7. nenhuma biblioteca de componentes, feature de produto, migration, secret ou Storage: `PASS`;
+8. `npm run verify` e CI da PR: `PASS` no run `33653441581`;
+9. PostgreSQL 18 + `npm run verify:db`: `PASS` no mesmo run;
+10. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
+11. deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
+
+**Non-goals preservados:** primitivos de US-DS-003, redesign da página base de US-DS-004, novas versões do logo, favicon/app icon fabricado, Auth e features funcionais.
 
 ### US-DS-003 — Criar primitivos acessíveis essenciais
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA / `NEXT_ACTION`
 - **Dependências:** `US-DS-001`, `US-DS-002`.
 
 **Objetivo:** fornecer um conjunto mínimo e reutilizável para o próximo incremento funcional, sem construir telas de produto.
@@ -172,9 +195,9 @@ Dos protocolos vigentes:
 ```text
 US-DS-001 tokens/temas — CONCLUÍDA
   ↓
-US-DS-002 tipografia/marca — NEXT_ACTION
+US-DS-002 tipografia/marca — CONCLUÍDA
   ↓
-US-DS-003 primitivos acessíveis
+US-DS-003 primitivos acessíveis — NEXT_ACTION
   ↓
 US-DS-004 fundação responsiva aplicada
 ```
@@ -202,15 +225,15 @@ O incremento estará concluído quando:
 | RLS / Auth / Data API | nenhum |
 | Neon-specific | normalmente `SKIPPED`; reavaliar somente se uma Story fugir deste limite |
 | Storage | nenhum; ativo de marca existente permanece no Git |
-| Egress | sem impacto material previsto; fontes devem evitar dependência remota de runtime |
+| Egress | sem impacto material previsto; fontes não dependem de request remoto de runtime |
 | Realtime / e-mail | nenhum |
 | Vercel | build compatível; deployment continua proibido para IA |
 | Segurança | foco em evitar superfície falsa e preservar semântica/acessibilidade |
 
 ## 9. Próxima ação promovida
 
-> `US-DS-002 — Integrar tipografia e assinatura de marca`
+> `US-DS-003 — Criar primitivos acessíveis essenciais`
 
-A próxima sessão deve criar Issue/branch próprias para essa Story, ler `docs/DESIGN_TOKENS.md`, inspecionar os ativos reais em `public/brand` e consultar a documentação oficial corrente do Next.js para fontes quando o comportamento de implementação depender dela.
+A próxima sessão deve criar Issue/branch próprias para essa Story, ler `docs/DESIGN_TOKENS.md` e `docs/BRAND_TYPOGRAPHY.md`, inspecionar os padrões existentes e implementar somente botão, campo/form-field e feedback mínimos, tipados e acessíveis.
 
-Não fabricar variantes ausentes do logotipo e não antecipar primitivos/componentes de `US-DS-003`.
+Não iniciar o redesign da página base de `US-DS-004`, não adicionar biblioteca de componentes sem necessidade demonstrada e não antecipar Auth, banco ou features funcionais.
