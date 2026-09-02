@@ -20,6 +20,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/INCREMENT_1_PLAN.md` como plano operacional de `EPIC-01 — Identidade e design system`, com quatro Stories pequenas e porta de saída explícita.
 - `docs/DESIGN_TOKENS.md` como contrato canônico de cores, temas e categorias materializado em US-DS-001.
 - `docs/BRAND_TYPOGRAPHY.md` como contrato canônico de tipografia e assinatura de marca materializado em US-DS-002.
+- `docs/UI_PRIMITIVES.md` como contrato canônico de botão, form-field e feedback acessíveis materializado em US-DS-003.
 - `docs/adr/README.md` como índice canônico de Architecture Decision Records.
 - `docs/adr/TEMPLATE.md` como formato mínimo de ADR.
 - `ADR-001` — catálogo global separado da biblioteca pessoal.
@@ -48,8 +49,10 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `tests/environment-contract.test.mjs` para proteger o contrato de variáveis, `.gitignore`, ausência de secrets públicos e CI sem repository secrets/CD.
 - `tests/design-tokens-contract.test.mjs` para proteger paleta, aliases semânticos, light/dark, categorias e contraste WCAG aplicável.
 - `tests/brand-typography-contract.test.mjs` para proteger Manrope/Newsreader, tokens tipográficos, uso do logo horizontal oficial e pendências reais de variantes.
+- `tests/ui-primitives-contract.test.mjs` para proteger HTML nativo, foco, estados, relações ARIA, live-region roles e ausência de biblioteca externa.
 - `src/app/fonts.ts` como integração centralizada das fontes de referência do Caleida via `next/font`.
 - `src/components/brand/CaleidaLogo.tsx` como integração responsiva do único ativo horizontal oficial existente.
+- `src/components/ui/Button.tsx`, `FormField.tsx` e `Feedback.tsx` como conjunto mínimo de primitivos acessíveis da fundação visual.
 
 ### Alterado
 
@@ -79,7 +82,8 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-DS-002` integrou Manrope como fonte global de interface e Newsreader como família editorial explícita, ambas por `next/font` com fallbacks e variáveis CSS reutilizáveis.
 - `public/brand/README.md` agora reflete que `caleida-logo-horizontal.png` é o único ativo de marca disponível e mantém versão clara/escura, símbolo, favicon, vetores e ícones como pendências reais.
 - O logo horizontal oficial passou a ter componente responsivo via `next/image`, sem filtros, recoloração, recorte ou fabricação de variantes.
-- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_1_PLAN.md` e `docs/CHECKPOINT.md` passam a promover `US-DS-003 — Criar primitivos acessíveis essenciais` como única próxima ação após integração de US-DS-002.
+- `US-DS-003` criou os três primitivos mínimos com semântica HTML nativa, relações acessíveis explícitas, foco visível e live-region roles proporcionais, sem montar fluxo funcional.
+- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_1_PLAN.md` e `docs/CHECKPOINT.md` passam a promover `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base` como única próxima ação após integração de US-DS-003.
 
 ### Corrigido
 
@@ -99,6 +103,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - O horizonte visual deixou de ser um épico amplo sem unidade executável e passou a possuir quatro Stories ordenadas.
 - Cores de interface deixaram de depender apenas do `color-scheme` nativo e passaram a possuir aliases semânticos reutilizáveis e contrastes testados.
 - O primeiro head da PR #36 deixou de importar o PNG de `public/brand` como módulo TypeScript fora de `src/`; após o typecheck detectar `TS2307`, o componente passou a usar o caminho público com caixa responsiva estável, preservando `next/image` e sem relaxar gates.
+- O botão base deixou de aplicar hover a controles disabled; variantes usam `enabled:hover:*` e preservam o estado disabled nativo.
 
 ### Segurança e operação
 
@@ -121,6 +126,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `OPS-005` não cria nem altera banco, Neon, Storage, dependências, código de produto ou superfície de deployment.
 - `US-DS-001` não altera migrations, Neon, Auth, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - `US-DS-002` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
+- `US-DS-003` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - Nenhuma connection string, senha, Neon API key ou Vercel token foi versionada.
 
 ### Observação operacional
@@ -140,4 +146,5 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Na PR #34, o run inicial `33645092044` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db`, incluindo o novo contrato de tokens e contraste.
 - Na PR #36, o run inicial `33653117310` falhou corretamente no typecheck por `TS2307` no import estático do PNG; a implementação foi corrigida sem relaxar teste ou configuração.
 - Na PR #36, o run corrigido `33653441581` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db` no head `f6db6b5237ae77ac1597bc5889c8acf21204792d`.
-- A próxima ação canônica após integração de US-DS-002 é `US-DS-003 — Criar primitivos acessíveis essenciais`.
+- Na PR #38, o run inicial `33656150580` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db`, incluindo o novo contrato de primitivos acessíveis.
+- A próxima ação canônica após integração de US-DS-003 é `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`.
