@@ -1,6 +1,6 @@
 # Incremento 1 — Fundação visual do Caleida
 
-**Status:** refinado por `OPS-005`  
+**Status:** em execução — `US-DS-001` concluída após integração  
 **Épico:** `EPIC-01 — Identidade e design system`  
 **Issue de refino:** `#31`  
 **Natureza:** incremento operacional de interface; nenhuma funcionalidade de domínio
@@ -24,13 +24,13 @@ PRs abertas: nenhuma
 último CI main: 33560939552 — PASS
 ```
 
-Interface existente:
+Interface existente antes da primeira Story técnica:
 
-- `src/app/globals.css` importa Tailwind CSS e não possui design tokens próprios;
-- `src/app/layout.tsx` contém somente metadata e o layout raiz mínimo;
-- `src/app/page.tsx` é uma página técnica neutra, sem identidade visual final;
-- `public/brand/caleida-logo-horizontal.png` já existe como ativo oficial;
-- `public/brand/README.md` registra variantes futuras ainda ausentes.
+- `src/app/globals.css` importava Tailwind CSS e não possuía design tokens próprios;
+- `src/app/layout.tsx` continha somente metadata e o layout raiz mínimo;
+- `src/app/page.tsx` era uma página técnica neutra, sem identidade visual final;
+- `public/brand/caleida-logo-horizontal.png` já existia como ativo oficial;
+- `public/brand/README.md` registrava variantes futuras ainda ausentes.
 
 Neon permaneceu fora do escopo do refino e foi somente conferido: `caleida-nonprod`, PostgreSQL 18, uma branch `main`. Nenhuma mudança de banco é necessária para EPIC-01.
 
@@ -83,28 +83,42 @@ Dos protocolos vigentes:
 ### US-DS-001 — Materializar tokens de cor e temas base
 
 - **Prioridade:** P0
-- **Estado após OPS-005:** PRONTA / `NEXT_ACTION`
+- **Estado:** CONCLUÍDA após integração da PR `#34`
+- **Issue:** `#33`
 - **Dependências:** Incremento 0 concluído; Project Design §§21–27; Tailwind CSS 4 já instalado.
 
 **Narrativa.** Como equipe de produto, quero codificar a paleta e os temas aprovados como tokens semânticos reutilizáveis para que as próximas interfaces usem cores coerentes, acessíveis e sem valores visuais dispersos.
 
+**Resultado:**
+
+- `src/app/globals.css` contém a paleta canônica em `@theme`, aliases semânticos e integração via `@theme inline`;
+- light/dark seguem `prefers-color-scheme` sem JavaScript ou preferência persistida;
+- `docs/DESIGN_TOKENS.md` documenta o contrato visual e as escolhas de categoria;
+- Manhua/coral = `#D9685B`, Série/ciano = `#278EAF`, Anime/verde-azulado = `#278F83`;
+- accent/focus escuro usa `#A994FF` como tint acessível do violeta canônico sem substituir o token de marca;
+- texto normal semanticamente previsto atende WCAG 2.2 AA nas superfícies suportadas;
+- `tests/design-tokens-contract.test.mjs` protege paleta, aliases, temas, categorias e contraste;
+- nenhuma dependência npm, componente, tela funcional, migration ou infraestrutura foi adicionada.
+
 **Critérios de aceite:**
 
-1. os valores de marca e superfícies já definidos pelo Project Design existem em uma camada canônica de tokens CSS;
-2. tokens semânticos distinguem ao menos background, surface, surface-raised, border, text-primary, text-muted, accent e focus;
-3. tema claro e tema escuro são representados sem duplicação arbitrária de valores e respeitam a preferência de esquema do sistema sem exigir JavaScript;
-4. cores de categoria previstas no Project Design recebem tokens próprios; quando o documento não fornecer hexadecimal exato, o valor escolhido deve ser documentado na mesma Story e manter coerência/contraste, sem alterar a semântica aprovada;
-5. combinações normais de texto e superfície atendem WCAG 2.2 AA quando o critério de contraste for aplicável;
-6. a implementação não adiciona dependência npm, componente de UI, theme switch persistido ou lógica de produto;
-7. contrato automatizado protege os tokens essenciais e evita regressão para configuração puramente ad hoc;
-8. `npm run verify` e o CI da PR passam; banco/Neon-specific são `SKIPPED` com motivo por ausência de mudança de dados.
+1. os valores de marca e superfícies já definidos pelo Project Design existem em uma camada canônica de tokens CSS: `PASS`;
+2. tokens semânticos distinguem background, surface, surface-raised, border, text-primary, text-muted, accent e focus: `PASS`;
+3. tema claro e tema escuro respeitam a preferência de esquema do sistema sem JavaScript: `PASS`;
+4. cores de categoria possuem tokens próprios e as três escolhas sem hexadecimal canônico estão documentadas: `PASS`;
+5. combinações normais de texto e superfície atendem WCAG 2.2 AA quando aplicável: `PASS` por contrato automatizado;
+6. nenhuma dependência npm, componente, theme switch persistido ou lógica de produto: `PASS`;
+7. contrato automatizado protege tokens essenciais: `PASS`;
+8. `npm run verify`/CI: `PASS` no head de implementação; head documental final deve passar antes do merge;
+9. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
+10. deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
 
-**Non-goals:** tipografia, logo/favicon, componentes, redesign completo da página inicial, persistência de preferência de tema, EPIC-02.
+**Non-goals preservados:** tipografia, logo/favicon, componentes, redesign completo da página inicial, persistência de preferência de tema, EPIC-02.
 
 ### US-DS-002 — Integrar tipografia e assinatura de marca
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA / `NEXT_ACTION` após integração de `US-DS-001`
 - **Dependência:** `US-DS-001`.
 
 **Objetivo:** materializar Manrope/Newsreader e o uso da marca já disponível sem inventar variantes ausentes.
@@ -156,9 +170,9 @@ Dos protocolos vigentes:
 ## 6. Ordem e gate do incremento
 
 ```text
-US-DS-001 tokens/temas
+US-DS-001 tokens/temas — CONCLUÍDA
   ↓
-US-DS-002 tipografia/marca
+US-DS-002 tipografia/marca — NEXT_ACTION
   ↓
 US-DS-003 primitivos acessíveis
   ↓
@@ -195,6 +209,8 @@ O incremento estará concluído quando:
 
 ## 9. Próxima ação promovida
 
-> `US-DS-001 — Materializar tokens de cor e temas base`
+> `US-DS-002 — Integrar tipografia e assinatura de marca`
 
-A próxima sessão deve criar Issue/branch próprias para essa Story e implementar somente seus critérios, consultando a documentação oficial corrente do Tailwind CSS 4/Next.js quando o comportamento de implementação depender dela.
+A próxima sessão deve criar Issue/branch próprias para essa Story, ler `docs/DESIGN_TOKENS.md`, inspecionar os ativos reais em `public/brand` e consultar a documentação oficial corrente do Next.js para fontes quando o comportamento de implementação depender dela.
+
+Não fabricar variantes ausentes do logotipo e não antecipar primitivos/componentes de `US-DS-003`.
