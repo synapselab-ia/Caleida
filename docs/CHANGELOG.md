@@ -19,6 +19,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/INCREMENT_0_VALIDATION.md` como evidência verificável do ciclo técnico de entrega e encerramento do Incremento 0.
 - `docs/INCREMENT_1_PLAN.md` como plano operacional de `EPIC-01 — Identidade e design system`, com quatro Stories pequenas e porta de saída explícita.
 - `docs/INCREMENT_1_VALIDATION.md` como evidência de encerramento técnico da fundação visual.
+- `docs/INCREMENT_2_PLAN.md` como plano operacional de `EPIC-02 — Contas e autenticação`, decomposto em oito Stories de acesso controlado com gates de segurança e Neon-specific explícitos.
 - `docs/DESIGN_TOKENS.md` como contrato canônico de cores, temas e categorias materializado em US-DS-001.
 - `docs/BRAND_TYPOGRAPHY.md` como contrato canônico de tipografia e assinatura de marca materializado em US-DS-002.
 - `docs/UI_PRIMITIVES.md` como contrato canônico de botão, form-field e feedback acessíveis materializado em US-DS-003.
@@ -89,6 +90,8 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `CaleidaLogo` passou a usar wrapper `block`/`shrink-0` e alinhamento `object-left`, garantindo caixa responsiva real para `next/image fill` sem alterar o PNG oficial.
 - O Incremento 1 / EPIC-01 passa a ser tratado como concluído após os gates finais de #40; o próximo horizonte é EPIC-02, mas somente via refino `OPS-006` antes de qualquer implementação de Auth.
 - `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_1_PLAN.md` e `docs/CHECKPOINT.md` passam a promover `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)` como única próxima ação.
+- `OPS-006` refinou EPIC-02 em oito Stories ordenadas de acesso controlado, separando fundação Neon Auth, autorização/papéis, entrada controlada, e-mail, cadastro, login/sessão, recuperação/revogação e auditoria.
+- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md` e `docs/CHECKPOINT.md` passam a promover somente `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão` como próxima ação.
 
 ### Corrigido
 
@@ -110,6 +113,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - O primeiro head da PR #36 deixou de importar o PNG de `public/brand` como módulo TypeScript fora de `src/`; após o typecheck detectar `TS2307`, o componente passou a usar o caminho público com caixa responsiva estável, preservando `next/image` e sem relaxar gates.
 - O botão base deixou de aplicar hover a controles disabled; variantes usam `enabled:hover:*` e preservam o estado disabled nativo.
 - O primeiro CI de #40 expôs que o contrato antigo do logo dependia da sequência literal de classes; o teste foi atualizado para exigir a caixa responsiva mais forte (`block`/`shrink-0`/`object-left`) sem relaxar os demais requisitos.
+- O refino de EPIC-02 deixou explícito que ocultar signup na UI não satisfaz o beta fechado: a futura Story deve negar também a criação direta de conta sem convite válido ou solicitação aprovada.
 
 ### Segurança e operação
 
@@ -134,12 +138,14 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-DS-002` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - `US-DS-003` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - `US-DS-004` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
+- `OPS-006` não provisiona Neon Auth/Data API, não cria schema/RLS/usuário/SMTP/OAuth/secret, não cria Production Neon e não altera dependências ou código de produto.
+- Os nomes `NEON_AUTH_BASE_URL` e `NEON_AUTH_COOKIE_SECRET` foram somente planejados/documentados; nenhum valor real foi criado ou versionado em OPS-006.
 - Nenhuma connection string, senha, Neon API key ou Vercel token foi versionada.
 - Browser real de US-DS-004 ficou `SKIPPED` porque a sessão não conseguiu obter checkout/dev server local; nenhum Preview/Production foi usado para contornar esse limite.
 
 ### Observação operacional
 
-- OPS-002, OPS-003 e OPS-004 foram mudanças documentais/arquiteturais; OPS-005 é refino documental de produto/interface.
+- OPS-002, OPS-003 e OPS-004 foram mudanças documentais/arquiteturais; OPS-005 e OPS-006 são refinos documentais de incrementos.
 - Workflows GitHub Actions usados em US-PLAT-001, US-PLAT-003, US-PLAT-005 e US-PLAT-006 foram descartáveis para verificação e não integram a `main`.
 - Em US-PLAT-005, as rotas de branching/migration temporária do conector Neon apresentaram incompatibilidade camelCase/snake_case; a limitação fica registrada para gates Neon-specific futuros.
 - A fundação de migrations foi provada em PostgreSQL 18 descartável com aplicação, testes, reaplicação do ledger e reconstrução do zero em PASS.
@@ -157,4 +163,6 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Na PR #38, o run inicial `33656150580` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db`, incluindo o novo contrato de primitivos acessíveis.
 - Na PR #40, o run inicial `33662849749` falhou somente no contrato legado do logo; lint, typecheck e os seis testes novos de US-DS-004 passaram.
 - Após reconciliar o contrato responsivo do logo, o head técnico `a4198a7c7508ae9ede628c59455a64d00cd55d94` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db` no run `33663025148`.
-- A próxima ação canônica após integração de US-DS-004 é `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`.
+- Em OPS-006, a baseline integrada de partida `a42b8bdcd78293e797cdb6e2aff3e3cf02c495a2` passou no CI `33664145901`; o Neon foi somente lido e permaneceu `caleida-nonprod`, PostgreSQL 18, branch única `main`, sem Auth/Data API/Production.
+- Em OPS-006, documentação oficial corrente confirmou o SDK Neon Auth Next.js com `createNeonAuth()`, configuração explícita de sessão e a limitação de não presumir plugins/handlers server-side customizados de Better Auth gerenciado.
+- A próxima ação canônica após OPS-006 é `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`.
