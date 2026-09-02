@@ -378,44 +378,88 @@ Na PR #27, head de implementação `5b91c07d665b73a249a07665612bd4548fa888a1`, r
 6. gate Neon-specific aplicado somente quando necessário: `PASS` (`SKIPPED` com motivo);
 7. PR revisada e mergeada com head verificado: `PASS`;
 8. CI pós-merge da `main`: `PASS`;
-9. documentação canônica reconciliada com uma única próxima ação: `PASS` após integração do fechamento.
+9. documentação canônica reconciliada com uma única próxima ação: `PASS`.
 
 ---
 
 # OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)
 
+**Estado:** CONCLUÍDO APÓS INTEGRAÇÃO  
+**Issue:** `#31`  
+**Tipo:** planejamento/refino; nenhuma implementação de produto
+
+## Resultado refinado
+
+- criado `docs/INCREMENT_1_PLAN.md` como plano detalhado da fundação visual;
+- o Incremento 1 operacional foi limitado a EPIC-01, sem alterar o incremento funcional de acesso controlado definido no Project Design;
+- EPIC-01 foi decomposto em quatro Stories pequenas e ordenadas;
+- a implementação atual foi inspecionada: `globals.css` ainda sem tokens, layout/page mínimos e logo horizontal oficial já presente em `public/brand`;
+- NFR-01 responsividade e NFR-02 acessibilidade/WCAG 2.2 AA foram mantidos como requisitos transversais;
+- não surgiu decisão arquitetural material que exija novo ADR;
+- banco/Neon, Auth, Storage, Vercel deployment e features funcionais ficaram fora do escopo;
+- exatamente uma próxima Story foi promovida: `US-DS-001`.
+
+## Stories do incremento
+
+1. `US-DS-001 — Materializar tokens de cor e temas base` — P0;
+2. `US-DS-002 — Integrar tipografia e assinatura de marca` — P0;
+3. `US-DS-003 — Criar primitivos acessíveis essenciais` — P0;
+4. `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base` — P1.
+
+Detalhamento, dependências e porta de saída: `docs/INCREMENT_1_PLAN.md`.
+
+---
+
+# US-DS-001 — Materializar tokens de cor e temas base
+
 **Estado:** NEXT_ACTION  
-**Tipo:** planejamento/refino; nenhuma implementação de produto nesta tarefa
+**Backlog:** `US-DS-001` / EPIC-01  
+**Incremento:** 1 — Fundação visual  
+**Prioridade:** P0
 
 ## Objetivo
 
-Transformar o próximo horizonte definido no Project Design — `EPIC-01 — Identidade e design system` — em um incremento operacional limitado, com primeira Story executável e critérios verificáveis, sem antecipar funcionalidade antes do refino.
+Codificar a paleta e os temas aprovados pelo Project Design como tokens CSS semânticos reutilizáveis, estabelecendo a primeira camada executável do design system sem criar componentes ou lógica de produto.
 
 ## Inspecionar antes de editar
 
-1. `docs/PROJECT_DESIGN.md`, especialmente EPIC-01;
-2. amendments vigentes e ADRs `Accepted`;
-3. estado integrado do Incremento 0 e `docs/INCREMENT_0_VALIDATION.md`;
-4. backlog atual, que ainda não contém Stories refinadas de EPIC-01;
-5. tokens/identidade visual já existentes no repositório, se houver;
-6. requisitos transversais de responsividade, acessibilidade, testes e segurança aplicáveis à UI.
+1. Project Design §§21–27 e `docs/INCREMENT_1_PLAN.md`;
+2. `src/app/globals.css`, `layout.tsx` e `page.tsx`;
+3. configuração efetiva do Tailwind CSS 4 e `package.json`;
+4. documentação oficial corrente do Tailwind CSS 4 para CSS-first theme variables quando a implementação depender dela;
+5. comportamento atual de `color-scheme`/`prefers-color-scheme` no browser;
+6. testes existentes e contrato de CI.
 
 ## Escopo esperado
 
-- definir o objetivo e limite do Incremento 1;
-- decompor EPIC-01 em Stories pequenas e ordenadas;
-- selecionar uma única primeira Story como próxima ação técnica;
-- explicitar dependências, critérios de aceite, verificações e non-goals;
-- reconciliar `PRODUCT_BACKLOG`, `EXECUTION_PLAN` e `CHECKPOINT`;
-- criar ADR somente se surgir decisão arquitetural material nova;
-- não implementar componentes, telas ou features nesta tarefa de refino.
+- materializar uma camada canônica de tokens CSS para valores de marca e superfícies já aprovados;
+- criar aliases semânticos para background, surfaces, border, text, accent e focus;
+- representar temas claro/escuro e respeitar preferência do sistema sem JavaScript nesta Story;
+- criar tokens de cores de categoria; valores ainda não hex-especificados pelo Project Design devem ser escolhidos/documentados com coerência visual e contraste;
+- adicionar teste/contrato automatizado proporcional que proteja os tokens essenciais;
+- manter a alteração independente de banco, Auth, Storage e deployment.
 
-## Critério de saída
+## Critérios de aceite
 
-- Incremento 1 limitado e coerente com Project Design;
-- Stories de EPIC-01 priorizadas e verificáveis;
-- exatamente uma próxima Story promovida a `NEXT_ACTION`;
-- nenhuma implementação antecipada.
+1. valores de marca e superfícies do Project Design existem em uma camada única de tokens;
+2. aliases semânticos mínimos existem para `background`, `surface`, `surface-raised`, `border`, `text-primary`, `text-muted`, `accent` e `focus`;
+3. light/dark funcionam pela preferência do sistema sem theme switch persistido ou JavaScript;
+4. cores de categoria possuem tokens e nunca são tratadas como único identificador conceitual;
+5. pares normais de texto/superfície atendem WCAG 2.2 AA quando aplicável;
+6. não é adicionada dependência npm, componente, tela funcional, migration ou secret;
+7. teste automatizado protege os tokens canônicos e os dois temas;
+8. `npm run verify` e CI da PR: `PASS`;
+9. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
+10. Vercel deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
+
+## Non-goals
+
+- integrar Manrope/Newsreader;
+- completar logo/favicon/variantes de marca;
+- criar componentes de UI;
+- redesenhar integralmente a página inicial;
+- persistir preferência de tema;
+- implementar Auth ou qualquer Story de EPIC-02.
 
 ---
 

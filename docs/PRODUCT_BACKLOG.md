@@ -1,7 +1,7 @@
 # Product Backlog
 
-**Status:** Incremento 0 concluído e validado por US-PLAT-010  
-**Escopo detalhado:** Incremento 0 — Fundação executável
+**Status:** Incremento 0 concluído; Incremento 1 refinado por OPS-005  
+**Escopo detalhado atual:** `docs/INCREMENT_1_PLAN.md`
 
 ## Convenções
 
@@ -89,9 +89,7 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 - **Resultado:** ciclo real `Issue → branch → CI → PR → review → merge → CI main` validado com todos os gates aplicáveis em PASS; ausência de deployment automático comprovada; gate Neon-specific corretamente `SKIPPED`; nenhuma feature artificial, secret, migration ou infraestrutura introduzida.
 - **Evidência:** `docs/INCREMENT_0_VALIDATION.md`.
 
----
-
-# Critério de encerramento do Incremento 0
+## Critério de encerramento do Incremento 0
 
 - clone/execução documentados: `PASS`;
 - lint, typecheck, testes e build passando: `PASS`;
@@ -104,20 +102,69 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 - hosting preparado contra Git deployments automáticos: `PASS`;
 - runbook de release manual: `PASS`;
 - ciclo `PR → CI → review → merge` funcionando sem deployment: `PASS`;
-- documentos refletindo estado real: `PASS` após integração do fechamento documental.
-
-Deployment Vercel real não é obrigatório para fechar o incremento.
+- documentos refletindo estado real: `PASS`.
 
 **Incremento 0: CONCLUÍDO.**
 
-# Próximo horizonte
+---
 
-O Project Design posiciona `EPIC-01 — Identidade e design system` após a fundação técnica. O backlog ainda não deve antecipar Stories de implementação sem refino explícito do próximo incremento.
+# Incremento 1 — Fundação visual
+
+## Objetivo
+
+Materializar `EPIC-01 — Identidade e design system` como fundação visual reutilizável antes dos fluxos funcionais de acesso controlado.
+
+Este é um incremento operacional de interface. Ele não altera a ordem funcional de capacidades do Project Design e não antecipa Auth, catálogo, biblioteca ou outros domínios.
+
+## EPIC-01 — Identidade e design system
+
+### US-DS-001 — Materializar tokens de cor e temas base
+
+- **Prioridade:** P0
+- **Estado:** PRONTA
+- **Resultado esperado:** paleta aprovada, temas light/dark e aliases semânticos codificados como tokens reutilizáveis, com contraste básico protegido e sem componente/lógica de produto.
+- **Dependências:** Project Design §§21–27; Tailwind CSS 4 já instalado.
+- **Banco/Neon:** nenhum; Neon-specific `SKIPPED` por escopo.
+
+### US-DS-002 — Integrar tipografia e assinatura de marca
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Resultado esperado:** Manrope/Newsreader integradas com fallbacks adequados e uso responsivo do ativo oficial de marca existente, sem fabricar variantes ausentes.
+- **Dependência:** `US-DS-001`.
+
+### US-DS-003 — Criar primitivos acessíveis essenciais
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Resultado esperado:** conjunto mínimo tipado e acessível de botão, campo/form-field e feedback, usando tokens canônicos e sem biblioteca externa sem necessidade demonstrada.
+- **Dependências:** `US-DS-001`, `US-DS-002`.
+
+### US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base
+
+- **Prioridade:** P1
+- **Estado:** A FAZER
+- **Resultado esperado:** layout raiz e página base coerentes com a marca em celular/tablet/notebook/desktop, sem fluxo falso ou feature futura antecipada.
+- **Dependências:** `US-DS-001` a `US-DS-003`.
+
+## Critério de encerramento do Incremento 1
+
+- tokens visuais canônicos e temas light/dark reutilizáveis;
+- tipografia de referência integrada;
+- primitivos mínimos acessíveis e testados;
+- layout base responsivo e sem fluxos falsos;
+- WCAG 2.2 AA considerada nos contrastes/foco aplicáveis;
+- redução de movimento respeitada quando houver movimento;
+- lint, typecheck, testes e build em PASS;
+- nenhuma infraestrutura/banco criado por conveniência visual;
+- deployment permanece separado e manual.
+
+Detalhamento: `docs/INCREMENT_1_PLAN.md`.
 
 # Próxima ação operacional
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-A próxima ação canônica, registrada no `CHECKPOINT` e refinada em `docs/EXECUTION_PLAN.md`, é:
+Após integração de `OPS-005`, a próxima ação canônica deve ser:
 
-> `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`
+> `US-DS-001 — Materializar tokens de cor e temas base`

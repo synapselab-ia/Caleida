@@ -1,16 +1,16 @@
 # Checkpoint — Caleida
 
 **PROJECT_STATUS:** READY  
-**CURRENT_PHASE:** Planejamento do Incremento 1 — EPIC-01 Identidade e design system  
+**CURRENT_PHASE:** Incremento 1 — Fundação visual / EPIC-01 Identidade e design system  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-PLAT-010 — Validar o ciclo técnico de entrega`  
-**LAST_COMPLETED_ISSUE:** `#28`  
-**LAST_COMPLETED_PR:** `#30`  
+**LAST_COMPLETED_TASK:** `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`  
+**LAST_COMPLETED_ISSUE:** `#31`  
+**LAST_COMPLETED_PR:** `#32`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`  
+**NEXT_ACTION:** `US-DS-001 — Materializar tokens de cor e temas base`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -21,65 +21,70 @@
 
 Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça Stories concluídas.
 
-## Incremento 0 — encerramento integrado
+## Incremento 0 — estado integrado
 
-`US-PLAT-010` validou o ciclo técnico real do Incremento 0 sem criar feature artificial:
+**Incremento 0 — Fundação executável: CONCLUÍDO.**
 
-```text
-Issue #28
-  → branch verify/us-plat-010-delivery-cycle
-  → CI da PR
-  → PR #29
-  → review
-  → merge verificado
-  → CI pós-merge na main
-  → reconciliação documental PR #30
-```
-
-### Evidência da validação
+Baseline a partir da qual OPS-005 foi iniciado:
 
 ```text
-Issue: #28
-Validation branch: verify/us-plat-010-delivery-cycle
-Validation PR: #29
-Head validado: 935a7fb742b78bba0df97169366b4c7ce806977d
-CI PR #29: 33560189535 — PASS
-Merge da PR #29: 4e0367957dc61b955e7b748244d50272b9209223
-CI main pós-merge #29: 33560364513 — PASS
-Closure PR: #30
-Evidência detalhada: docs/INCREMENT_0_VALIDATION.md
+main: 52065a10416432fd8d5b70b5a92c99a6dd9b5270
+último CI main antes de OPS-005: 33560939552 — PASS
+Issues abertas antes de OPS-005: nenhuma
+PRs abertas antes de OPS-005: nenhuma
 ```
 
-Na PR #29 e no push integrado correspondente passaram:
+A evidência detalhada permanece em `docs/INCREMENT_0_VALIDATION.md`.
 
-- runtime Node/npm pinado;
-- `npm ci`;
-- `npm run verify`;
-- PostgreSQL server 18.x;
-- `npm run verify:db`;
-- cleanup do runner.
+## OPS-005 — resultado
 
-A review do head final da PR #29 confirmou:
+O refino foi executado como unidade exclusivamente documental:
 
-- diff limitado à auditoria/documentação do Incremento 0;
-- nenhuma migration, dependência, mudança de workflow ou código de produto;
-- nenhum secret, token ou connection string real;
-- nenhuma thread pendente ou finding bloqueante;
-- merge executado somente com o head verificado.
+```text
+Issue: #31
+Branch de trabalho: ops/005-refine-increment-1
+PR de integração: #32
+Plano produzido: docs/INCREMENT_1_PLAN.md
+```
 
-## Estado técnico preservado
+### Baseline visual inspecionada
 
-- Next.js `16.3.3` / React `19.2.8`;
-- TypeScript strict;
-- Tailwind CSS 4;
-- Node `24.20.0` / npm `11.19.0`;
-- `npm run verify` executa `db:migrations:check → lint → typecheck → test → build`;
-- `npm run verify:db` executa `db:migrate → db:test`;
-- CI permanente em `.github/workflows/ci.yml` usa PostgreSQL 18 efêmero;
-- CI permanece sem CD e sem repository secrets externos;
-- aplicação ainda não exige banco/secret externo para iniciar.
+- Project Design mantém `EPIC-01 — Identidade e design system` como fundação transversal;
+- `src/app/globals.css` permanece sem design tokens próprios antes da primeira Story técnica;
+- `src/app/layout.tsx` e `src/app/page.tsx` permanecem mínimos;
+- `public/brand/caleida-logo-horizontal.png` já existe como ativo oficial;
+- variantes clara/escura, símbolo, favicon, vetor e ícone continuam pendências reais registradas em `public/brand/README.md`;
+- nenhuma variante de marca foi fabricada para fechar o refino;
+- nenhum componente ou tela de produto foi implementado em OPS-005.
 
-## Neon verificado em US-PLAT-010
+### Incremento 1 refinado
+
+Objetivo operacional: materializar a fundação visual do Caleida antes dos fluxos funcionais de acesso controlado, sem alterar a sequência funcional aprovada no Project Design.
+
+Stories ordenadas:
+
+1. `US-DS-001 — Materializar tokens de cor e temas base` — P0;
+2. `US-DS-002 — Integrar tipografia e assinatura de marca` — P0;
+3. `US-DS-003 — Criar primitivos acessíveis essenciais` — P0;
+4. `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base` — P1.
+
+NFR-01 responsividade e NFR-02 acessibilidade/WCAG 2.2 AA permanecem requisitos transversais.
+
+Detalhamento, critérios, dependências, non-goals e porta de saída: `docs/INCREMENT_1_PLAN.md`.
+
+## Verificação de OPS-005
+
+- diff limitado a documentação de planejamento/refino: `PASS`;
+- código de produto, componentes e telas: `PASS — nenhuma alteração`;
+- migrations/dependências/workflow: `PASS — nenhuma alteração`;
+- secrets/tokens/connection strings: `PASS — nenhum introduzido`;
+- coerência Project Design / amendments / ADRs / backlog / Execution Plan: `PASS`;
+- nova decisão arquitetural material: `SKIPPED — nenhuma surgiu`;
+- CI da PR #32 no head `aec5a5b1741197c14ab89a21af210550a67f67a7`, run `33641572661`: `PASS`;
+- CI do head final da PR após este checkpoint: **deve estar `PASS` antes do merge**;
+- CI pós-merge da `main`: **deve estar `PASS` antes de considerar a integração operacionalmente encerrada**.
+
+## Estado Neon conferido em OPS-005
 
 ```text
 Projeto: caleida-nonprod
@@ -90,45 +95,23 @@ Branches: 1
 Baseline: main / br-restless-cherry-awpcwy6r
 ```
 
-- `caleida-production`: não provisionado;
-- Neon Auth/Data API/Object Storage: não implementados;
-- nenhum recurso Neon foi criado ou alterado por US-PLAT-010;
-- gate Neon-specific: `SKIPPED — a Story não depende de comportamento gerenciado do Neon`;
-- gate PostgreSQL portável: `PASS` via PostgreSQL 18 efêmero na PR e na `main`.
+- nenhum recurso Neon foi criado ou alterado;
+- gate Neon-specific: `SKIPPED — OPS-005 é refino documental de UI sem comportamento Neon`;
+- banco/migrations/RLS/Auth/Data API/Storage permanecem fora do escopo.
 
-## Vercel verificada em US-PLAT-010
+## Deployment
 
-- `vercel.json` continua com `git.deploymentEnabled: false`;
-- a conta/team foi inspecionada antes, durante e depois do merge da PR #29;
-- nenhum projeto Caleida existe na Vercel;
-- nenhum Preview/Production Caleida foi criado;
-- nenhum Project Linking, deployment, promote, rollback ou redeploy foi executado por IA;
-- release continua exclusivamente humana/manual conforme `ADR-007`.
+- nenhuma mudança de Vercel foi necessária em OPS-005;
+- `ADR-007` permanece vigente;
+- IA não executou Preview/Production/promote/rollback/redeploy;
+- deployment: `SKIPPED/PROIBIDO`.
 
-## Resultado do Incremento 0
-
-Critérios de fundação satisfeitos:
-
-- setup local documentado e reproduzível;
-- lint, typecheck, testes e build em gates executáveis;
-- migrations/testes de banco reproduzíveis;
-- PostgreSQL 18 descartável como gate portável;
-- fundação Neon non-production registrada;
-- ambientes e secrets explicitamente separados;
-- CI permanente sem CD;
-- hosting protegido contra Git deployments automáticos;
-- runbook de release manual;
-- ciclo `Issue → branch → CI → PR → review → merge → CI main` comprovado;
-- documentos reconciliados pelo fechamento de US-PLAT-010.
-
-**Incremento 0 — Fundação executável: CONCLUÍDO.**
-
-## Próxima ação — OPS-005
+## Próxima ação — US-DS-001
 
 Executar somente:
 
-> `OPS-005 — Refinar o Incremento 1 (EPIC-01 — Identidade e design system)`
+> `US-DS-001 — Materializar tokens de cor e temas base`
 
-Essa ação é exclusivamente de planejamento/refino. Deve ler o Project Design e decisões vigentes, delimitar o Incremento 1, decompor EPIC-01 em Stories pequenas e promover exatamente uma primeira Story técnica. Não deve implementar componentes, telas ou features durante o refino.
+A Story deve criar Issue e branch próprias, consultar a documentação oficial corrente do Tailwind CSS 4 quando o comportamento de implementação depender dela e permanecer limitada a tokens/temas conforme `docs/EXECUTION_PLAN.md` e `docs/INCREMENT_1_PLAN.md`.
 
-O escopo detalhado está em `docs/EXECUTION_PLAN.md`.
+Não antecipar tipografia, componentes, Auth, banco ou features posteriores.
