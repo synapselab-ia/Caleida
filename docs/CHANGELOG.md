@@ -18,6 +18,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/ENVIRONMENTS.md` como contrato canônico de configuração para local, non-production/staging e Production.
 - `docs/INCREMENT_0_VALIDATION.md` como evidência verificável do ciclo técnico de entrega e encerramento do Incremento 0.
 - `docs/INCREMENT_1_PLAN.md` como plano operacional de `EPIC-01 — Identidade e design system`, com quatro Stories pequenas e porta de saída explícita.
+- `docs/DESIGN_TOKENS.md` como contrato canônico de cores, temas e categorias materializado em US-DS-001.
 - `docs/adr/README.md` como índice canônico de Architecture Decision Records.
 - `docs/adr/TEMPLATE.md` como formato mínimo de ADR.
 - `ADR-001` — catálogo global separado da biblioteca pessoal.
@@ -44,6 +45,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `vercel.json` com `git.deploymentEnabled: false` para impedir Git deployments automáticos enquanto `ADR-007` estiver vigente.
 - `tests/vercel-config-contract.test.mjs` para proteger o guardrail Vercel e impedir retorno à chave legada `github`.
 - `tests/environment-contract.test.mjs` para proteger o contrato de variáveis, `.gitignore`, ausência de secrets públicos e CI sem repository secrets/CD.
+- `tests/design-tokens-contract.test.mjs` para proteger paleta, aliases semânticos, light/dark, categorias e contraste WCAG aplicável.
 
 ### Alterado
 
@@ -67,7 +69,10 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-PLAT-010` foi concluída com validação do ciclo real `Issue → branch → CI → PR → review → merge → CI main`, sem feature artificial ou deployment.
 - O Incremento 0 foi encerrado após a PR #29, CI da PR `33560189535` e CI integrada da `main` `33560364513` em PASS.
 - `OPS-005` refinou a fundação visual em `US-DS-001` a `US-DS-004`, sem implementar UI e sem alterar arquitetura.
-- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md` e `docs/CHECKPOINT.md` passam a promover `US-DS-001 — Materializar tokens de cor e temas base` como única próxima ação após integração do refino.
+- `US-DS-001` materializou a paleta e os temas aprovados em `src/app/globals.css` usando `@theme`, aliases semânticos, `@theme inline` e `prefers-color-scheme` sem JavaScript.
+- As categorias sem hexadecimal explícito no Project Design passam a usar Manhua/coral `#D9685B`, Série/ciano `#278EAF` e Anime/verde-azulado `#278F83`, com uso restrito a pista visual auxiliar.
+- O accent/focus do tema escuro usa `#A994FF` para preservar contraste sem alterar o violeta canônico `#7457E8`.
+- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_1_PLAN.md` e `docs/CHECKPOINT.md` passam a promover `US-DS-002 — Integrar tipografia e assinatura de marca` como única próxima ação após integração de US-DS-001.
 
 ### Corrigido
 
@@ -84,7 +89,8 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `baseline` deixou explícito em todos os runbooks que representa somente a baseline Neon non-production e não é um caminho implícito para Production.
 - O guia local deixou de referir a CI permanente como futura e passou a refletir o workflow já implementado.
 - O estado canônico deixou de apontar US-PLAT-010 como pendente após sua validação e agora exige refino explícito antes de iniciar EPIC-01.
-- O horizonte visual deixou de ser um épico amplo sem unidade executável e passou a possuir quatro Stories ordenadas, com escopo de `US-DS-001` limitado a tokens/temas.
+- O horizonte visual deixou de ser um épico amplo sem unidade executável e passou a possuir quatro Stories ordenadas.
+- Cores de interface deixaram de depender apenas do `color-scheme` nativo e passaram a possuir aliases semânticos reutilizáveis e contrastes testados.
 
 ### Segurança e operação
 
@@ -105,6 +111,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Nenhum Neon Auth/Data API/Object Storage/schema funcional de produto foi provisionado na US-PLAT-010.
 - Gate Neon-specific de US-PLAT-010 foi `SKIPPED` porque a Story não alterou comportamento gerenciado do Neon; o gate PostgreSQL portável passou na PR e na `main`.
 - `OPS-005` não cria nem altera banco, Neon, Storage, dependências, código de produto ou superfície de deployment.
+- `US-DS-001` não altera migrations, Neon, Auth, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - Nenhuma connection string, senha, Neon API key ou Vercel token foi versionada.
 
 ### Observação operacional
@@ -121,4 +128,5 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Na PR #29, o run `33560189535` passou todos os gates no head final `935a7fb742b78bba0df97169366b4c7ce806977d`; a review técnica não encontrou finding bloqueante.
 - O merge verificado de #29 gerou `4e0367957dc61b955e7b748244d50272b9209223`; o push correspondente na `main` passou no run `33560364513`.
 - Em OPS-005, o estado Neon foi somente conferido e permaneceu `caleida-nonprod`, PostgreSQL 18, branch única `main`; nenhum gate Neon-specific se aplica ao refino.
-- A próxima ação canônica após integração de OPS-005 é `US-DS-001 — Materializar tokens de cor e temas base`.
+- Na PR #34, o run inicial `33645092044` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db`, incluindo o novo contrato de tokens e contraste.
+- A próxima ação canônica após integração de US-DS-001 é `US-DS-002 — Integrar tipografia e assinatura de marca`.
