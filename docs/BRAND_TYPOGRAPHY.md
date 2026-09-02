@@ -48,14 +48,15 @@ O inventário real de `public/brand` contém atualmente apenas:
 public/brand/caleida-logo-horizontal.png
 ```
 
-`src/components/brand/CaleidaLogo.tsx` integra esse arquivo por import estático e `next/image`, preservando dimensões intrínsecas para evitar layout shift e definindo apresentação responsiva com largura fluida e limite máximo.
+`src/components/brand/CaleidaLogo.tsx` integra esse arquivo por `next/image` usando o caminho público `/brand/caleida-logo-horizontal.png`. O componente reserva uma caixa responsiva estável e usa `fill` + `object-contain`, mantendo a proporção do arquivo sem depender de import tipado de PNG fora de `src/`.
 
 Regras:
 
 - usar o arquivo oficial sem filtros, recoloração, recorte ou reconstrução;
-- manter proporção original;
+- manter proporção original por `object-contain`;
 - o texto alternativo da assinatura é `Caleida`;
 - largura é responsiva e não deve ultrapassar o limite definido pelo componente sem necessidade explícita;
+- a caixa reservada evita mudança de layout enquanto a imagem é resolvida;
 - o componente não cria automaticamente versão clara/escura; contraste deve ser conferido no contexto em que ele for aplicado futuramente.
 
 A Story não redesenha `src/app/page.tsx`; a aplicação da identidade à página base pertence a `US-DS-004`.
