@@ -9,7 +9,7 @@ on:
       - .github/workflows/us-auth-001-lockfile.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   lockfile:
@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: feat/us-auth-001-neon-auth-foundation
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -34,10 +35,15 @@ jobs:
         shell: bash
         run: |
           node -e "const l=require('./package-lock.json'); if(l.packages['node_modules/@neondatabase/auth']?.version !== '0.5.0-beta') process.exit(1)"
-      - name: Upload generated lockfile
-        uses: actions/upload-artifact@v6
-        with:
-          name: us-auth-001-package-lock
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit and rebase generated lockfile
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore(auth): atualizar package-lock"
+          git pull --rebase origin feat/us-auth-001-neon-auth-foundation
+          git push origin HEAD:feat/us-auth-001-neon-auth-foundation
