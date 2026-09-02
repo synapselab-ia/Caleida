@@ -1,6 +1,6 @@
 # Ambientes e variáveis — Caleida
 
-**Status:** contrato operacional canônico de configuração  
+**Status:** contrato operacional canônico de configuração após US-AUTH-001  
 **Decisões relacionadas:** `ADR-005` e `ADR-007`  
 **Plataforma:** `docs/NEON_PLATFORM.md`  
 **Release:** `docs/VERCEL_RELEASE.md`
@@ -28,7 +28,7 @@ Regras obrigatórias:
 - variáveis server-only nunca recebem prefixo `NEXT_PUBLIC_`;
 - qualquer nova variável deve ser classificada neste contrato ou em documentação de domínio aplicável antes de depender dela operacionalmente.
 
-## 2. Estado real em US-PLAT-009
+## 2. Estado real após US-AUTH-001
 
 ### Neon
 
@@ -42,15 +42,17 @@ Baseline: main
 Branch ID: br-restless-cherry-awpcwy6r
 ```
 
-O projeto Neon Production **não está provisionado**. Portanto não existe connection string Production para registrar, configurar ou simular.
+A baseline non-production possui Neon Auth gerenciado com provider Better Auth e schema `neon_auth`. Nenhum usuário do Caleida foi criado nesta Story.
 
-Neon Auth, Data API e Object Storage também não estão implementados nesta fase.
+A branch descartável `verify-us-auth-001` (`br-snowy-hall-aw9uv2gn`) foi usada para o gate Neon-specific antes da promoção deliberada da configuração Auth para a baseline.
+
+O projeto Neon Production **não está provisionado**. Portanto não existe connection string, endpoint Auth ou cookie secret Production canônico para registrar, configurar ou simular.
+
+Neon Data API e Object Storage continuam não implementados para o produto.
 
 ### Vercel
 
-A conta conectada ainda não possui projeto Caleida. Nenhuma variável remota do Caleida existe na Vercel e nenhum Project Linking deve ser criado apenas para concluir esta Story.
-
-Quando o projeto Vercel existir por ação humana deliberada, os escopos da plataforma devem ser mapeados assim:
+Nenhum projeto/deployment Caleida foi criado como consequência desta Story. Quando o projeto Vercel existir por ação humana deliberada, os escopos da plataforma devem ser mapeados assim:
 
 | Caleida | Vercel | Dados permitidos |
 |---|---|---|
@@ -78,34 +80,43 @@ Uso local futuro:
 .env.*.local            ← também permanece fora do Git quando criado por tooling/framework
 ```
 
-A aplicação atualmente inicia sem variável externa. Não crie um `.env.local` apenas para preencher placeholders desnecessários.
+O build e o CI padrão continuam funcionando sem variável externa porque a fronteira Auth é lazy e não inicializa o SDK durante build sem uma operação Auth real.
+
+Para exercer Auth localmente, a configuração deve apontar somente para non-production/branch apropriada e permanecer em arquivo ignorado ou secret store equivalente.
 
 ## 4. Classificação das variáveis atuais
 
 | Variável | Classe | Escopo atual | Regra |
 |---|---|---|---|
-| `DATABASE_URL` | secret server-only | runtime futuro | conexão pooled; não é consumida pela aplicação atualmente |
+| `DATABASE_URL` | secret server-only | runtime futuro | conexão pooled; ainda não é consumida pelo runtime normal da aplicação |
 | `DATABASE_URL_UNPOOLED` | secret server-only | tooling de banco | conexão direta para migrations/testes; nunca browser |
 | `CALEIDA_DB_TARGET` | controle não secreto | tooling de banco | aceita somente os alvos implementados pelo runner |
 | `CALEIDA_NEON_BRANCH_ID` | identificador não secreto | tooling Neon | vincula o comando ao branch esperado; não concede acesso sozinho |
-| `CALEIDA_ALLOW_BASELINE_MIGRATIONS` | confirmação não secreta | promoção non-production | só existe para a ação deliberada de baseline documentada |
+| `CALEIDA_ALLOW_BASELINE_MIGRATIONS` | confirmação não secreta | promoção non-production | só existe para ação deliberada de migrations na baseline |
+| `NEON_AUTH_BASE_URL` | configuração server-only | Auth branch-scoped | endpoint Auth do ambiente em uso; não versionar valor real nem reutilizar entre ambientes |
+| `NEON_AUTH_COOKIE_SECRET` | secret server-only | assinatura do cache de sessão | mínimo de 32 caracteres; nunca browser/Git/log persistente |
 | `NEXT_PUBLIC_*` | público | nenhum atualmente | só pode ser criado para dado intencionalmente público |
 
-Connection strings contêm credenciais e devem ser tratadas como secrets mesmo quando o hostname, project ID ou branch ID isoladamente não forem secretos.
+Connection strings e cookie/session secrets são sempre secrets. Um branch/project ID isolado é identificador não sensível; uma URL Auth operacional é tratada como configuração de ambiente e permanece fora do Git por política do Caleida.
 
 ## 5. Desenvolvimento local
 
-### Aplicação
+### Aplicação sem exercício de Auth
 
-No estado atual:
+`npm run build`, lint, typecheck e testes não exigem variáveis Auth externas.
+
+### Aplicação exercitando Neon Auth
+
+Quando uma operação Auth real for exercitada localmente:
 
 ```text
-nenhuma variável obrigatória
+NEON_AUTH_BASE_URL=<auth-endpoint-nonprod-ou-branch-isolada>
+NEON_AUTH_COOKIE_SECRET=<server-only-random-secret-32+-chars>
 ```
 
-Quando a aplicação passar a depender de Neon ou outro serviço, o desenvolvimento local deve apontar exclusivamente para:
+O desenvolvimento local deve apontar exclusivamente para:
 
-- `caleida-nonprod` quando for apropriado usar a baseline de integração; ou
+- `caleida-nonprod/main` quando for apropriado usar a baseline integrada; ou
 - branch/recurso descartável quando a mudança exigir isolamento.
 
 Production é proibida para desenvolvimento local.
@@ -123,7 +134,20 @@ Esse ambiente é descartável e não usa credencial Neon.
 
 ## 6. Non-production / staging
 
-### Runtime futuro
+### Neon Auth
+
+A baseline `caleida-nonprod/main` possui Neon Auth habilitado.
+
+Configuração de runtime Auth:
+
+```text
+NEON_AUTH_BASE_URL=<branch-scoped-auth-endpoint>
+NEON_AUTH_COOKIE_SECRET=<server-only-random-secret-32+-chars>
+```
+
+Cada branch Auth deve usar seu próprio endpoint. Cookie secrets não são copiados para Production e nunca são prefixados com `NEXT_PUBLIC_`.
+
+### Runtime futuro de banco
 
 Quando o runtime realmente passar a consumir banco:
 
@@ -141,13 +165,15 @@ Quando uma mudança depender de comportamento específico do Neon:
 DATABASE_URL_UNPOOLED=<direct-disposable-neon-branch-connection>
 CALEIDA_DB_TARGET=neon-isolated
 CALEIDA_NEON_BRANCH_ID=<disposable-neon-branch-id>
+NEON_AUTH_BASE_URL=<disposable-branch-auth-endpoint>    # quando Auth fizer parte do gate
+NEON_AUTH_COOKIE_SECRET=<isolated-server-only-secret>  # quando Auth fizer parte do gate
 ```
 
 A baseline `main` não pode ser usada como branch `neon-isolated`.
 
 ### Promoção deliberada da baseline non-production
 
-Somente migrations já versionadas e verificadas podem usar:
+Migrations de produto já versionadas e verificadas podem usar:
 
 ```text
 DATABASE_URL_UNPOOLED=<direct-nonprod-baseline-connection>
@@ -155,6 +181,8 @@ CALEIDA_DB_TARGET=baseline
 CALEIDA_NEON_BRANCH_ID=br-restless-cherry-awpcwy6r
 CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES
 ```
+
+Recursos gerenciados do Neon, como Neon Auth, seguem promoção deliberada própria depois do gate Neon-specific; não são tratados como migrations de produto.
 
 Esse fluxo é non-production. Não deve ser reinterpretado como mecanismo de promoção Production.
 
@@ -166,11 +194,13 @@ Até uma Story explícita provisionar e proteger esse ambiente:
 
 - não existe `DATABASE_URL` Production canônica;
 - não existe `DATABASE_URL_UNPOOLED` Production canônica;
+- não existe `NEON_AUTH_BASE_URL` Production canônica;
+- não existe `NEON_AUTH_COOKIE_SECRET` Production canônico;
 - não existe alvo `CALEIDA_DB_TARGET` Production no runner;
 - não se reutiliza `baseline` para chegar a Production;
 - nenhum valor fictício deve ser criado para aparentar que Production está configurada.
 
-Uma futura Story que habilitar migrations Production deve introduzir guardrail explícito e verificável antes de qualquer operação real.
+Uma futura Story que habilitar migrations/identidade em Production deve introduzir guardrails explícitos antes de qualquer operação real.
 
 ## 8. Exposição ao browser
 
@@ -179,6 +209,7 @@ No Next.js, nomes `NEXT_PUBLIC_*` são destinados a valores públicos incorporad
 - `DATABASE_URL`;
 - `DATABASE_URL_UNPOOLED`;
 - senhas/tokens Neon;
+- `NEON_AUTH_COOKIE_SECRET`;
 - secrets de Neon Auth/Data API;
 - OAuth client secrets;
 - cookie/session secrets;
@@ -205,22 +236,28 @@ Variáveis de sistema fornecidas automaticamente pela Vercel, como `VERCEL_ENV`,
 
 O CI permanente usa somente um PostgreSQL 18 efêmero e valores locais do próprio workflow para esse container.
 
-Ele não deve depender de:
+Ele não depende de:
 
 - connection string Neon;
 - Neon API key;
 - Vercel token;
-- Auth secret;
-- secret externo do repositório apenas para executar os gates padrão.
+- Auth endpoint/secret;
+- secret externo do repositório para executar os gates padrão.
+
+A integração Auth é lazy para permitir que `npm run verify` prove lint/typecheck/test/build sem puxar credenciais externas para o CI padrão.
 
 Uma Story futura só pode adicionar secret ao CI quando houver requisito técnico explícito e revisão de segurança correspondente. CI continua sem CD.
 
-## 11. Fontes externas revalidadas em US-PLAT-009
+## 11. Fontes externas revalidadas
 
-Em 01/09/2026 foram revalidados:
+Em `US-PLAT-009` foram revalidados Vercel Environment Variables e o contrato Neon de URLs pooled/unpooled.
 
-- Vercel Environment Variables / ambientes Development, Preview e Production;
-- Vercel Sensitive Environment Variables;
-- Neon branch-scoped environment variables, incluindo `DATABASE_URL` pooled e `DATABASE_URL_UNPOOLED` direta.
+Em `US-AUTH-001`, em 02/09/2026, foram revalidados:
 
-A documentação corrente deve ser revalidada novamente na Story que efetivamente configurar um projeto Vercel, Neon Production, Auth/Data API ou outra integração com secrets.
+- SDK oficial Neon Auth para Next.js;
+- `createNeonAuth()`, handler catch-all e `getSession()` server-side;
+- requisito corrente de cookie secret com pelo menos 32 caracteres;
+- cache de dados de sessão com TTL configurável;
+- isolamento Auth branch-scoped do Neon.
+
+Revalidar novamente a documentação corrente na Story que efetivamente configurar Vercel, Neon Production, Data API, OAuth, e-mail ou política de revogação de sessão.
