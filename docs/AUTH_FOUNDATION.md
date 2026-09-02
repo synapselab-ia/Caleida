@@ -1,6 +1,6 @@
 # Fundação Neon Auth — Caleida
 
-**Status:** contrato técnico de `US-AUTH-001`  
+**Status:** contrato técnico implementado em `US-AUTH-001`  
 **Capacidade:** CAP-01  
 **Plataforma:** `ADR-005` + `docs/NEON_PLATFORM.md`  
 **Ambientes:** `docs/ENVIRONMENTS.md`
@@ -19,7 +19,7 @@ A fixação exata é deliberada porque a linha atual permanece beta e pode intro
 
 ## 2. Estado Neon verificado
 
-A baseline canônica non-production continua:
+A baseline canônica non-production é:
 
 ```text
 Projeto: caleida-nonprod
@@ -27,6 +27,8 @@ Project ID: patient-glade-95136440
 Baseline: main
 Branch ID: br-restless-cherry-awpcwy6r
 PostgreSQL: 18
+Auth provider: better_auth
+Auth schema: neon_auth
 ```
 
 Para o gate Neon-specific de US-AUTH-001 foi criada uma branch descartável isolada:
@@ -42,7 +44,17 @@ Auth schema: neon_auth
 
 IDs de recurso não são credenciais. Nenhuma connection string, senha, cookie secret ou Auth URL real é registrada no Git.
 
-Antes da Story, `get_auth` na baseline retornava Auth não habilitado. O provisionamento inicial ocorreu exclusivamente na branch descartável.
+Sequência aplicada:
+
+1. antes da Story, `get_auth` na baseline retornava Auth não habilitado;
+2. o provisionamento inicial ocorreu exclusivamente na branch descartável;
+3. o schema gerenciado `neon_auth` foi verificado na branch isolada;
+4. a baseline foi relida e continuava sem Auth durante a experimentação;
+5. o código corrigido passou `npm run verify`, PostgreSQL 18 e `verify:db`;
+6. somente então Neon Auth Better Auth foi provisionado deliberadamente na baseline non-production;
+7. o schema `neon_auth` foi confirmado na baseline depois da promoção.
+
+Nenhum usuário foi criado para realizar esse gate.
 
 ## 3. Integração Next.js
 
@@ -65,7 +77,9 @@ A fronteira é deliberadamente server-only.
 
 `createServerAuth()` é lazy: configuração é lida somente quando uma operação Auth é executada. Isso preserva `npm run build` e o CI padrão sem exigir secrets externos quando nenhuma chamada Auth ocorre durante o build.
 
-A rota proxy oficial expõe apenas `GET` e `POST` nesta Story. Nenhum client SDK, Auth UI ou `proxy.ts` é criado porque ainda não existe fluxo ou rota privada real a proteger.
+O handler catch-all corrente do SDK recebe dois argumentos: request e contexto com `params: Promise<{ path: string[] }>`. A rota do Caleida encaminha ambos explicitamente. O primeiro CI da PR detectou corretamente a omissão do contexto por typecheck; a correção foi feita sem relaxar gates e um teste de regressão passou a proteger essa assinatura.
+
+A rota proxy expõe apenas `GET` e `POST` nesta Story. Nenhum client SDK, Auth UI do produto ou `proxy.ts` é criado porque ainda não existe fluxo ou rota privada real a proteger.
 
 ## 4. Fail-closed
 
@@ -108,23 +122,31 @@ Production Neon continua inexistente; nenhum valor Production é criado ou simul
 
 ## 7. Gate Neon-specific
 
-A prova mínima desta Story exige:
+A prova desta Story cobriu:
 
 - branch filha separada da baseline;
 - compute read-write próprio;
 - Neon Auth Better Auth provisionado na branch isolada;
 - schema gerenciado `neon_auth` disponível pelo serviço;
 - endpoint Auth branch-scoped distinto da baseline;
-- baseline não usada como laboratório.
+- baseline não usada como laboratório;
+- promoção deliberada à baseline somente depois dos gates técnicos;
+- confirmação pós-promoção do Auth/schema gerenciado na baseline.
 
-A promoção para baseline non-production somente ocorre após os gates de código/CI e revisão da mudança. Nenhum usuário real precisa ser criado para provar a fundação.
+A branch descartável permanece pendente de remoção segura porque a ferramenta classifica exclusão de branch como ação destrutiva que exige autorização explícita.
 
-## 8. Non-goals preservados
+## 8. Dependência beta e observações de instalação
+
+O `npm ci` da Story resolveu o SDK exato e terminou com auditoria de zero vulnerabilidades conhecidas, mas o pacote corrente traz dependências transitivas de Auth UI/Better Auth que emitem warnings de peer dependency e depreciação em pacotes internos de e-mail.
+
+O Caleida não declara nem importa `@neondatabase/auth-ui` diretamente nesta Story. Esses warnings são tratados como risco upstream da versão beta e devem ser reavaliados antes de ampliar a superfície de Auth ou atualizar o SDK.
+
+## 9. Non-goals preservados
 
 US-AUTH-001 não implementa:
 
 - signup/signin/logout funcional;
-- client Auth ou Auth UI;
+- client Auth ou Auth UI do produto;
 - convite/lista de espera;
 - papéis/autorização de produto;
 - Data API;
@@ -135,12 +157,13 @@ US-AUTH-001 não implementa:
 - Production Neon;
 - Preview/Production Vercel.
 
-## 9. Referências correntes revalidadas
+## 10. Referências correntes revalidadas
 
 Em 02/09/2026 foram revalidados:
 
 - Neon Auth Next.js SDK — `packages/auth/NEXT-JS.md` no repositório oficial `neondatabase/neon-js`;
-- implementação corrente de `createNeonAuth()` e validação de cookies no mesmo repositório;
+- implementação corrente de `createNeonAuth()` e do handler catch-all no mesmo repositório;
+- validação corrente do cookie secret;
 - documentação oficial Neon Auth/branchable identity;
 - Next.js 16 — `proxy.ts` como convenção atual, sem tratá-lo como substituto de autorização server-side.
 
