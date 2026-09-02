@@ -1,255 +1,156 @@
 # Incremento 1 — Fundação visual do Caleida
 
-**Status:** em execução — `US-DS-001`, `US-DS-002` e `US-DS-003` concluídas após integração  
+**Status:** CONCLUÍDO após integração de `US-DS-001` a `US-DS-004`  
 **Épico:** `EPIC-01 — Identidade e design system`  
 **Issue de refino:** `#31`  
+**Evidência de encerramento:** `docs/INCREMENT_1_VALIDATION.md`  
 **Natureza:** incremento operacional de interface; nenhuma funcionalidade de domínio
 
 ## 1. Objetivo
 
-Materializar a identidade visual aprovada do Caleida em uma fundação reutilizável de UI antes de iniciar contas/autenticação e demais fluxos funcionais.
+Materializar a identidade visual aprovada do Caleida em uma fundação reutilizável antes de contas/autenticação e demais fluxos funcionais.
 
-O incremento deve transformar as regras já aprovadas no Project Design em contratos executáveis de interface: cores e temas, tipografia, primitivos acessíveis e composição responsiva básica.
+O incremento transforma o Project Design em contratos executáveis de interface: cores e temas, tipografia/marca, primitivos acessíveis e composição responsiva básica, sem alterar a visão funcional do produto.
 
-Este incremento **não altera** a visão funcional do Project Design. O incremento funcional de acesso controlado continua posterior a esta fundação visual.
+## 2. Requisitos canônicos preservados
 
-## 2. Baseline inspecionada
+Do Project Design §§21–27:
 
-Estado integrado antes do refino:
-
-```text
-main: 52065a10416432fd8d5b70b5a92c99a6dd9b5270
-Issues abertas: nenhuma
-PRs abertas: nenhuma
-último CI main: 33560939552 — PASS
-```
-
-Interface existente antes da primeira Story técnica:
-
-- `src/app/globals.css` importava Tailwind CSS e não possuía design tokens próprios;
-- `src/app/layout.tsx` continha somente metadata e o layout raiz mínimo;
-- `src/app/page.tsx` era uma página técnica neutra, sem identidade visual final;
-- `public/brand/caleida-logo-horizontal.png` já existia como ativo oficial;
-- `public/brand/README.md` registrava variantes futuras ainda ausentes.
-
-Neon permaneceu fora do escopo do refino e foi somente conferido: `caleida-nonprod`, PostgreSQL 18, uma branch `main`. Nenhuma mudança de banco é necessária para EPIC-01.
-
-## 3. Requisitos canônicos preservados
-
-Do Project Design:
-
-- personalidade: cultural, íntima, sofisticada, organizada, tecnológica, levemente lúdica e autoral;
-- evitar aparência de dashboard empresarial genérico, streaming clone, loja, cassino ou interface infantil;
-- paleta principal aprovada: violeta `#7457E8`, magenta `#D85BA8`, azul `#4C8DFF`, verde `#39B99A`, âmbar `#F2A93B`;
-- tema escuro: fundo `#101014`, superfícies `#17171D` / `#202028`, borda `#30303A`, texto principal `#F5F4F8`;
-- tema claro: fundo `#F7F6FA`, superfície branca, borda `#E4E1EA`, texto principal `#24212A`;
-- Manrope como referência de interface e Newsreader para resenhas/citações/retrospectivas;
-- cor nunca pode ser o único identificador de categoria;
-- animação deve ser discreta, funcional e respeitar redução de movimento;
-- NFR-01 responsividade e NFR-02 acessibilidade/WCAG 2.2 AA são transversais.
+- personalidade cultural, íntima, sofisticada, organizada, tecnológica, levemente lúdica e autoral;
+- evitar dashboard empresarial genérico, streaming clone, loja, cassino, interface infantil ou rede social indiferenciada;
+- paleta e temas materializados por tokens semânticos;
+- Manrope para interface e Newsreader para contexto editorial;
+- assinatura geométrica discreta como recurso visual auxiliar;
+- cor nunca como único identificador de categoria;
+- movimento discreto, funcional e reduzível;
+- NFR-01 responsividade e NFR-02 acessibilidade/WCAG 2.2 AA como requisitos transversais.
 
 Dos protocolos vigentes:
 
-- CI continua sem CD;
-- deployment Vercel continua exclusivamente humano/manual;
-- nenhuma Story deste incremento exige Neon, migration, RLS ou Storage por padrão;
-- decisões arquiteturais materiais futuras exigem ADR; calibração visual/tokenização interna não exige ADR por si só.
+- CI permanece sem CD;
+- deployment Vercel permanece exclusivamente humano/manual;
+- nenhuma Story do incremento cria banco, Auth, RLS, Storage ou infraestrutura por conveniência visual;
+- nenhuma decisão arquitetural material nova foi necessária.
 
-## 4. Limite do Incremento 1
-
-### Inclui
-
-- tokens de cor e temas light/dark;
-- tipografia e hierarquia textual base;
-- uso coerente dos ativos de marca já disponíveis;
-- primitivos acessíveis mínimos para os próximos fluxos;
-- composição/layout base responsivo;
-- foco, contraste e redução de movimento como requisitos transversais;
-- testes/contratos proporcionais à fundação visual.
-
-### Não inclui
-
-- Auth, convites, sessão ou papéis;
-- banco, migrations, Neon Auth/Data API ou RLS;
-- catálogo, biblioteca ou qualquer domínio funcional;
-- Storage ou upload de avatar/banner;
-- componentes específicos de features futuras;
-- Storybook, framework E2E ou biblioteca de componentes adicionados sem necessidade demonstrada;
-- geração/reinterpretação arbitrária de novas versões do logotipo;
-- deployment Preview/Production.
-
-## 5. Stories refinadas
+## 3. Stories concluídas
 
 ### US-DS-001 — Materializar tokens de cor e temas base
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA após integração da PR `#34`
+- **Estado:** CONCLUÍDA
 - **Issue:** `#33`
-- **Dependências:** Incremento 0 concluído; Project Design §§21–27; Tailwind CSS 4 já instalado.
+- **PR:** `#34`
+- **Documentação:** `docs/DESIGN_TOKENS.md`
 
-**Narrativa.** Como equipe de produto, quero codificar a paleta e os temas aprovados como tokens semânticos reutilizáveis para que as próximas interfaces usem cores coerentes, acessíveis e sem valores visuais dispersos.
+Resultado:
 
-**Resultado:**
-
-- `src/app/globals.css` contém a paleta canônica em `@theme`, aliases semânticos e integração via `@theme inline`;
+- paleta de marca e aliases semânticos materializados em `src/app/globals.css`;
 - light/dark seguem `prefers-color-scheme` sem JavaScript ou preferência persistida;
-- `docs/DESIGN_TOKENS.md` documenta o contrato visual e as escolhas de categoria;
-- Manhua/coral = `#D9685B`, Série/ciano = `#278EAF`, Anime/verde-azulado = `#278F83`;
-- accent/focus escuro usa `#A994FF` como tint acessível do violeta canônico sem substituir o token de marca;
-- texto normal semanticamente previsto atende WCAG 2.2 AA nas superfícies suportadas;
-- `tests/design-tokens-contract.test.mjs` protege paleta, aliases, temas, categorias e contraste;
-- nenhuma dependência npm, componente, tela funcional, migration ou infraestrutura foi adicionada.
-
-**Critérios de aceite:**
-
-1. os valores de marca e superfícies já definidos pelo Project Design existem em uma camada canônica de tokens CSS: `PASS`;
-2. tokens semânticos distinguem background, surface, surface-raised, border, text-primary, text-muted, accent e focus: `PASS`;
-3. tema claro e tema escuro respeitam a preferência de esquema do sistema sem JavaScript: `PASS`;
-4. cores de categoria possuem tokens próprios e as três escolhas sem hexadecimal canônico estão documentadas: `PASS`;
-5. combinações normais de texto e superfície atendem WCAG 2.2 AA quando aplicável: `PASS` por contrato automatizado;
-6. nenhuma dependência npm, componente, theme switch persistido ou lógica de produto: `PASS`;
-7. contrato automatizado protege tokens essenciais: `PASS`;
-8. `npm run verify`/CI: `PASS`;
-9. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
-10. deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
-
-**Non-goals preservados:** tipografia, logo/favicon, componentes, redesign completo da página inicial, persistência de preferência de tema, EPIC-02.
+- sete categorias possuem tokens próprios e texto normal/foco têm contratos de contraste automatizados;
+- Manhua/coral `#D9685B`, Série/ciano `#278EAF` e Anime/verde-azulado `#278F83` foram documentados;
+- nenhuma dependência, feature, migration ou infraestrutura foi adicionada.
 
 ### US-DS-002 — Integrar tipografia e assinatura de marca
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA após integração da PR `#36`
+- **Estado:** CONCLUÍDA
 - **Issue:** `#35`
 - **PR:** `#36`
-- **Dependência:** `US-DS-001`.
+- **Documentação:** `docs/BRAND_TYPOGRAPHY.md`
 
-**Objetivo:** materializar Manrope/Newsreader e o uso da marca já disponível sem inventar variantes ausentes.
+Resultado:
 
-**Resultado:**
-
-- `src/app/fonts.ts` centraliza Manrope e Newsreader por `next/font/google`;
-- Manrope é aplicada como tipografia padrão de interface;
-- Newsreader possui token editorial separado e não substitui a fonte global;
-- `src/app/layout.tsx` instala as variáveis tipográficas e `src/app/globals.css` expõe `font-sans` / `font-editorial`;
-- `docs/BRAND_TYPOGRAPHY.md` documenta carregamento, fallbacks, papel editorial e regras da marca;
-- `src/components/brand/CaleidaLogo.tsx` integra somente `public/brand/caleida-logo-horizontal.png` por `next/image`, com caixa responsiva estável e `object-contain`;
-- `public/brand/README.md` foi reconciliado com o inventário real;
-- variantes clara/escura, símbolo, favicon, vetor e ícones permanecem pendências reais;
-- `tests/brand-typography-contract.test.mjs` protege fontes, tokens tipográficos, ativo oficial e ausência de variantes fabricadas;
-- `src/app/page.tsx` permanece técnica e sem redesign, preservando US-DS-004;
-- nenhuma dependência npm, migration, banco, Auth, Storage ou superfície de deployment foi adicionada.
-
-**Critérios de aceite:**
-
-1. Manrope é a fonte padrão de interface e possui fallback adequado: `PASS`;
-2. Newsreader está disponível para contexto editorial sem substituir a fonte global: `PASS`;
-3. carregamento usa `next/font` e não depende de stylesheet remota do Google no browser: `PASS`;
-4. estilos/rendering estão limitados ao papel atual, com Newsreader sem preload global: `PASS`;
-5. o logo horizontal existente possui componente responsivo sem fabricar ativo: `PASS`;
-6. variantes ausentes permanecem explicitamente pendentes: `PASS`;
-7. nenhuma biblioteca de componentes, feature de produto, migration, secret ou Storage: `PASS`;
-8. `npm run verify` e CI da PR: `PASS` no run `33653441581`;
-9. PostgreSQL 18 + `npm run verify:db`: `PASS` no mesmo run;
-10. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
-11. deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
-
-**Non-goals preservados:** primitivos de US-DS-003, redesign da página base de US-DS-004, novas versões do logo, favicon/app icon fabricado, Auth e features funcionais.
+- Manrope e Newsreader centralizadas por `next/font`;
+- Manrope é a fonte padrão da interface; Newsreader possui papel editorial explícito;
+- o único asset oficial, `public/brand/caleida-logo-horizontal.png`, foi integrado por `next/image`;
+- variantes clara/escura, símbolo, favicon, vetores e ícones permanecem pendências reais, sem fabricação automática;
+- nenhum redesign funcional, banco ou infraestrutura foi antecipado.
 
 ### US-DS-003 — Criar primitivos acessíveis essenciais
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA após integração da PR `#38`
+- **Estado:** CONCLUÍDA
 - **Issue:** `#37`
 - **PR:** `#38`
-- **Dependências:** `US-DS-001`, `US-DS-002`.
+- **Documentação:** `docs/UI_PRIMITIVES.md`
 
-**Objetivo:** fornecer um conjunto mínimo e reutilizável para o próximo incremento funcional, sem construir telas de produto.
+Resultado:
 
-**Resultado:**
-
-- `src/components/ui/Button.tsx` usa `<button>` nativo, `type="button"` por padrão, variantes `primary`/`secondary`, hover somente em controles enabled, disabled nativo e focus-visible explícito;
-- `src/components/ui/FormField.tsx` usa `<label htmlFor>` + `<input>`, exige `id`, associa descrição/erro por `aria-describedby`, emite `aria-invalid` apenas com erro e mantém indicação textual de obrigatório/erro;
-- `src/components/ui/Feedback.tsx` diferencia `note`, `status` e `alert`, sem live region em nota estática e sem permitir sobrescrita contraditória de `role`/`aria-live` pela API comum;
-- `docs/UI_PRIMITIVES.md` registra API, semântica e limites;
-- `tests/ui-primitives-contract.test.mjs` protege foco, labels, relações ARIA, live-region roles e ausência de biblioteca externa;
-- a página base permanece inalterada e nenhum fluxo funcional foi criado.
-
-**Critérios de aceite:**
-
-1. botão preserva semântica HTML e navegação por teclado: `PASS`;
-2. campo/form-field possui label acessível e ligação correta com descrição/erro: `PASS`;
-3. feedback usa papel/semântica proporcional sem transformar toda mensagem em alerta: `PASS`;
-4. default, hover, focus-visible, disabled e erro usam tokens canônicos: `PASS`;
-5. foco usa outline de 2 px + offset de 2 px com token `focus`, sem depender apenas de cor interna: `PASS`;
-6. API pequena e TypeScript strict: `PASS`;
-7. nenhuma biblioteca de componentes, feature funcional, migration, secret ou Storage: `PASS`;
-8. `npm run verify`/CI inicial: `PASS` no run `33656150580`;
-9. PostgreSQL 18 + `npm run verify:db`: `PASS` no mesmo run, embora sem impacto semântico da Story;
-10. banco/Neon-specific: `SKIPPED — Story visual sem mudança de dados`;
-11. deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
-
-**Non-goals preservados:** redesign da página base de US-DS-004, Auth, domínio funcional, theme switch, Storybook/framework E2E e biblioteca de UI externa.
+- `Button` nativo e tipado com foco visível, disabled nativo e hover somente em enabled;
+- `FormField` com label explícito, descrição/erro programaticamente associados e `aria-invalid` proporcional;
+- `Feedback` diferencia nota estática, status não urgente e alerta urgente;
+- contratos automatizados protegem semântica, foco, estados e ausência de biblioteca externa;
+- nenhuma tela ou feature de produto foi criada.
 
 ### US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base
 
 - **Prioridade:** P1
-- **Estado:** PRONTA / `NEXT_ACTION`
-- **Dependências:** `US-DS-001` a `US-DS-003` — satisfeitas.
+- **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO
+- **Issue:** `#39`
+- **PR:** `#40`
+- **Evidência:** `docs/INCREMENT_1_VALIDATION.md`
 
-**Objetivo:** provar a fundação visual no layout raiz e na página base sem criar fluxo falso.
+Resultado:
 
-**Critérios principais:**
+- a página técnica neutra foi substituída por composição cultural/editorial coerente com a marca;
+- tokens, Manrope/Newsreader e o logo horizontal oficial são usados sem valores/ativos paralelos;
+- o wrapper do logo passou a possuir caixa de layout real (`block`) e comportamento responsivo estável;
+- a composição é mobile-first, possui `overflow-x-hidden` e breakpoints progressivos para tablet/notebook/desktop;
+- as sete categorias são apresentadas com marcador de cor **e rótulo textual**;
+- nenhuma interação, CTA, formulário, link ou fluxo futuro é fabricado;
+- nenhuma animação ou dependência de hover foi introduzida;
+- `tests/base-visual-foundation-contract.test.mjs` protege semântica, responsividade, temas, categorias e ausência de fluxo falso.
 
-- composição base funciona em celular, tablet, notebook e desktop sem dependência de hover;
-- a página técnica existente passa a apresentar o Caleida de forma coerente com a marca, sem botões/ações que ainda não existem;
-- light/dark, tipografia, foco e redução de movimento são verificáveis em browser quando a infraestrutura estiver disponível;
-- não são antecipados login, convite, catálogo, biblioteca ou outras features;
-- `npm run verify` e CI passam.
+Verificação da Story:
 
-## 6. Ordem e gate do incremento
+- CI inicial da PR #40 `33662849749`: `FAIL` legítimo em contrato legado do logo; lint, typecheck e os seis testes novos passaram;
+- causa: teste antigo exigia literalmente a sequência anterior de classes e não reconhecia o fortalecimento da caixa responsiva;
+- contrato atualizado sem relaxar gate;
+- head técnico corrigido `a4198a7c7508ae9ede628c59455a64d00cd55d94`, CI `33663025148`: `PASS` para `npm run verify`, build, PostgreSQL 18 e `npm run verify:db`;
+- browser real: `SKIPPED` — a sessão não obteve checkout/dev server local porque o ambiente não resolveu `github.com`; nenhum deployment externo foi criado para contornar a limitação;
+- Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
+- Vercel deployment: `SKIPPED/PROIBIDO` conforme `ADR-007`;
+- CI do head documental final ainda deve estar `PASS` antes do merge e CI pós-merge da `main` deve passar antes do fechamento operacional; evidência final será registrada em `#39/#40`.
 
-```text
-US-DS-001 tokens/temas — CONCLUÍDA
-  ↓
-US-DS-002 tipografia/marca — CONCLUÍDA
-  ↓
-US-DS-003 primitivos acessíveis — CONCLUÍDA
-  ↓
-US-DS-004 fundação responsiva aplicada — NEXT_ACTION
-```
+## 4. Porta de saída do Incremento 1
 
-A sequência é intencional: componentes não devem cristalizar valores visuais antes dos tokens; layout não deve consolidar componentes antes dos primitivos básicos.
+- tokens visuais canônicos e temas light/dark reutilizáveis: `PASS`;
+- tipografia de referência integrada: `PASS`;
+- assinatura de marca existente integrada sem variantes fabricadas: `PASS`;
+- primitivos mínimos acessíveis e testados: `PASS`;
+- layout base responsivo e sem fluxo falso: `PASS` por código/contrato/build; browser real `SKIPPED` com motivo registrado;
+- WCAG 2.2 AA considerada em contraste, foco, labels e semântica: `PASS` nos contratos executados;
+- redução de movimento: `PASS — nenhuma animação introduzida na composição base`;
+- lint, typecheck, testes e build: `PASS` no head técnico corrigido;
+- banco/infraestrutura criados por conveniência visual: `PASS — nenhum`;
+- deployment: `PASS — separado do desenvolvimento e não executado`.
 
-## 7. Porta de saída do Incremento 1
+O fechamento operacional definitivo exige ainda CI do head documental final e CI pós-merge em `PASS`, conforme `docs/INCREMENT_1_VALIDATION.md`.
 
-O incremento estará concluído quando:
+## 5. Impacto técnico final
 
-- identidade visual base estiver codificada por tokens reutilizáveis: `PASS`;
-- temas claro/escuro tiverem comportamento coerente: `PASS`;
-- tipografia oficial de referência estiver integrada: `PASS`;
-- primitivos mínimos necessários ao próximo fluxo funcional estiverem acessíveis e testados: `PASS`;
-- layout base for responsivo e não contiver fluxo falso: pendente de US-DS-004;
-- lint, typecheck, testes e build estiverem em PASS;
-- nenhum banco/infraestrutura tiver sido criado por conveniência visual;
-- documentação e backlog apontarem para o próximo incremento funcional real após US-DS-004.
-
-## 8. Impacto técnico do incremento
-
-| Área | Impacto esperado |
+| Área | Resultado |
 |---|---|
-| Banco / migrations | nenhum |
-| RLS / Auth / Data API | nenhum |
-| Neon-specific | normalmente `SKIPPED`; reavaliar somente se uma Story fugir deste limite |
-| Storage | nenhum; ativo de marca existente permanece no Git |
-| Egress | sem impacto material previsto; fontes não dependem de request remoto de runtime |
-| Realtime / e-mail | nenhum |
-| Vercel | build compatível; deployment continua proibido para IA |
-| Segurança | foco em evitar superfície falsa e preservar semântica/acessibilidade |
+| Banco / migrations | nenhuma alteração |
+| RLS / Auth / Data API | nenhuma alteração |
+| Neon-specific | `SKIPPED` em todas as Stories visuais |
+| Storage | nenhuma alteração |
+| Dependências | nenhuma biblioteca de UI adicionada |
+| Vercel | build compatível; nenhum projeto/deployment criado |
+| Segurança | sem superfície funcional falsa; foco/semântica protegidos |
 
-## 9. Próxima ação promovida
+## 6. Próximo horizonte
 
-> `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`
+O próximo épico funcional definido pelo Project Design é:
 
-A próxima sessão deve criar Issue/branch próprias para essa Story, ler os contratos de tokens, tipografia/marca e primitivos, aplicar a identidade à página técnica sem criar ações falsas e verificar composição responsiva/acessibilidade em browser quando houver infraestrutura de teste disponível.
+> `EPIC-02 — Contas e autenticação`
 
-Não antecipar Auth, convites, catálogo, biblioteca, banco ou features do incremento funcional seguinte.
+Ele cobre convites, cadastro, login, sessão, SMTP, papéis e auditoria básica e toca decisões de segurança/Neon Auth que evoluem rapidamente. Por isso, **não deve ser implementado diretamente a partir deste plano visual**.
+
+## 7. Próxima ação promovida
+
+> `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`
+
+O refino deve confrontar CAP-01, CAP-02, CAP-04 e CAP-35 com `ADR-005`, arquitetura atual, estado real do Neon e documentação oficial corrente de Neon Auth/Data API antes de produzir Stories pequenas, critérios de segurança, gates de RLS/Auth e ordem de execução.
+
+Não implementar Auth, criar secrets, provisionar Production ou executar deployment durante o refino.

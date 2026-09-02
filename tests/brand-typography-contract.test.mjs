@@ -54,8 +54,8 @@ test("horizontal brand asset uses next/image with a stable responsive box", asyn
   assert.match(component, /alt="Caleida"/);
   assert.match(component, /\bfill\b/);
   assert.match(component, /sizes="\(max-width: 640px\) 72vw, 20rem"/);
-  assert.match(component, /relative h-20 w-full max-w-80/);
-  assert.match(component, /className="object-contain"/);
+  assert.match(component, /relative block h-20 w-full max-w-80 shrink-0/);
+  assert.match(component, /className="object-contain object-left"/);
   assert.doesNotMatch(component, /filter:|invert|hue-rotate|grayscale/);
 });
 
