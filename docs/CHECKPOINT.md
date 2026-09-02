@@ -3,14 +3,14 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 1 — Fundação visual / EPIC-01 Identidade e design system  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-DS-002 — Integrar tipografia e assinatura de marca`  
-**LAST_COMPLETED_ISSUE:** `#35`  
-**LAST_COMPLETED_PR:** `#36`  
+**LAST_COMPLETED_TASK:** `US-DS-003 — Criar primitivos acessíveis essenciais`  
+**LAST_COMPLETED_ISSUE:** `#37`  
+**LAST_COMPLETED_PR:** `#38`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `US-DS-003 — Criar primitivos acessíveis essenciais`  
+**NEXT_ACTION:** `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -27,71 +27,66 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 
 Evidência detalhada: `docs/INCREMENT_0_VALIDATION.md`.
 
-## Incremento 1 — estado integrado após US-DS-002
-
-Ordem vigente:
+## Incremento 1 — estado integrado após US-DS-003
 
 ```text
 US-DS-001 tokens/temas — CONCLUÍDA
   ↓
 US-DS-002 tipografia/marca — CONCLUÍDA
   ↓
-US-DS-003 primitivos acessíveis — NEXT_ACTION
+US-DS-003 primitivos acessíveis — CONCLUÍDA
   ↓
-US-DS-004 fundação responsiva aplicada
+US-DS-004 fundação responsiva aplicada — NEXT_ACTION
 ```
 
 Plano detalhado: `docs/INCREMENT_1_PLAN.md`.
 
-## US-DS-002 — resultado
-
-A Story foi executada em:
+## US-DS-003 — resultado
 
 ```text
-Issue: #35
-Branch: feat/us-ds-002-typography-brand
-PR: #36
-Contrato visual: docs/BRAND_TYPOGRAPHY.md
-Contrato automatizado: tests/brand-typography-contract.test.mjs
+Issue: #37
+Branch: feat/us-ds-003-accessible-primitives
+PR: #38
+Contrato: docs/UI_PRIMITIVES.md
+Contrato automatizado: tests/ui-primitives-contract.test.mjs
 ```
 
-### Tipografia materializada
+### Primitivos materializados
 
-- `src/app/fonts.ts` centraliza Manrope e Newsreader via `next/font/google`;
-- Manrope é a fonte padrão da interface;
-- Newsreader possui papel editorial explícito para resenhas, citações e retrospectivas;
-- ambas usam subset `latin`, `display: "swap"` e fallbacks explícitos;
-- Newsreader não é preloaded globalmente por ser família secundária;
-- `src/app/layout.tsx` instala as duas variáveis de fonte no layout raiz;
-- `src/app/globals.css` expõe `font-sans` e `font-editorial` sem alterar os tokens de cor de US-DS-001;
-- o carregamento usa `next/font`, sem stylesheet do Google Fonts requisitada pelo browser em runtime.
+- `src/components/ui/Button.tsx`: `<button>` nativo e tipado, `type="button"` por padrão, variantes `primary`/`secondary`, hover somente quando enabled, disabled nativo e `focus-visible` explícito;
+- `src/components/ui/FormField.tsx`: `<label htmlFor>` + `<input>`, `id` obrigatório, descrição/erro associados por `aria-describedby`, `aria-invalid` somente quando há erro e pistas textuais para obrigatório/erro;
+- `src/components/ui/Feedback.tsx`: `note` sem live region, `status` para atualização não urgente e `alert` somente para mensagem urgente;
+- todos usam tokens canônicos de `US-DS-001` e herdam a tipografia de `US-DS-002`;
+- nenhum primitivo foi aplicado à página base, preservando o escopo de `US-DS-004`;
+- nenhuma biblioteca externa de UI, dependência npm ou feature de produto foi adicionada.
 
-### Assinatura de marca materializada
+### Acessibilidade
 
-- o único ativo oficial disponível continua sendo `public/brand/caleida-logo-horizontal.png`;
-- `src/components/brand/CaleidaLogo.tsx` usa `next/image` com caminho público, caixa responsiva estável e `object-contain`;
-- não houve recoloração, filtro, recorte ou reconstrução do logo;
-- versões clara/escura, símbolo, favicon, vetor e ícones permanecem pendências reais de ativo;
-- `src/app/page.tsx` não foi redesenhada; aplicação da identidade à página base permanece em US-DS-004.
+- HTML nativo permanece a primeira camada de semântica;
+- foco perceptível usa outline de 2 px + offset de 2 px com token `focus`;
+- hover não é necessário para operar os controles;
+- label, descrição, erro e estado inválido possuem relações programáticas explícitas;
+- erro visível começa por `Erro:` e não depende apenas da cor da borda;
+- feedback estático não recebe anúncio intrusivo por padrão;
+- padrões WAI/WCAG correntes para foco, labels, `aria-describedby`, `aria-invalid` e status messages foram revalidados em 02/09/2026.
 
-## Verificação de US-DS-002
+## Verificação de US-DS-003
 
-- documentação oficial corrente do Next.js para `next/font`: `PASS — revalidada em 02/09/2026`;
+- baseline: `main` `1fda10cd786749b2d5c220144b25b3c08ca92c79`, último CI anterior `33654393286` — `PASS`;
+- Issue/branch/PR reais: `#37` / `feat/us-ds-003-accessible-primitives` / `#38`;
+- diff inicial limitado a três primitivos, `docs/UI_PRIMITIVES.md` e teste de contrato: `PASS`;
 - dependências/package-lock: `PASS — nenhuma alteração`;
-- primitivos/telas/feature funcional: `PASS — nenhuma antecipação de US-DS-003/US-DS-004`;
-- migration/banco/Auth/RLS/Data API/Storage: `PASS — nenhuma alteração`;
-- secrets/tokens/connection strings: `PASS — nenhum introduzido`;
-- CI inicial da PR #36, run `33653117310`: `FAIL` legítimo em typecheck por import estático do PNG fora de `src/`;
-- correção: logo passou a usar `/brand/caleida-logo-horizontal.png` com `next/image`, `fill` e caixa responsiva estável, sem relaxar gate;
-- CI corrigido da PR #36, head `f6db6b5237ae77ac1597bc5889c8acf21204792d`, run `33653441581`: `PASS`;
-- `npm run verify`: `PASS` no run corrigido;
-- PostgreSQL 18 + `npm run verify:db`: `PASS` no run corrigido;
-- gate Neon-specific: `SKIPPED — nenhuma mudança depende de comportamento gerenciado do Neon`;
-- consulta/mutação remota Neon nesta Story: `SKIPPED — não aplicável ao escopo visual`;
-- verificação visual em browser: `SKIPPED — Story não aplica o componente à página base e nenhum deployment/dev server remoto é gate; validação visual de composição pertence a US-DS-004`;
+- `src/app/page.tsx`, layout, migrations e workflow CI: `PASS — nenhuma alteração`;
+- TypeScript strict e semântica/estados: `PASS` no CI inicial;
+- CI inicial da PR #38, head `3839651f980ae6c693572fc6f2b4bd8045910736`, run `33656150580`: `PASS`;
+- `npm run verify`: `PASS` no run inicial;
+- PostgreSQL 18 + `npm run verify:db`: `PASS` no run inicial, embora sem impacto semântico nesta Story;
+- gate Neon-specific: `SKIPPED — Story visual sem mudança de dados ou comportamento gerenciado do Neon`;
+- consulta/mutação remota Neon: `SKIPPED — não aplicável ao escopo`;
+- verificação visual composta em browser: `SKIPPED — os primitivos não são montados na página nesta Story; a prova visual/responsiva pertence a US-DS-004`;
 - deployment Vercel: `SKIPPED/PROIBIDO` conforme `ADR-007`;
-- CI do head documental final da PR #36: **deve estar `PASS` antes do merge**;
-- CI pós-merge da `main`: **deve estar `PASS` antes do fechamento operacional da sessão; evidência final deve ser registrada em #35/#36**.
+- CI do head documental final da PR #38: **deve estar `PASS` antes do merge**;
+- CI pós-merge da `main`: **deve estar `PASS` antes do fechamento operacional; evidência final deve ser registrada em #37/#38**.
 
 ## Estado técnico preservado
 
@@ -100,15 +95,15 @@ Contrato automatizado: tests/brand-typography-contract.test.mjs
 - Tailwind CSS 4;
 - Node `24.20.0` / npm `11.19.0`;
 - CI permanente continua sem CD;
-- banco/migrations/Neon não foram alterados;
+- banco/migrations/Neon/Auth/RLS/Data API/Storage não foram alterados;
 - `vercel.json` e política de release manual permanecem inalterados.
 
-## Próxima ação — US-DS-003
+## Próxima ação — US-DS-004
 
 Executar somente:
 
-> `US-DS-003 — Criar primitivos acessíveis essenciais`
+> `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`
 
-A próxima Story deve criar Issue/branch próprias, ler `docs/DESIGN_TOKENS.md` e `docs/BRAND_TYPOGRAPHY.md`, inspecionar os padrões existentes e implementar apenas botão, campo/form-field e feedback mínimos, tipados e acessíveis.
+A próxima Story deve criar Issue/branch próprias, ler `docs/DESIGN_TOKENS.md`, `docs/BRAND_TYPOGRAPHY.md` e `docs/UI_PRIMITIVES.md`, aplicar a identidade à página técnica sem inventar ações ou fluxos e validar composição responsiva/acessibilidade em browser quando houver infraestrutura disponível.
 
-Não iniciar redesign da página base de `US-DS-004`, não adicionar biblioteca de componentes sem necessidade demonstrada e não iniciar Auth/banco/features funcionais.
+Não iniciar Auth, convites, catálogo, biblioteca, banco ou qualquer feature do incremento funcional seguinte.

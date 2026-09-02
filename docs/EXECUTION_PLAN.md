@@ -487,54 +487,91 @@ Detalhamento, dependências e porta de saída: `docs/INCREMENT_1_PLAN.md`.
 
 # US-DS-003 — Criar primitivos acessíveis essenciais
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO APÓS INTEGRAÇÃO  
 **Backlog:** `US-DS-003` / EPIC-01  
 **Incremento:** 1 — Fundação visual  
-**Prioridade:** P0
+**Prioridade:** P0  
+**Issue:** `#37`  
+**PR:** `#38`
+
+## Resultado
+
+- `src/components/ui/Button.tsx` usa `<button>` nativo, `type="button"` por padrão, variantes mínimas, hover somente em enabled, disabled nativo e `focus-visible` explícito;
+- `src/components/ui/FormField.tsx` usa `<label>` + `<input>`, associa descrição/erro via `aria-describedby`, emite `aria-invalid` apenas em erro e mantém pistas textuais de obrigatório/falha;
+- `src/components/ui/Feedback.tsx` distingue informação estática, status não urgente e alertas urgentes sem tornar toda mensagem uma live region;
+- `docs/UI_PRIMITIVES.md` registra API, semântica, referências WAI/WCAG e limites;
+- `tests/ui-primitives-contract.test.mjs` protege HTML nativo, foco, estados, relações ARIA, live-region roles e ausência de biblioteca externa;
+- a página base permaneceu inalterada e nenhuma feature funcional foi criada;
+- nenhuma dependência npm, migration, banco, Auth, Data API, RLS, Storage, workflow CI ou deployment foi adicionada.
+
+## Verificação
+
+- WAI/WCAG corrente para foco visível, non-text contrast, labels, `aria-describedby`, `aria-invalid` e status messages: revalidada em 02/09/2026;
+- baseline `main` `1fda10cd786749b2d5c220144b25b3c08ca92c79`, CI `33654393286`: `PASS`;
+- CI inicial da PR #38, head `3839651f980ae6c693572fc6f2b4bd8045910736`, run `33656150580`: `PASS`;
+- `npm run verify`: `PASS`;
+- PostgreSQL 18 + `npm run verify:db`: `PASS`, embora sem impacto semântico desta Story;
+- dependências/package-lock: `PASS — nenhuma alteração`;
+- banco/Neon-specific: `SKIPPED — Story visual sem mudança de dados ou comportamento gerenciado do Neon`;
+- consulta/mutação remota Neon: `SKIPPED — não aplicável ao escopo`;
+- verificação visual composta em browser: `SKIPPED — primitivos não são montados na página nesta Story; composição pertence a US-DS-004`;
+- Vercel deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`;
+- CI do head documental final da PR deve estar `PASS` antes do merge; evidência pós-merge deve ficar registrada em #37/#38.
+
+---
+
+# US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base
+
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-DS-004` / EPIC-01  
+**Incremento:** 1 — Fundação visual  
+**Prioridade:** P1
 
 ## Objetivo
 
-Criar somente os primitivos mínimos reutilizáveis necessários à fundação visual: botão, campo/form-field e feedback, com semântica HTML correta, TypeScript estrito e tokens canônicos já materializados.
+Provar a fundação visual já construída no layout raiz e na página técnica existente, com composição responsiva e acessível, sem criar fluxo, ação ou funcionalidade de produto que ainda não exista.
 
 ## Inspecionar antes de editar
 
-1. `docs/PROJECT_DESIGN.md` §§21–27 e requisitos NFR-01/NFR-02;
+1. `docs/PROJECT_DESIGN.md` §§21–27 e NFR-01/NFR-02;
 2. `docs/INCREMENT_1_PLAN.md`;
-3. `docs/DESIGN_TOKENS.md` e `docs/BRAND_TYPOGRAPHY.md`;
-4. `src/app/globals.css`, `src/app/layout.tsx` e estrutura real de `src/components`;
-5. testes existentes e contrato de CI;
-6. documentação oficial corrente de React/Next.js e padrões de acessibilidade quando o comportamento depender deles.
+3. `docs/DESIGN_TOKENS.md`, `docs/BRAND_TYPOGRAPHY.md` e `docs/UI_PRIMITIVES.md`;
+4. `src/app/layout.tsx`, `src/app/page.tsx`, `src/app/globals.css` e componentes existentes;
+5. inventário real de `public/brand`;
+6. testes existentes e contrato de CI;
+7. documentação oficial corrente quando comportamento de Next.js/Tailwind depender dela;
+8. browser real quando a infraestrutura de teste estiver disponível.
 
 ## Escopo esperado
 
-- botão com semântica nativa, estados essenciais e `focus-visible` consistente;
-- campo/form-field com label, descrição/erro quando aplicável e associação acessível;
-- mensagem/feedback com semântica proporcional ao tipo de mensagem;
-- API pequena e tipada;
-- uso de cores/tipografia/tokens existentes, sem duplicar valores visuais dispersos;
-- nenhum pacote externo de componentes sem necessidade demonstrada;
-- testes proporcionais para semântica e estados essenciais;
-- manter a Story independente de Auth, banco, Storage, página base e deployment.
+- aplicar a identidade visual à página técnica base usando tokens, tipografia e o ativo oficial existente;
+- criar composição semântica e responsiva para celular, tablet, notebook e desktop;
+- usar os primitivos de US-DS-003 apenas quando houver uma necessidade semântica real, sem fabricar botões ou formulários falsos;
+- preservar light/dark por preferência do sistema;
+- evitar dependência de hover e respeitar `prefers-reduced-motion` caso qualquer movimento seja introduzido;
+- adicionar teste/contrato proporcional à composição base;
+- verificar foco/teclado, overflow e console em browser quando houver infraestrutura disponível;
+- manter a Story independente de Auth, banco, Storage e deployment.
 
 ## Critérios de aceite
 
-1. botão preserva semântica HTML e navegação por teclado;
-2. campo/form-field possui label acessível e ligação correta com descrição/erro quando presentes;
-3. feedback usa papel/semântica apropriados sem transformar toda mensagem em alerta intrusivo;
-4. estados default, hover quando aplicável, focus-visible, disabled e erro usam tokens canônicos;
-5. foco permanece perceptível e acessível sem depender somente de cor;
-6. API dos componentes é pequena e TypeScript strict permanece em `PASS`;
-7. nenhuma biblioteca de componentes, feature funcional, migration, secret ou Storage é adicionada sem decisão nova;
+1. a página técnica apresenta o Caleida de forma coerente com a identidade aprovada, sem aparência de dashboard/streaming/loja e sem fluxo falso;
+2. composição funciona em viewports representativos de celular, tablet, notebook e desktop sem rolagem horizontal indevida ou dependência de hover;
+3. light/dark continuam funcionando pela preferência do sistema;
+4. Manrope, papel editorial da Newsreader e logo horizontal são usados somente nos contextos semânticos previstos, sem fabricar variantes de marca;
+5. primitivos acessíveis são usados somente quando semanticamente necessários e nenhum CTA inexistente é criado;
+6. foco, teclado, contraste e redução de movimento permanecem coerentes com NFR-02;
+7. browser real é verificado quando a infraestrutura disponível permitir; ausência de infraestrutura deve ser registrada como `SKIPPED` com motivo, nunca como `PASS`;
 8. `npm run verify` e CI da PR: `PASS`;
 9. banco/Neon-specific: `SKIPPED — Story visual sem mudança de dados`;
 10. Vercel deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
 
 ## Non-goals
 
-- redesign da página base de `US-DS-004`;
-- login, convite, catálogo, biblioteca ou qualquer feature de domínio;
-- theme switch persistido;
-- Storybook/framework E2E por conveniência;
+- login, convite, conta, catálogo, biblioteca ou qualquer feature de domínio;
+- novos componentes de design system além do necessário para composição semântica da base;
+- novas variantes de logo, favicon ou app icon fabricados;
+- persistência manual de tema;
 - banco, Auth, Storage ou deployment.
 
 ---

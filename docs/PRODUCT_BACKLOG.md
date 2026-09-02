@@ -141,25 +141,29 @@ Este é um incremento operacional de interface. Ele não altera a ordem funciona
 ### US-DS-003 — Criar primitivos acessíveis essenciais
 
 - **Prioridade:** P0
-- **Estado:** PRONTA / `NEXT_ACTION`
-- **Resultado esperado:** conjunto mínimo tipado e acessível de botão, campo/form-field e feedback, usando tokens canônicos e sem biblioteca externa sem necessidade demonstrada.
-- **Dependências:** `US-DS-001`, `US-DS-002`.
+- **Estado:** CONCLUÍDA após integração da PR `#38`
+- **Issue:** `#37`
+- **PR:** `#38`
+- **Resultado:** `Button`, `FormField` e `Feedback` mínimos e tipados, com HTML nativo, focus-visible explícito, label/descrição/erro associados e live-region roles proporcionais; nenhuma biblioteca externa ou feature funcional adicionada.
+- **Documentação:** `docs/UI_PRIMITIVES.md`.
+- **Guardrail:** `tests/ui-primitives-contract.test.mjs` protege semântica, estados, foco e ausência de dependência de biblioteca de UI.
+- **Banco/Neon:** nenhum; Neon-specific `SKIPPED` por escopo.
 
 ### US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base
 
 - **Prioridade:** P1
-- **Estado:** A FAZER
+- **Estado:** PRONTA / `NEXT_ACTION`
 - **Resultado esperado:** layout raiz e página base coerentes com a marca em celular/tablet/notebook/desktop, sem fluxo falso ou feature futura antecipada.
-- **Dependências:** `US-DS-001` a `US-DS-003`.
+- **Dependências:** `US-DS-001` a `US-DS-003` — satisfeitas após integração de `#34`, `#36` e `#38`.
 
 ## Critério de encerramento do Incremento 1
 
 - tokens visuais canônicos e temas light/dark reutilizáveis: `PASS` após US-DS-001;
 - tipografia de referência integrada: `PASS` após US-DS-002;
 - assinatura de marca existente integrada sem variantes fabricadas: `PASS` após US-DS-002;
-- primitivos mínimos acessíveis e testados;
+- primitivos mínimos acessíveis e testados: `PASS` após US-DS-003;
 - layout base responsivo e sem fluxos falsos;
-- WCAG 2.2 AA considerada nos contrastes/foco aplicáveis;
+- WCAG 2.2 AA considerada nos contrastes/foco aplicáveis: `PASS` na fundação existente; revalidar composição em US-DS-004;
 - redução de movimento respeitada quando houver movimento;
 - lint, typecheck, testes e build em PASS;
 - nenhuma infraestrutura/banco criado por conveniência visual;
@@ -171,6 +175,6 @@ Detalhamento: `docs/INCREMENT_1_PLAN.md`.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após integração de `US-DS-002`, a próxima ação canônica deve ser:
+Após integração de `US-DS-003`, a próxima ação canônica deve ser:
 
-> `US-DS-003 — Criar primitivos acessíveis essenciais`
+> `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`
