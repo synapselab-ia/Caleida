@@ -1,16 +1,16 @@
 # Checkpoint — Caleida
 
 **PROJECT_STATUS:** READY  
-**CURRENT_PHASE:** Incremento 1 — Fundação visual / EPIC-01 Identidade e design system  
+**CURRENT_PHASE:** Incremento 1 — Fundação visual concluído / preparação do próximo incremento funcional  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-DS-003 — Criar primitivos acessíveis essenciais`  
-**LAST_COMPLETED_ISSUE:** `#37`  
-**LAST_COMPLETED_PR:** `#38`  
+**LAST_COMPLETED_TASK:** `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`  
+**LAST_COMPLETED_ISSUE:** `#39`  
+**LAST_COMPLETED_PR:** `#40`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`  
+**NEXT_ACTION:** `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -25,68 +25,65 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 
 **Incremento 0 — Fundação executável: CONCLUÍDO.**
 
-Evidência detalhada: `docs/INCREMENT_0_VALIDATION.md`.
+Evidência: `docs/INCREMENT_0_VALIDATION.md`.
 
-## Incremento 1 — estado integrado após US-DS-003
+## Incremento 1
 
-```text
-US-DS-001 tokens/temas — CONCLUÍDA
-  ↓
-US-DS-002 tipografia/marca — CONCLUÍDA
-  ↓
-US-DS-003 primitivos acessíveis — CONCLUÍDA
-  ↓
-US-DS-004 fundação responsiva aplicada — NEXT_ACTION
-```
-
-Plano detalhado: `docs/INCREMENT_1_PLAN.md`.
-
-## US-DS-003 — resultado
+**Incremento 1 — Fundação visual / EPIC-01: CONCLUÍDO APÓS INTEGRAÇÃO DE US-DS-004.**
 
 ```text
-Issue: #37
-Branch: feat/us-ds-003-accessible-primitives
-PR: #38
-Contrato: docs/UI_PRIMITIVES.md
-Contrato automatizado: tests/ui-primitives-contract.test.mjs
+US-DS-001 tokens/temas — CONCLUÍDA (#33 / #34)
+  ↓
+US-DS-002 tipografia/marca — CONCLUÍDA (#35 / #36)
+  ↓
+US-DS-003 primitivos acessíveis — CONCLUÍDA (#37 / #38)
+  ↓
+US-DS-004 fundação responsiva aplicada — CONCLUÍDA (#39 / #40)
 ```
 
-### Primitivos materializados
+Plano: `docs/INCREMENT_1_PLAN.md`.  
+Evidência de encerramento: `docs/INCREMENT_1_VALIDATION.md`.
 
-- `src/components/ui/Button.tsx`: `<button>` nativo e tipado, `type="button"` por padrão, variantes `primary`/`secondary`, hover somente quando enabled, disabled nativo e `focus-visible` explícito;
-- `src/components/ui/FormField.tsx`: `<label htmlFor>` + `<input>`, `id` obrigatório, descrição/erro associados por `aria-describedby`, `aria-invalid` somente quando há erro e pistas textuais para obrigatório/erro;
-- `src/components/ui/Feedback.tsx`: `note` sem live region, `status` para atualização não urgente e `alert` somente para mensagem urgente;
-- todos usam tokens canônicos de `US-DS-001` e herdam a tipografia de `US-DS-002`;
-- nenhum primitivo foi aplicado à página base, preservando o escopo de `US-DS-004`;
-- nenhuma biblioteca externa de UI, dependência npm ou feature de produto foi adicionada.
+## US-DS-004 — resultado
 
-### Acessibilidade
+```text
+Issue: #39
+Branch: feat/us-ds-004-responsive-foundation
+PR: #40
+Contrato automatizado: tests/base-visual-foundation-contract.test.mjs
+```
 
-- HTML nativo permanece a primeira camada de semântica;
-- foco perceptível usa outline de 2 px + offset de 2 px com token `focus`;
-- hover não é necessário para operar os controles;
-- label, descrição, erro e estado inválido possuem relações programáticas explícitas;
-- erro visível começa por `Erro:` e não depende apenas da cor da borda;
-- feedback estático não recebe anúncio intrusivo por padrão;
-- padrões WAI/WCAG correntes para foco, labels, `aria-describedby`, `aria-invalid` e status messages foram revalidados em 02/09/2026.
+### Fundação visual aplicada
 
-## Verificação de US-DS-003
+- `src/app/page.tsx` deixou de ser uma página técnica neutra e passou a apresentar a identidade aprovada do Caleida;
+- a composição usa somente tokens canônicos, Manrope/Newsreader e o logo horizontal oficial;
+- a frase canônica `Cada história muda o desenho.` assume papel editorial sem fabricar funcionalidade;
+- sete categorias aparecem com marcador cromático e rótulo textual, preservando a regra de que cor não é identificador único;
+- composição mobile-first usa proteção contra overflow horizontal e breakpoints progressivos para tablet/notebook/desktop;
+- não há botão, link, formulário, CTA, navegação funcional ou ação futura simulada;
+- não há animação nem dependência de hover;
+- os primitivos de US-DS-003 não foram usados porque não existe necessidade semântica real de interação/feedback na página base;
+- `CaleidaLogo` passou a usar wrapper `block`/`shrink-0`, garantindo caixa responsiva real para `next/image fill`, sem modificar o PNG oficial.
 
-- baseline: `main` `1fda10cd786749b2d5c220144b25b3c08ca92c79`, último CI anterior `33654393286` — `PASS`;
-- Issue/branch/PR reais: `#37` / `feat/us-ds-003-accessible-primitives` / `#38`;
-- diff inicial limitado a três primitivos, `docs/UI_PRIMITIVES.md` e teste de contrato: `PASS`;
+### Verificação de US-DS-004
+
+- baseline: `main` `43be04c122349ee33a727cd7f8e576df18a54375`, CI anterior `33657214289` — `PASS`;
+- Issue/branch/PR: `#39` / `feat/us-ds-004-responsive-foundation` / `#40`;
+- CI inicial da PR #40, head `3ba500f2f1c1c10a740c2db3608107df64380bbb`, run `33662849749`: `FAIL` legítimo em um contrato legado do logo;
+- nesse run, migrations manifest, lint, typecheck e os seis testes novos de US-DS-004 passaram;
+- causa: `tests/brand-typography-contract.test.mjs` exigia literalmente a sequência antiga de classes e rejeitou a adição correta de `block`/`shrink-0`/`object-left`;
+- correção: contrato antigo atualizado para exigir a caixa responsiva mais forte, sem remover ou relaxar gate;
+- head técnico corrigido `a4198a7c7508ae9ede628c59455a64d00cd55d94`, run `33663025148`: `PASS`;
+- `npm run verify`: `PASS` no run corrigido;
+- PostgreSQL 18 + `npm run verify:db`: `PASS` no run corrigido, como gate permanente do repositório;
 - dependências/package-lock: `PASS — nenhuma alteração`;
-- `src/app/page.tsx`, layout, migrations e workflow CI: `PASS — nenhuma alteração`;
-- TypeScript strict e semântica/estados: `PASS` no CI inicial;
-- CI inicial da PR #38, head `3839651f980ae6c693572fc6f2b4bd8045910736`, run `33656150580`: `PASS`;
-- `npm run verify`: `PASS` no run inicial;
-- PostgreSQL 18 + `npm run verify:db`: `PASS` no run inicial, embora sem impacto semântico nesta Story;
+- migrations/Auth/RLS/Data API/Storage: `PASS — nenhuma alteração`;
 - gate Neon-specific: `SKIPPED — Story visual sem mudança de dados ou comportamento gerenciado do Neon`;
-- consulta/mutação remota Neon: `SKIPPED — não aplicável ao escopo`;
-- verificação visual composta em browser: `SKIPPED — os primitivos não são montados na página nesta Story; a prova visual/responsiva pertence a US-DS-004`;
+- consulta/mutação remota Neon: `SKIPPED — não aplicável`;
+- browser real: `SKIPPED — tentativa de preparar checkout/dev server local falhou porque o ambiente da sessão não resolveu github.com; deployment externo não foi usado como substituto de teste`;
 - deployment Vercel: `SKIPPED/PROIBIDO` conforme `ADR-007`;
-- CI do head documental final da PR #38: **deve estar `PASS` antes do merge**;
-- CI pós-merge da `main`: **deve estar `PASS` antes do fechamento operacional; evidência final deve ser registrada em #37/#38**.
+- CI do head documental final da PR #40: **deve estar `PASS` antes do merge**;
+- CI pós-merge da `main`: **deve estar `PASS` antes do fechamento operacional; evidência final deve ser registrada em #39/#40**.
 
 ## Estado técnico preservado
 
@@ -95,15 +92,25 @@ Contrato automatizado: tests/ui-primitives-contract.test.mjs
 - Tailwind CSS 4;
 - Node `24.20.0` / npm `11.19.0`;
 - CI permanente continua sem CD;
-- banco/migrations/Neon/Auth/RLS/Data API/Storage não foram alterados;
-- `vercel.json` e política de release manual permanecem inalterados.
+- Neon canônico continua `caleida-nonprod`; US-DS-004 não exige consulta/mutação remota;
+- Production Neon continua não provisionada;
+- nenhum projeto Caleida foi criado/importado na Vercel;
+- `vercel.json` continua bloqueando Git deployments automáticos;
+- nenhum Preview/Production foi executado.
 
-## Próxima ação — US-DS-004
+## Próxima ação — OPS-006
 
 Executar somente:
 
-> `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`
+> `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`
 
-A próxima Story deve criar Issue/branch próprias, ler `docs/DESIGN_TOKENS.md`, `docs/BRAND_TYPOGRAPHY.md` e `docs/UI_PRIMITIVES.md`, aplicar a identidade à página técnica sem inventar ações ou fluxos e validar composição responsiva/acessibilidade em browser quando houver infraestrutura disponível.
+O Project Design define EPIC-02 como contas e autenticação: convites, cadastro, login, sessão, SMTP, papéis e auditoria básica. Antes de implementar qualquer parte, o refino deve:
 
-Não iniciar Auth, convites, catálogo, biblioteca, banco ou qualquer feature do incremento funcional seguinte.
+1. reler CAP-01, CAP-02, CAP-04 e CAP-35 e requisitos de privacidade/segurança;
+2. confrontar `ADR-005` e a arquitetura Neon vigente;
+3. verificar o estado real do projeto Neon non-production quando aplicável;
+4. revalidar documentação oficial corrente de Neon Auth/Data API, Next.js e mecanismos de sessão relevantes;
+5. decompor o épico em Stories pequenas, com dependências, critérios de autorização/RLS, gates Neon-specific e non-goals explícitos;
+6. produzir um plano do próximo incremento e promover exatamente uma Story técnica executável.
+
+**Não implementar Auth durante OPS-006.** Não criar secrets, SMTP, OAuth, usuários, schema funcional, Production Neon ou deployment Vercel durante o refino.
