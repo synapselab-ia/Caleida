@@ -1,9 +1,66 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-violet: #7457e8;
+  --color-brand-magenta: #d85ba8;
+  --color-brand-blue: #4c8dff;
+  --color-brand-green: #39b99a;
+  --color-brand-amber: #f2a93b;
+}
+
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+
+  --caleida-category-manhua: #d9685b;
+  --caleida-category-series: #278eaf;
+  --caleida-category-anime: #278f83;
+
+  --caleida-background: #f7f6fa;
+  --caleida-surface: #ffffff;
+  --caleida-surface-raised: var(--caleida-surface);
+  --caleida-border: #e4e1ea;
+  --caleida-text-primary: #24212a;
+  --caleida-text-muted: #706978;
+  --caleida-accent: var(--color-brand-violet);
+  --caleida-focus: var(--caleida-accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --caleida-background: #101014;
+    --caleida-surface: #17171d;
+    --caleida-surface-raised: #202028;
+    --caleida-border: #30303a;
+    --caleida-text-primary: #f5f4f8;
+    --caleida-text-muted: #aaa5b3;
+    --caleida-accent: #a994ff;
+    --caleida-focus: var(--caleida-accent);
+  }
+}
+
+@theme inline {
+  --color-background: var(--caleida-background);
+  --color-surface: var(--caleida-surface);
+  --color-surface-raised: var(--caleida-surface-raised);
+  --color-border: var(--caleida-border);
+  --color-text-primary: var(--caleida-text-primary);
+  --color-text-muted: var(--caleida-text-muted);
+  --color-accent: var(--caleida-accent);
+  --color-focus: var(--caleida-focus);
+
+  --color-category-book: var(--color-brand-amber);
+  --color-category-manga: var(--color-brand-magenta);
+  --color-category-manhwa: var(--color-brand-violet);
+  --color-category-manhua: var(--caleida-category-manhua);
+  --color-category-movie: var(--color-brand-blue);
+  --color-category-series: var(--caleida-category-series);
+  --color-category-anime: var(--caleida-category-anime);
 }
 
 body {
   margin: 0;
+  background: var(--caleida-background);
+  color: var(--caleida-text-primary);
 }

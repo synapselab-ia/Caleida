@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Incremento 0 concluído; Incremento 1 refinado por OPS-005  
+**Status:** Incremento 0 concluído; Incremento 1 em execução  
 **Escopo detalhado atual:** `docs/INCREMENT_1_PLAN.md`
 
 ## Convenções
@@ -121,15 +121,17 @@ Este é um incremento operacional de interface. Ele não altera a ordem funciona
 ### US-DS-001 — Materializar tokens de cor e temas base
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado esperado:** paleta aprovada, temas light/dark e aliases semânticos codificados como tokens reutilizáveis, com contraste básico protegido e sem componente/lógica de produto.
-- **Dependências:** Project Design §§21–27; Tailwind CSS 4 já instalado.
+- **Estado:** CONCLUÍDA após integração da PR `#34`
+- **Issue:** `#33`
+- **PR:** `#34`
+- **Resultado:** paleta aprovada, temas light/dark e aliases semânticos codificados em `src/app/globals.css`; categorias documentadas; contraste protegido por teste automatizado; nenhuma dependência, componente, banco ou infraestrutura adicionados.
+- **Documentação:** `docs/DESIGN_TOKENS.md`.
 - **Banco/Neon:** nenhum; Neon-specific `SKIPPED` por escopo.
 
 ### US-DS-002 — Integrar tipografia e assinatura de marca
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Resultado esperado:** Manrope/Newsreader integradas com fallbacks adequados e uso responsivo do ativo oficial de marca existente, sem fabricar variantes ausentes.
 - **Dependência:** `US-DS-001`.
 
@@ -149,7 +151,7 @@ Este é um incremento operacional de interface. Ele não altera a ordem funciona
 
 ## Critério de encerramento do Incremento 1
 
-- tokens visuais canônicos e temas light/dark reutilizáveis;
+- tokens visuais canônicos e temas light/dark reutilizáveis: `PASS` após US-DS-001;
 - tipografia de referência integrada;
 - primitivos mínimos acessíveis e testados;
 - layout base responsivo e sem fluxos falsos;
@@ -165,6 +167,6 @@ Detalhamento: `docs/INCREMENT_1_PLAN.md`.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após integração de `OPS-005`, a próxima ação canônica deve ser:
+Após integração de `US-DS-001`, a próxima ação canônica deve ser:
 
-> `US-DS-001 — Materializar tokens de cor e temas base`
+> `US-DS-002 — Integrar tipografia e assinatura de marca`

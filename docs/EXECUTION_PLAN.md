@@ -412,54 +412,93 @@ Detalhamento, dependências e porta de saída: `docs/INCREMENT_1_PLAN.md`.
 
 # US-DS-001 — Materializar tokens de cor e temas base
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO APÓS INTEGRAÇÃO  
 **Backlog:** `US-DS-001` / EPIC-01  
+**Incremento:** 1 — Fundação visual  
+**Prioridade:** P0  
+**Issue:** `#33`  
+**PR:** `#34`
+
+## Resultado
+
+- `src/app/globals.css` passou a conter a paleta canônica do Project Design em `@theme`;
+- aliases semânticos foram criados para background, surface, surface-raised, border, text-primary, text-muted, accent e focus;
+- `@theme inline` conecta aliases runtime ao namespace de cores do Tailwind CSS 4;
+- light/dark seguem `prefers-color-scheme` sem JavaScript, cookie, localStorage ou theme switch persistido;
+- `color-scheme` acompanha a preferência do sistema;
+- categorias recebem tokens próprios;
+- Manhua/coral = `#D9685B`, Série/ciano = `#278EAF` e Anime/verde-azulado = `#278F83` foram documentados em `docs/DESIGN_TOKENS.md`;
+- accent/focus dark = `#A994FF`, tint acessível derivado do violeta canônico, sem substituir `--color-brand-violet`;
+- `tests/design-tokens-contract.test.mjs` calcula contraste a partir dos tokens e protege ambos os temas;
+- não houve dependência npm, componente, tela funcional, migration, secret ou infraestrutura.
+
+## Verificação
+
+- documentação oficial corrente do Tailwind CSS 4 para `@theme`/`@theme inline`: verificada em 02/09/2026;
+- CI inicial da PR #34, run `33645092044`: `PASS` para `npm run verify`, PostgreSQL 18 e `npm run verify:db`;
+- contraste light: texto principal `>= 14.72:1`, muted `>= 4.90:1`, accent `>= 4.57:1`;
+- contraste dark: texto principal `>= 14.77:1`, muted `>= 6.73:1`, accent `>= 6.44:1`;
+- focus: `>= 3:1` contra background/surfaces suportadas;
+- banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
+- Vercel deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`;
+- CI do head documental final da PR deve estar `PASS` antes do merge; evidência pós-merge fica registrada em #33/#34.
+
+---
+
+# US-DS-002 — Integrar tipografia e assinatura de marca
+
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-DS-002` / EPIC-01  
 **Incremento:** 1 — Fundação visual  
 **Prioridade:** P0
 
 ## Objetivo
 
-Codificar a paleta e os temas aprovados pelo Project Design como tokens CSS semânticos reutilizáveis, estabelecendo a primeira camada executável do design system sem criar componentes ou lógica de produto.
+Integrar Manrope como tipografia de interface, Newsreader como tipografia editorial e estabelecer o uso responsivo do ativo oficial de marca já existente, sem fabricar variantes de logo ausentes e sem criar componentes de produto.
 
 ## Inspecionar antes de editar
 
 1. Project Design §§21–27 e `docs/INCREMENT_1_PLAN.md`;
-2. `src/app/globals.css`, `layout.tsx` e `page.tsx`;
-3. configuração efetiva do Tailwind CSS 4 e `package.json`;
-4. documentação oficial corrente do Tailwind CSS 4 para CSS-first theme variables quando a implementação depender dela;
-5. comportamento atual de `color-scheme`/`prefers-color-scheme` no browser;
-6. testes existentes e contrato de CI.
+2. `docs/DESIGN_TOKENS.md` e `src/app/globals.css`;
+3. `src/app/layout.tsx` e a integração atual de metadata/fonts;
+4. `public/brand/README.md` e todos os ativos realmente existentes em `public/brand`;
+5. `package.json` e versões vigentes de Next.js/React;
+6. documentação oficial corrente do Next.js para `next/font` e carregamento de Google/local fonts;
+7. testes existentes, acessibilidade e contrato de CI.
 
 ## Escopo esperado
 
-- materializar uma camada canônica de tokens CSS para valores de marca e superfícies já aprovados;
-- criar aliases semânticos para background, surfaces, border, text, accent e focus;
-- representar temas claro/escuro e respeitar preferência do sistema sem JavaScript nesta Story;
-- criar tokens de cores de categoria; valores ainda não hex-especificados pelo Project Design devem ser escolhidos/documentados com coerência visual e contraste;
-- adicionar teste/contrato automatizado proporcional que proteja os tokens essenciais;
-- manter a alteração independente de banco, Auth, Storage e deployment.
+- integrar Manrope como fonte padrão de interface;
+- integrar Newsreader para uso editorial explícito;
+- definir fallbacks e variáveis/classes tipográficas reutilizáveis sem substituir os tokens de cor existentes;
+- preferir mecanismo suportado pelo Next.js que não exija fetch remoto das fontes em runtime;
+- documentar pesos/estilos efetivamente carregados e evitar payload desnecessário;
+- estabelecer regras de uso do logo horizontal oficial existente, incluindo tamanho/legibilidade e apresentação responsiva;
+- manter como pendência real qualquer variante clara/escura, símbolo, favicon, vetor ou ícone ainda ausente;
+- adicionar contrato automatizado proporcional para fontes/ativos quando útil;
+- manter a Story independente de Auth, banco, Storage e deployment.
 
 ## Critérios de aceite
 
-1. valores de marca e superfícies do Project Design existem em uma camada única de tokens;
-2. aliases semânticos mínimos existem para `background`, `surface`, `surface-raised`, `border`, `text-primary`, `text-muted`, `accent` e `focus`;
-3. light/dark funcionam pela preferência do sistema sem theme switch persistido ou JavaScript;
-4. cores de categoria possuem tokens e nunca são tratadas como único identificador conceitual;
-5. pares normais de texto/superfície atendem WCAG 2.2 AA quando aplicável;
-6. não é adicionada dependência npm, componente, tela funcional, migration ou secret;
-7. teste automatizado protege os tokens canônicos e os dois temas;
+1. Manrope é a fonte padrão de interface e possui fallback adequado;
+2. Newsreader está disponível para contexto editorial sem substituir a fonte de interface global;
+3. carregamento usa mecanismo suportado pelo Next.js vigente e não depende de download remoto em runtime do browser;
+4. pesos/estilos carregados são limitados ao necessário nesta fundação;
+5. o logo horizontal existente recebe regra de uso/apresentação responsiva sem fabricar ativo novo;
+6. variantes de marca ausentes permanecem explicitamente pendentes;
+7. nenhuma biblioteca de componentes, feature de produto, migration, secret ou Storage é adicionada;
 8. `npm run verify` e CI da PR: `PASS`;
 9. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
 10. Vercel deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
 
 ## Non-goals
 
-- integrar Manrope/Newsreader;
-- completar logo/favicon/variantes de marca;
-- criar componentes de UI;
+- criar botão/input/feedback de `US-DS-003`;
 - redesenhar integralmente a página inicial;
-- persistir preferência de tema;
-- implementar Auth ou qualquer Story de EPIC-02.
+- gerar ou editar novas versões do logotipo;
+- favicon/app icon se o ativo correspondente ainda não existir;
+- Auth, catálogo, biblioteca ou qualquer Story funcional;
+- persistência de tema ou deployment.
 
 ---
 
@@ -478,5 +517,3 @@ Para cada tarefa:
 9. atualizar Checkpoint;
 10. abrir/revisar/mergear PR;
 11. deixar uma única próxima ação.
-
-Deployment segue `ADR-007` e nunca é consequência automática do fluxo.
