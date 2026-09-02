@@ -1,6 +1,6 @@
 # Incremento 1 — Fundação visual do Caleida
 
-**Status:** em execução — `US-DS-001` e `US-DS-002` concluídas após integração  
+**Status:** em execução — `US-DS-001`, `US-DS-002` e `US-DS-003` concluídas após integração  
 **Épico:** `EPIC-01 — Identidade e design system`  
 **Issue de refino:** `#31`  
 **Natureza:** incremento operacional de interface; nenhuma funcionalidade de domínio
@@ -158,27 +158,43 @@ Dos protocolos vigentes:
 ### US-DS-003 — Criar primitivos acessíveis essenciais
 
 - **Prioridade:** P0
-- **Estado:** PRONTA / `NEXT_ACTION`
+- **Estado:** CONCLUÍDA após integração da PR `#38`
+- **Issue:** `#37`
+- **PR:** `#38`
 - **Dependências:** `US-DS-001`, `US-DS-002`.
 
 **Objetivo:** fornecer um conjunto mínimo e reutilizável para o próximo incremento funcional, sem construir telas de produto.
 
-**Escopo inicial:** botão, campo/form-field e mensagem/feedback, usando semântica HTML correta e tokens canônicos.
+**Resultado:**
 
-**Critérios principais:**
+- `src/components/ui/Button.tsx` usa `<button>` nativo, `type="button"` por padrão, variantes `primary`/`secondary`, hover somente em controles enabled, disabled nativo e focus-visible explícito;
+- `src/components/ui/FormField.tsx` usa `<label htmlFor>` + `<input>`, exige `id`, associa descrição/erro por `aria-describedby`, emite `aria-invalid` apenas com erro e mantém indicação textual de obrigatório/erro;
+- `src/components/ui/Feedback.tsx` diferencia `note`, `status` e `alert`, sem live region em nota estática e sem permitir sobrescrita contraditória de `role`/`aria-live` pela API comum;
+- `docs/UI_PRIMITIVES.md` registra API, semântica e limites;
+- `tests/ui-primitives-contract.test.mjs` protege foco, labels, relações ARIA, live-region roles e ausência de biblioteca externa;
+- a página base permanece inalterada e nenhum fluxo funcional foi criado.
 
-- estados default, hover quando aplicável, focus-visible, disabled e erro possuem contrato consistente;
-- navegação por teclado e labels são preservados;
-- foco nunca depende somente de cor imperceptível;
-- API dos componentes é pequena e tipada;
-- não é adicionada biblioteca de componentes sem decisão/necessidade demonstrada;
-- testes cobrem semântica e estados essenciais.
+**Critérios de aceite:**
+
+1. botão preserva semântica HTML e navegação por teclado: `PASS`;
+2. campo/form-field possui label acessível e ligação correta com descrição/erro: `PASS`;
+3. feedback usa papel/semântica proporcional sem transformar toda mensagem em alerta: `PASS`;
+4. default, hover, focus-visible, disabled e erro usam tokens canônicos: `PASS`;
+5. foco usa outline de 2 px + offset de 2 px com token `focus`, sem depender apenas de cor interna: `PASS`;
+6. API pequena e TypeScript strict: `PASS`;
+7. nenhuma biblioteca de componentes, feature funcional, migration, secret ou Storage: `PASS`;
+8. `npm run verify`/CI inicial: `PASS` no run `33656150580`;
+9. PostgreSQL 18 + `npm run verify:db`: `PASS` no mesmo run, embora sem impacto semântico da Story;
+10. banco/Neon-specific: `SKIPPED — Story visual sem mudança de dados`;
+11. deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
+
+**Non-goals preservados:** redesign da página base de US-DS-004, Auth, domínio funcional, theme switch, Storybook/framework E2E e biblioteca de UI externa.
 
 ### US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base
 
 - **Prioridade:** P1
-- **Estado:** A FAZER
-- **Dependências:** `US-DS-001` a `US-DS-003`.
+- **Estado:** PRONTA / `NEXT_ACTION`
+- **Dependências:** `US-DS-001` a `US-DS-003` — satisfeitas.
 
 **Objetivo:** provar a fundação visual no layout raiz e na página base sem criar fluxo falso.
 
@@ -197,9 +213,9 @@ US-DS-001 tokens/temas — CONCLUÍDA
   ↓
 US-DS-002 tipografia/marca — CONCLUÍDA
   ↓
-US-DS-003 primitivos acessíveis — NEXT_ACTION
+US-DS-003 primitivos acessíveis — CONCLUÍDA
   ↓
-US-DS-004 fundação responsiva aplicada
+US-DS-004 fundação responsiva aplicada — NEXT_ACTION
 ```
 
 A sequência é intencional: componentes não devem cristalizar valores visuais antes dos tokens; layout não deve consolidar componentes antes dos primitivos básicos.
@@ -208,14 +224,14 @@ A sequência é intencional: componentes não devem cristalizar valores visuais 
 
 O incremento estará concluído quando:
 
-- identidade visual base estiver codificada por tokens reutilizáveis;
-- temas claro/escuro tiverem comportamento coerente;
-- tipografia oficial de referência estiver integrada;
-- primitivos mínimos necessários ao próximo fluxo funcional estiverem acessíveis e testados;
-- layout base for responsivo e não contiver fluxo falso;
+- identidade visual base estiver codificada por tokens reutilizáveis: `PASS`;
+- temas claro/escuro tiverem comportamento coerente: `PASS`;
+- tipografia oficial de referência estiver integrada: `PASS`;
+- primitivos mínimos necessários ao próximo fluxo funcional estiverem acessíveis e testados: `PASS`;
+- layout base for responsivo e não contiver fluxo falso: pendente de US-DS-004;
 - lint, typecheck, testes e build estiverem em PASS;
 - nenhum banco/infraestrutura tiver sido criado por conveniência visual;
-- documentação e backlog apontarem para o próximo incremento funcional real.
+- documentação e backlog apontarem para o próximo incremento funcional real após US-DS-004.
 
 ## 8. Impacto técnico do incremento
 
@@ -232,8 +248,8 @@ O incremento estará concluído quando:
 
 ## 9. Próxima ação promovida
 
-> `US-DS-003 — Criar primitivos acessíveis essenciais`
+> `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`
 
-A próxima sessão deve criar Issue/branch próprias para essa Story, ler `docs/DESIGN_TOKENS.md` e `docs/BRAND_TYPOGRAPHY.md`, inspecionar os padrões existentes e implementar somente botão, campo/form-field e feedback mínimos, tipados e acessíveis.
+A próxima sessão deve criar Issue/branch próprias para essa Story, ler os contratos de tokens, tipografia/marca e primitivos, aplicar a identidade à página técnica sem criar ações falsas e verificar composição responsiva/acessibilidade em browser quando houver infraestrutura de teste disponível.
 
-Não iniciar o redesign da página base de `US-DS-004`, não adicionar biblioteca de componentes sem necessidade demonstrada e não antecipar Auth, banco ou features funcionais.
+Não antecipar Auth, convites, catálogo, biblioteca, banco ou features do incremento funcional seguinte.
