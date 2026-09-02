@@ -1,7 +1,8 @@
 # Product Backlog
 
-**Status:** Incremento 0 concluído; Incremento 1 em execução  
-**Escopo detalhado atual:** `docs/INCREMENT_1_PLAN.md`
+**Status:** Incrementos 0 e 1 concluídos; próximo incremento funcional ainda requer refino  
+**Último incremento detalhado:** `docs/INCREMENT_1_PLAN.md`  
+**Próxima ação operacional:** `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`
 
 ## Convenções
 
@@ -69,16 +70,14 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Resultado:** `vercel.json` desabilita todos os Git deployments automáticos com `git.deploymentEnabled: false`; `tests/vercel-config-contract.test.mjs` protege o guardrail; `docs/VERCEL_RELEASE.md` documenta release manual, pré-condições, alertas e ausência de CD.
+- **Resultado:** `vercel.json` desabilita Git deployments automáticos com `git.deploymentEnabled: false`; `tests/vercel-config-contract.test.mjs` protege o guardrail; `docs/VERCEL_RELEASE.md` documenta release manual.
 - **Operação:** nenhum projeto Caleida foi conectado/importado na Vercel e nenhum Preview/Production foi executado.
 
 ### US-PLAT-009 — Separar variáveis por ambiente
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Resultado:** `docs/ENVIRONMENTS.md` formaliza local, non-production/staging e Production; `.env.example` permanece sem valores ativos/sensíveis; variáveis de banco são server-only; Production não reutiliza non-production e o tooling não inventa alvo Production inexistente.
-- **Guardrail:** `tests/environment-contract.test.mjs` protege `.env.example`, `.gitignore`, ausência de `NEXT_PUBLIC_*` sensível e CI sem repository secrets/CD.
-- **Operação:** nenhum secret remoto, projeto Neon Production, projeto Vercel Caleida ou deployment foi criado.
+- **Resultado:** `docs/ENVIRONMENTS.md` formaliza local, non-production/staging e Production; `.env.example` permanece sem valores ativos/sensíveis; variáveis de banco são server-only; Production não reutiliza non-production.
 
 ### US-PLAT-010 — Validar o ciclo técnico de entrega
 
@@ -86,23 +85,12 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 - **Estado:** CONCLUÍDA
 - **Issue:** `#28`
 - **PR:** `#29`
-- **Resultado:** ciclo real `Issue → branch → CI → PR → review → merge → CI main` validado com todos os gates aplicáveis em PASS; ausência de deployment automático comprovada; gate Neon-specific corretamente `SKIPPED`; nenhuma feature artificial, secret, migration ou infraestrutura introduzida.
+- **Resultado:** ciclo real `Issue → branch → CI → PR → review → merge → CI main` validado com gates aplicáveis em PASS; ausência de deployment automático comprovada; Neon-specific `SKIPPED` corretamente.
 - **Evidência:** `docs/INCREMENT_0_VALIDATION.md`.
 
 ## Critério de encerramento do Incremento 0
 
-- clone/execução documentados: `PASS`;
-- lint, typecheck, testes e build passando: `PASS`;
-- fundação Neon non-production reproduzível: `PASS`;
-- migrations reconstruindo baseline esperada: `PASS`;
-- testes de banco/RLS em PostgreSQL descartável e gate Neon adicional quando aplicável: `PASS`;
-- nenhuma credencial versionada: `PASS`;
-- contratos local/non-production/Production explícitos: `PASS`;
-- PRs executando CI sem CD: `PASS`;
-- hosting preparado contra Git deployments automáticos: `PASS`;
-- runbook de release manual: `PASS`;
-- ciclo `PR → CI → review → merge` funcionando sem deployment: `PASS`;
-- documentos refletindo estado real: `PASS`.
+Todos os gates de fundação executável, banco portável, CI sem CD, ambientes e ciclo de entrega foram concluídos.
 
 **Incremento 0: CONCLUÍDO.**
 
@@ -114,67 +102,80 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 
 Materializar `EPIC-01 — Identidade e design system` como fundação visual reutilizável antes dos fluxos funcionais de acesso controlado.
 
-Este é um incremento operacional de interface. Ele não altera a ordem funcional de capacidades do Project Design e não antecipa Auth, catálogo, biblioteca ou outros domínios.
+Detalhamento: `docs/INCREMENT_1_PLAN.md`.  
+Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 
 ## EPIC-01 — Identidade e design system
 
 ### US-DS-001 — Materializar tokens de cor e temas base
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA após integração da PR `#34`
+- **Estado:** CONCLUÍDA
 - **Issue:** `#33`
 - **PR:** `#34`
-- **Resultado:** paleta aprovada, temas light/dark e aliases semânticos codificados em `src/app/globals.css`; categorias documentadas; contraste protegido por teste automatizado; nenhuma dependência, componente, banco ou infraestrutura adicionados.
+- **Resultado:** paleta aprovada, temas light/dark e aliases semânticos codificados em `src/app/globals.css`; categorias documentadas; contraste protegido por teste automatizado.
 - **Documentação:** `docs/DESIGN_TOKENS.md`.
-- **Banco/Neon:** nenhum; Neon-specific `SKIPPED` por escopo.
+- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
 
 ### US-DS-002 — Integrar tipografia e assinatura de marca
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA após integração da PR `#36`
+- **Estado:** CONCLUÍDA
 - **Issue:** `#35`
 - **PR:** `#36`
-- **Resultado:** Manrope/Newsreader integradas via `next/font` com papéis semânticos distintos; logo horizontal oficial integrado por componente responsivo com `next/image`; variantes ausentes permanecem pendências reais; nenhum redesign, dependência, banco ou infraestrutura antecipados.
+- **Resultado:** Manrope/Newsreader integradas via `next/font`; logo horizontal oficial integrado por `next/image`; variantes ausentes permanecem pendências reais.
 - **Documentação:** `docs/BRAND_TYPOGRAPHY.md`.
-- **Banco/Neon:** nenhum; Neon-specific `SKIPPED` por escopo.
+- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
 
 ### US-DS-003 — Criar primitivos acessíveis essenciais
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA após integração da PR `#38`
+- **Estado:** CONCLUÍDA
 - **Issue:** `#37`
 - **PR:** `#38`
-- **Resultado:** `Button`, `FormField` e `Feedback` mínimos e tipados, com HTML nativo, focus-visible explícito, label/descrição/erro associados e live-region roles proporcionais; nenhuma biblioteca externa ou feature funcional adicionada.
+- **Resultado:** `Button`, `FormField` e `Feedback` mínimos e tipados, com HTML nativo, focus-visible explícito, label/descrição/erro associados e live-region roles proporcionais.
 - **Documentação:** `docs/UI_PRIMITIVES.md`.
-- **Guardrail:** `tests/ui-primitives-contract.test.mjs` protege semântica, estados, foco e ausência de dependência de biblioteca de UI.
-- **Banco/Neon:** nenhum; Neon-specific `SKIPPED` por escopo.
+- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
 
 ### US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base
 
 - **Prioridade:** P1
-- **Estado:** PRONTA / `NEXT_ACTION`
-- **Resultado esperado:** layout raiz e página base coerentes com a marca em celular/tablet/notebook/desktop, sem fluxo falso ou feature futura antecipada.
-- **Dependências:** `US-DS-001` a `US-DS-003` — satisfeitas após integração de `#34`, `#36` e `#38`.
+- **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO
+- **Issue:** `#39`
+- **PR:** `#40`
+- **Resultado:** página base cultural/editorial, mobile-first e sem fluxo falso; tokens, tipografia e logo oficial aplicados; sete categorias preservam texto além da cor; nenhuma animação/hover obrigatório; contrato responsivo automatizado.
+- **Guardrail:** `tests/base-visual-foundation-contract.test.mjs`.
+- **Verificação:** CI inicial `33662849749` falhou legitimamente em contrato legado do logo; contrato corrigido sem relaxar gate; head técnico `a4198a7c7508ae9ede628c59455a64d00cd55d94`, CI `33663025148` em `PASS` para `npm run verify`, PostgreSQL 18 e `verify:db`.
+- **Browser real:** `SKIPPED` por indisponibilidade de checkout/dev server local na sessão; nenhum deployment foi criado como atalho.
+- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
 
 ## Critério de encerramento do Incremento 1
 
-- tokens visuais canônicos e temas light/dark reutilizáveis: `PASS` após US-DS-001;
-- tipografia de referência integrada: `PASS` após US-DS-002;
-- assinatura de marca existente integrada sem variantes fabricadas: `PASS` após US-DS-002;
-- primitivos mínimos acessíveis e testados: `PASS` após US-DS-003;
-- layout base responsivo e sem fluxos falsos;
-- WCAG 2.2 AA considerada nos contrastes/foco aplicáveis: `PASS` na fundação existente; revalidar composição em US-DS-004;
-- redução de movimento respeitada quando houver movimento;
-- lint, typecheck, testes e build em PASS;
-- nenhuma infraestrutura/banco criado por conveniência visual;
-- deployment permanece separado e manual.
+- tokens e temas reutilizáveis: `PASS`;
+- tipografia e marca: `PASS`;
+- primitivos acessíveis: `PASS`;
+- composição responsiva sem fluxo falso: `PASS` por código/contrato/build;
+- browser real: `SKIPPED` com motivo explícito;
+- lint/typecheck/test/build: `PASS` no head técnico corrigido;
+- banco/infraestrutura criados por conveniência visual: nenhum;
+- deployment: não executado.
 
-Detalhamento: `docs/INCREMENT_1_PLAN.md`.
+**Incremento 1: CONCLUÍDO após CI final da PR #40 e CI pós-merge da `main` em PASS.**
+
+---
+
+# Próximo horizonte funcional — EPIC-02
+
+O Project Design define:
+
+### EPIC-02 — Contas e autenticação
+
+Convites, cadastro, login, sessão, SMTP, papéis e auditoria básica, com relação direta a CAP-01, CAP-02, CAP-04 e CAP-35.
+
+O épico ainda **não está refinado em Stories técnicas executáveis** e toca Auth, segurança, autorização, e-mail e comportamento gerenciado do Neon. Implementação direta está proibida até o refino canônico.
 
 # Próxima ação operacional
 
-O backlog não define sozinho a `NEXT_ACTION`.
+> `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`
 
-Após integração de `US-DS-003`, a próxima ação canônica deve ser:
-
-> `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`
+O refino deve verificar arquitetura/ADRs, estado real do Neon e documentação oficial corrente antes de decompor o épico e promover exatamente uma Story técnica.
