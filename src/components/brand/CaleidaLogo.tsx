@@ -5,7 +5,7 @@ type CaleidaLogoProps = {
 };
 
 export function CaleidaLogo({ className }: CaleidaLogoProps) {
-  const classes = ["relative h-20 w-full max-w-80", className]
+  const classes = ["relative block h-20 w-full max-w-80 shrink-0", className]
     .filter(Boolean)
     .join(" ");
 
@@ -16,7 +16,7 @@ export function CaleidaLogo({ className }: CaleidaLogoProps) {
         alt="Caleida"
         fill
         sizes="(max-width: 640px) 72vw, 20rem"
-        className="object-contain"
+        className="object-contain object-left"
       />
     </span>
   );
