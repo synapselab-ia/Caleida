@@ -57,10 +57,14 @@
   --color-category-movie: var(--color-brand-blue);
   --color-category-series: var(--caleida-category-series);
   --color-category-anime: var(--caleida-category-anime);
+
+  --font-sans: var(--font-caleida-interface);
+  --font-editorial: var(--font-caleida-editorial);
 }
 
 body {
   margin: 0;
   background: var(--caleida-background);
   color: var(--caleida-text-primary);
+  font-family: var(--font-caleida-interface), Arial, sans-serif;
 }
