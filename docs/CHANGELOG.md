@@ -18,6 +18,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/ENVIRONMENTS.md` como contrato canônico de configuração para local, non-production/staging e Production.
 - `docs/INCREMENT_0_VALIDATION.md` como evidência verificável do ciclo técnico de entrega e encerramento do Incremento 0.
 - `docs/INCREMENT_1_PLAN.md` como plano operacional de `EPIC-01 — Identidade e design system`, com quatro Stories pequenas e porta de saída explícita.
+- `docs/INCREMENT_1_VALIDATION.md` como evidência de encerramento técnico da fundação visual.
 - `docs/DESIGN_TOKENS.md` como contrato canônico de cores, temas e categorias materializado em US-DS-001.
 - `docs/BRAND_TYPOGRAPHY.md` como contrato canônico de tipografia e assinatura de marca materializado em US-DS-002.
 - `docs/UI_PRIMITIVES.md` como contrato canônico de botão, form-field e feedback acessíveis materializado em US-DS-003.
@@ -50,6 +51,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `tests/design-tokens-contract.test.mjs` para proteger paleta, aliases semânticos, light/dark, categorias e contraste WCAG aplicável.
 - `tests/brand-typography-contract.test.mjs` para proteger Manrope/Newsreader, tokens tipográficos, uso do logo horizontal oficial e pendências reais de variantes.
 - `tests/ui-primitives-contract.test.mjs` para proteger HTML nativo, foco, estados, relações ARIA, live-region roles e ausência de biblioteca externa.
+- `tests/base-visual-foundation-contract.test.mjs` para proteger composição semântica/mobile-first, temas, categorias, logo e ausência de fluxo falso em US-DS-004.
 - `src/app/fonts.ts` como integração centralizada das fontes de referência do Caleida via `next/font`.
 - `src/components/brand/CaleidaLogo.tsx` como integração responsiva do único ativo horizontal oficial existente.
 - `src/components/ui/Button.tsx`, `FormField.tsx` e `Feedback.tsx` como conjunto mínimo de primitivos acessíveis da fundação visual.
@@ -83,7 +85,10 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `public/brand/README.md` agora reflete que `caleida-logo-horizontal.png` é o único ativo de marca disponível e mantém versão clara/escura, símbolo, favicon, vetores e ícones como pendências reais.
 - O logo horizontal oficial passou a ter componente responsivo via `next/image`, sem filtros, recoloração, recorte ou fabricação de variantes.
 - `US-DS-003` criou os três primitivos mínimos com semântica HTML nativa, relações acessíveis explícitas, foco visível e live-region roles proporcionais, sem montar fluxo funcional.
-- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_1_PLAN.md` e `docs/CHECKPOINT.md` passam a promover `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base` como única próxima ação após integração de US-DS-003.
+- `US-DS-004` aplicou a identidade à página técnica com composição editorial mobile-first, sete categorias rotuladas, assinatura geométrica estática e nenhum fluxo funcional falso.
+- `CaleidaLogo` passou a usar wrapper `block`/`shrink-0` e alinhamento `object-left`, garantindo caixa responsiva real para `next/image fill` sem alterar o PNG oficial.
+- O Incremento 1 / EPIC-01 passa a ser tratado como concluído após os gates finais de #40; o próximo horizonte é EPIC-02, mas somente via refino `OPS-006` antes de qualquer implementação de Auth.
+- `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_1_PLAN.md` e `docs/CHECKPOINT.md` passam a promover `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)` como única próxima ação.
 
 ### Corrigido
 
@@ -104,6 +109,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Cores de interface deixaram de depender apenas do `color-scheme` nativo e passaram a possuir aliases semânticos reutilizáveis e contrastes testados.
 - O primeiro head da PR #36 deixou de importar o PNG de `public/brand` como módulo TypeScript fora de `src/`; após o typecheck detectar `TS2307`, o componente passou a usar o caminho público com caixa responsiva estável, preservando `next/image` e sem relaxar gates.
 - O botão base deixou de aplicar hover a controles disabled; variantes usam `enabled:hover:*` e preservam o estado disabled nativo.
+- O primeiro CI de #40 expôs que o contrato antigo do logo dependia da sequência literal de classes; o teste foi atualizado para exigir a caixa responsiva mais forte (`block`/`shrink-0`/`object-left`) sem relaxar os demais requisitos.
 
 ### Segurança e operação
 
@@ -127,7 +133,9 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-DS-001` não altera migrations, Neon, Auth, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - `US-DS-002` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - `US-DS-003` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
+- `US-DS-004` não altera migrations, Neon, Auth, Data API, RLS, Storage, variáveis de ambiente, dependências ou workflow CI; gate Neon-specific permanece `SKIPPED`.
 - Nenhuma connection string, senha, Neon API key ou Vercel token foi versionada.
+- Browser real de US-DS-004 ficou `SKIPPED` porque a sessão não conseguiu obter checkout/dev server local; nenhum Preview/Production foi usado para contornar esse limite.
 
 ### Observação operacional
 
@@ -147,4 +155,6 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Na PR #36, o run inicial `33653117310` falhou corretamente no typecheck por `TS2307` no import estático do PNG; a implementação foi corrigida sem relaxar teste ou configuração.
 - Na PR #36, o run corrigido `33653441581` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db` no head `f6db6b5237ae77ac1597bc5889c8acf21204792d`.
 - Na PR #38, o run inicial `33656150580` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db`, incluindo o novo contrato de primitivos acessíveis.
-- A próxima ação canônica após integração de US-DS-003 é `US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base`.
+- Na PR #40, o run inicial `33662849749` falhou somente no contrato legado do logo; lint, typecheck e os seis testes novos de US-DS-004 passaram.
+- Após reconciliar o contrato responsivo do logo, o head técnico `a4198a7c7508ae9ede628c59455a64d00cd55d94` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db` no run `33663025148`.
+- A próxima ação canônica após integração de US-DS-004 é `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`.
