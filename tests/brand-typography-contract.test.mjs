@@ -46,17 +46,16 @@ test("semantic typography tokens expose interface and editorial roles", async ()
   );
 });
 
-test("horizontal brand asset uses next/image with responsive intrinsic rendering", async () => {
+test("horizontal brand asset uses next/image with a stable responsive box", async () => {
   const component = await readFile(logoComponentUrl, "utf8");
 
   assert.match(component, /import Image from "next\/image"/);
-  assert.match(
-    component,
-    /import caleidaLogoHorizontal from "\.\.\/\.\.\/\.\.\/public\/brand\/caleida-logo-horizontal\.png"/,
-  );
+  assert.match(component, /src="\/brand\/caleida-logo-horizontal\.png"/);
   assert.match(component, /alt="Caleida"/);
+  assert.match(component, /\bfill\b/);
   assert.match(component, /sizes="\(max-width: 640px\) 72vw, 20rem"/);
-  assert.match(component, /h-auto w-full max-w-80/);
+  assert.match(component, /relative h-20 w-full max-w-80/);
+  assert.match(component, /className="object-contain"/);
   assert.doesNotMatch(component, /filter:|invert|hue-rotate|grayscale/);
 });
 
