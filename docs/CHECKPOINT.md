@@ -3,14 +3,14 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 1 — Fundação visual / EPIC-01 Identidade e design system  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-DS-001 — Materializar tokens de cor e temas base`  
-**LAST_COMPLETED_ISSUE:** `#33`  
-**LAST_COMPLETED_PR:** `#34`  
+**LAST_COMPLETED_TASK:** `US-DS-002 — Integrar tipografia e assinatura de marca`  
+**LAST_COMPLETED_ISSUE:** `#35`  
+**LAST_COMPLETED_PR:** `#36`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `US-DS-002 — Integrar tipografia e assinatura de marca`  
+**NEXT_ACTION:** `US-DS-003 — Criar primitivos acessíveis essenciais`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -27,93 +27,71 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 
 Evidência detalhada: `docs/INCREMENT_0_VALIDATION.md`.
 
-## Incremento 1 — estado integrado após US-DS-001
+## Incremento 1 — estado integrado após US-DS-002
 
 Ordem vigente:
 
 ```text
 US-DS-001 tokens/temas — CONCLUÍDA
   ↓
-US-DS-002 tipografia/marca — NEXT_ACTION
+US-DS-002 tipografia/marca — CONCLUÍDA
   ↓
-US-DS-003 primitivos acessíveis
+US-DS-003 primitivos acessíveis — NEXT_ACTION
   ↓
 US-DS-004 fundação responsiva aplicada
 ```
 
 Plano detalhado: `docs/INCREMENT_1_PLAN.md`.
 
-## US-DS-001 — resultado
+## US-DS-002 — resultado
 
 A Story foi executada em:
 
 ```text
-Issue: #33
-Branch: feat/us-ds-001-design-tokens
-PR: #34
-Contrato visual: docs/DESIGN_TOKENS.md
-Contrato automatizado: tests/design-tokens-contract.test.mjs
+Issue: #35
+Branch: feat/us-ds-002-typography-brand
+PR: #36
+Contrato visual: docs/BRAND_TYPOGRAPHY.md
+Contrato automatizado: tests/brand-typography-contract.test.mjs
 ```
 
-### Tokens materializados
+### Tipografia materializada
 
-`src/app/globals.css` agora contém:
+- `src/app/fonts.ts` centraliza Manrope e Newsreader via `next/font/google`;
+- Manrope é a fonte padrão da interface;
+- Newsreader possui papel editorial explícito para resenhas, citações e retrospectivas;
+- ambas usam subset `latin`, `display: "swap"` e fallbacks explícitos;
+- Newsreader não é preloaded globalmente por ser família secundária;
+- `src/app/layout.tsx` instala as duas variáveis de fonte no layout raiz;
+- `src/app/globals.css` expõe `font-sans` e `font-editorial` sem alterar os tokens de cor de US-DS-001;
+- o carregamento usa `next/font`, sem stylesheet do Google Fonts requisitada pelo browser em runtime.
 
-- paleta canônica do Project Design em `@theme`;
-- aliases semânticos para background, surface, surface-raised, border, text-primary, text-muted, accent e focus;
-- `@theme inline` para expor aliases runtime no namespace de cores do Tailwind CSS 4;
-- light/dark por `prefers-color-scheme`, sem JavaScript, cookie, localStorage ou theme switch persistido;
-- `color-scheme` coerente com a preferência do sistema;
-- tokens para Livro, Mangá, Manhwa, Manhua, Filme, Série e Anime.
+### Assinatura de marca materializada
 
-Valores definidos nesta Story para categorias sem hexadecimal canônico:
+- o único ativo oficial disponível continua sendo `public/brand/caleida-logo-horizontal.png`;
+- `src/components/brand/CaleidaLogo.tsx` usa `next/image` com caminho público, caixa responsiva estável e `object-contain`;
+- não houve recoloração, filtro, recorte ou reconstrução do logo;
+- versões clara/escura, símbolo, favicon, vetor e ícones permanecem pendências reais de ativo;
+- `src/app/page.tsx` não foi redesenhada; aplicação da identidade à página base permanece em US-DS-004.
 
-```text
-Manhua / coral: #D9685B
-Série / ciano: #278EAF
-Anime / verde-azulado: #278F83
-```
+## Verificação de US-DS-002
 
-Accent/focus escuro: `#A994FF`, tint acessível derivado do violeta canônico `#7457E8`. O token de marca original permanece inalterado.
-
-### Contraste protegido
-
-`tests/design-tokens-contract.test.mjs` lê os próprios tokens CSS e calcula contraste WCAG.
-
-Mínimos verificados no contrato:
-
-```text
-Light
-text-primary >= 14.72:1
-text-muted   >= 4.90:1
-accent       >= 4.57:1
-
-Dark
-text-primary >= 14.77:1
-text-muted   >= 6.73:1
-accent       >= 6.44:1
-
-focus >= 3:1 contra background/surfaces suportadas
-```
-
-Cores de categoria continuam sendo pistas auxiliares; nunca são o único identificador conceitual.
-
-## Verificação de US-DS-001
-
-- documentação oficial Tailwind CSS 4 (`@theme`, `@theme inline`, custom colors): `PASS — verificada em 02/09/2026`;
-- diff inicial limitado a `globals.css`, contrato automatizado e documentação visual: `PASS`;
+- documentação oficial corrente do Next.js para `next/font`: `PASS — revalidada em 02/09/2026`;
 - dependências/package-lock: `PASS — nenhuma alteração`;
-- componentes/telas/feature funcional: `PASS — nenhuma alteração`;
-- migration/banco/Auth/RLS/Storage: `PASS — nenhuma alteração`;
+- primitivos/telas/feature funcional: `PASS — nenhuma antecipação de US-DS-003/US-DS-004`;
+- migration/banco/Auth/RLS/Data API/Storage: `PASS — nenhuma alteração`;
 - secrets/tokens/connection strings: `PASS — nenhum introduzido`;
-- CI inicial da PR #34, head `b7abe1dfb1a6efb26a3da07a445e8723386d12c2`, run `33645092044`: `PASS`;
-- `npm run verify`: `PASS` no CI inicial;
-- PostgreSQL 18 + `npm run verify:db`: `PASS` no CI inicial, embora sem impacto semântico nesta Story;
+- CI inicial da PR #36, run `33653117310`: `FAIL` legítimo em typecheck por import estático do PNG fora de `src/`;
+- correção: logo passou a usar `/brand/caleida-logo-horizontal.png` com `next/image`, `fill` e caixa responsiva estável, sem relaxar gate;
+- CI corrigido da PR #36, head `f6db6b5237ae77ac1597bc5889c8acf21204792d`, run `33653441581`: `PASS`;
+- `npm run verify`: `PASS` no run corrigido;
+- PostgreSQL 18 + `npm run verify:db`: `PASS` no run corrigido;
 - gate Neon-specific: `SKIPPED — nenhuma mudança depende de comportamento gerenciado do Neon`;
 - consulta/mutação remota Neon nesta Story: `SKIPPED — não aplicável ao escopo visual`;
+- verificação visual em browser: `SKIPPED — Story não aplica o componente à página base e nenhum deployment/dev server remoto é gate; validação visual de composição pertence a US-DS-004`;
 - deployment Vercel: `SKIPPED/PROIBIDO` conforme `ADR-007`;
-- CI do head documental final da PR #34: **deve estar `PASS` antes do merge**;
-- CI pós-merge da `main`: **deve estar `PASS` antes do fechamento operacional da sessão; evidência final deve ser registrada em #33/#34**.
+- CI do head documental final da PR #36: **deve estar `PASS` antes do merge**;
+- CI pós-merge da `main`: **deve estar `PASS` antes do fechamento operacional da sessão; evidência final deve ser registrada em #35/#36**.
 
 ## Estado técnico preservado
 
@@ -125,12 +103,12 @@ Cores de categoria continuam sendo pistas auxiliares; nunca são o único identi
 - banco/migrations/Neon não foram alterados;
 - `vercel.json` e política de release manual permanecem inalterados.
 
-## Próxima ação — US-DS-002
+## Próxima ação — US-DS-003
 
 Executar somente:
 
-> `US-DS-002 — Integrar tipografia e assinatura de marca`
+> `US-DS-003 — Criar primitivos acessíveis essenciais`
 
-A próxima Story deve criar Issue/branch próprias, ler `docs/DESIGN_TOKENS.md`, inspecionar os ativos reais de `public/brand` e revalidar a documentação oficial corrente do Next.js para fontes antes de implementar.
+A próxima Story deve criar Issue/branch próprias, ler `docs/DESIGN_TOKENS.md` e `docs/BRAND_TYPOGRAPHY.md`, inspecionar os padrões existentes e implementar apenas botão, campo/form-field e feedback mínimos, tipados e acessíveis.
 
-Não fabricar variantes de logo ausentes, não antecipar os primitivos de `US-DS-003` e não iniciar Auth/banco/features funcionais.
+Não iniciar redesign da página base de `US-DS-004`, não adicionar biblioteca de componentes sem necessidade demonstrada e não iniciar Auth/banco/features funcionais.

@@ -447,58 +447,95 @@ Detalhamento, dependências e porta de saída: `docs/INCREMENT_1_PLAN.md`.
 
 # US-DS-002 — Integrar tipografia e assinatura de marca
 
-**Estado:** NEXT_ACTION  
+**Estado:** CONCLUÍDO APÓS INTEGRAÇÃO  
 **Backlog:** `US-DS-002` / EPIC-01  
+**Incremento:** 1 — Fundação visual  
+**Prioridade:** P0  
+**Issue:** `#35`  
+**PR:** `#36`
+
+## Resultado
+
+- `src/app/fonts.ts` centraliza Manrope e Newsreader por `next/font/google`;
+- Manrope é a tipografia padrão da interface;
+- Newsreader possui papel editorial separado para resenhas, citações e retrospectivas;
+- `src/app/layout.tsx` instala as variáveis tipográficas no layout raiz;
+- `src/app/globals.css` expõe `font-sans` e `font-editorial`, preservando integralmente os tokens de US-DS-001;
+- `docs/BRAND_TYPOGRAPHY.md` documenta carregamento, fallbacks, rendering, papel editorial e regras de uso da marca;
+- `src/components/brand/CaleidaLogo.tsx` integra somente o ativo `public/brand/caleida-logo-horizontal.png` por `next/image`, usando caminho público, caixa responsiva estável, `fill` e `object-contain`;
+- `public/brand/README.md` foi reconciliado com o inventário real e mantém versões clara/escura, símbolo, favicon, vetores e ícones como pendências;
+- `tests/brand-typography-contract.test.mjs` protege fontes, tokens tipográficos, ativo oficial e ausência de variantes fabricadas;
+- `src/app/page.tsx` permaneceu sem redesign; aplicação da identidade à base continua reservada a US-DS-004;
+- nenhuma dependência npm, migration, banco, Auth, Data API, RLS, Storage, workflow CI ou deployment foi adicionada.
+
+## Verificação
+
+- documentação oficial corrente do Next.js para `next/font`: revalidada em 02/09/2026;
+- run inicial da PR #36 `33653117310`: `FAIL` legítimo no typecheck por import estático do PNG fora de `src/`;
+- a causa foi corrigida usando caminho público no `next/image`, sem relaxar teste, TypeScript ou CI;
+- run corrigido da PR #36 `33653441581`, head `f6db6b5237ae77ac1597bc5889c8acf21204792d`: `PASS`;
+- `npm run verify`: `PASS`;
+- PostgreSQL 18 + `npm run verify:db`: `PASS`;
+- dependências/package-lock: `PASS — nenhuma alteração`;
+- banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
+- consulta/mutação remota Neon: `SKIPPED — não aplicável ao escopo visual`;
+- verificação visual em browser: `SKIPPED — o logo não é aplicado à página base nesta Story e composição visual pertence a US-DS-004`;
+- Vercel deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`;
+- CI do head documental final da PR deve estar `PASS` antes do merge; evidência pós-merge deve ficar registrada em #35/#36.
+
+---
+
+# US-DS-003 — Criar primitivos acessíveis essenciais
+
+**Estado:** NEXT_ACTION  
+**Backlog:** `US-DS-003` / EPIC-01  
 **Incremento:** 1 — Fundação visual  
 **Prioridade:** P0
 
 ## Objetivo
 
-Integrar Manrope como tipografia de interface, Newsreader como tipografia editorial e estabelecer o uso responsivo do ativo oficial de marca já existente, sem fabricar variantes de logo ausentes e sem criar componentes de produto.
+Criar somente os primitivos mínimos reutilizáveis necessários à fundação visual: botão, campo/form-field e feedback, com semântica HTML correta, TypeScript estrito e tokens canônicos já materializados.
 
 ## Inspecionar antes de editar
 
-1. Project Design §§21–27 e `docs/INCREMENT_1_PLAN.md`;
-2. `docs/DESIGN_TOKENS.md` e `src/app/globals.css`;
-3. `src/app/layout.tsx` e a integração atual de metadata/fonts;
-4. `public/brand/README.md` e todos os ativos realmente existentes em `public/brand`;
-5. `package.json` e versões vigentes de Next.js/React;
-6. documentação oficial corrente do Next.js para `next/font` e carregamento de Google/local fonts;
-7. testes existentes, acessibilidade e contrato de CI.
+1. `docs/PROJECT_DESIGN.md` §§21–27 e requisitos NFR-01/NFR-02;
+2. `docs/INCREMENT_1_PLAN.md`;
+3. `docs/DESIGN_TOKENS.md` e `docs/BRAND_TYPOGRAPHY.md`;
+4. `src/app/globals.css`, `src/app/layout.tsx` e estrutura real de `src/components`;
+5. testes existentes e contrato de CI;
+6. documentação oficial corrente de React/Next.js e padrões de acessibilidade quando o comportamento depender deles.
 
 ## Escopo esperado
 
-- integrar Manrope como fonte padrão de interface;
-- integrar Newsreader para uso editorial explícito;
-- definir fallbacks e variáveis/classes tipográficas reutilizáveis sem substituir os tokens de cor existentes;
-- preferir mecanismo suportado pelo Next.js que não exija fetch remoto das fontes em runtime;
-- documentar pesos/estilos efetivamente carregados e evitar payload desnecessário;
-- estabelecer regras de uso do logo horizontal oficial existente, incluindo tamanho/legibilidade e apresentação responsiva;
-- manter como pendência real qualquer variante clara/escura, símbolo, favicon, vetor ou ícone ainda ausente;
-- adicionar contrato automatizado proporcional para fontes/ativos quando útil;
-- manter a Story independente de Auth, banco, Storage e deployment.
+- botão com semântica nativa, estados essenciais e `focus-visible` consistente;
+- campo/form-field com label, descrição/erro quando aplicável e associação acessível;
+- mensagem/feedback com semântica proporcional ao tipo de mensagem;
+- API pequena e tipada;
+- uso de cores/tipografia/tokens existentes, sem duplicar valores visuais dispersos;
+- nenhum pacote externo de componentes sem necessidade demonstrada;
+- testes proporcionais para semântica e estados essenciais;
+- manter a Story independente de Auth, banco, Storage, página base e deployment.
 
 ## Critérios de aceite
 
-1. Manrope é a fonte padrão de interface e possui fallback adequado;
-2. Newsreader está disponível para contexto editorial sem substituir a fonte de interface global;
-3. carregamento usa mecanismo suportado pelo Next.js vigente e não depende de download remoto em runtime do browser;
-4. pesos/estilos carregados são limitados ao necessário nesta fundação;
-5. o logo horizontal existente recebe regra de uso/apresentação responsiva sem fabricar ativo novo;
-6. variantes de marca ausentes permanecem explicitamente pendentes;
-7. nenhuma biblioteca de componentes, feature de produto, migration, secret ou Storage é adicionada;
+1. botão preserva semântica HTML e navegação por teclado;
+2. campo/form-field possui label acessível e ligação correta com descrição/erro quando presentes;
+3. feedback usa papel/semântica apropriados sem transformar toda mensagem em alerta intrusivo;
+4. estados default, hover quando aplicável, focus-visible, disabled e erro usam tokens canônicos;
+5. foco permanece perceptível e acessível sem depender somente de cor;
+6. API dos componentes é pequena e TypeScript strict permanece em `PASS`;
+7. nenhuma biblioteca de componentes, feature funcional, migration, secret ou Storage é adicionada sem decisão nova;
 8. `npm run verify` e CI da PR: `PASS`;
-9. banco/Neon-specific: `SKIPPED — nenhuma mudança de dados ou comportamento gerenciado do Neon`;
+9. banco/Neon-specific: `SKIPPED — Story visual sem mudança de dados`;
 10. Vercel deployment: `SKIPPED/PROIBIDO — release permanece humana/manual`.
 
 ## Non-goals
 
-- criar botão/input/feedback de `US-DS-003`;
-- redesenhar integralmente a página inicial;
-- gerar ou editar novas versões do logotipo;
-- favicon/app icon se o ativo correspondente ainda não existir;
-- Auth, catálogo, biblioteca ou qualquer Story funcional;
-- persistência de tema ou deployment.
+- redesign da página base de `US-DS-004`;
+- login, convite, catálogo, biblioteca ou qualquer feature de domínio;
+- theme switch persistido;
+- Storybook/framework E2E por conveniência;
+- banco, Auth, Storage ou deployment.
 
 ---
 

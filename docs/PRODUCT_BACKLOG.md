@@ -131,14 +131,17 @@ Este é um incremento operacional de interface. Ele não altera a ordem funciona
 ### US-DS-002 — Integrar tipografia e assinatura de marca
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Resultado esperado:** Manrope/Newsreader integradas com fallbacks adequados e uso responsivo do ativo oficial de marca existente, sem fabricar variantes ausentes.
-- **Dependência:** `US-DS-001`.
+- **Estado:** CONCLUÍDA após integração da PR `#36`
+- **Issue:** `#35`
+- **PR:** `#36`
+- **Resultado:** Manrope/Newsreader integradas via `next/font` com papéis semânticos distintos; logo horizontal oficial integrado por componente responsivo com `next/image`; variantes ausentes permanecem pendências reais; nenhum redesign, dependência, banco ou infraestrutura antecipados.
+- **Documentação:** `docs/BRAND_TYPOGRAPHY.md`.
+- **Banco/Neon:** nenhum; Neon-specific `SKIPPED` por escopo.
 
 ### US-DS-003 — Criar primitivos acessíveis essenciais
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA / `NEXT_ACTION`
 - **Resultado esperado:** conjunto mínimo tipado e acessível de botão, campo/form-field e feedback, usando tokens canônicos e sem biblioteca externa sem necessidade demonstrada.
 - **Dependências:** `US-DS-001`, `US-DS-002`.
 
@@ -152,7 +155,8 @@ Este é um incremento operacional de interface. Ele não altera a ordem funciona
 ## Critério de encerramento do Incremento 1
 
 - tokens visuais canônicos e temas light/dark reutilizáveis: `PASS` após US-DS-001;
-- tipografia de referência integrada;
+- tipografia de referência integrada: `PASS` após US-DS-002;
+- assinatura de marca existente integrada sem variantes fabricadas: `PASS` após US-DS-002;
 - primitivos mínimos acessíveis e testados;
 - layout base responsivo e sem fluxos falsos;
 - WCAG 2.2 AA considerada nos contrastes/foco aplicáveis;
@@ -167,6 +171,6 @@ Detalhamento: `docs/INCREMENT_1_PLAN.md`.
 
 O backlog não define sozinho a `NEXT_ACTION`.
 
-Após integração de `US-DS-001`, a próxima ação canônica deve ser:
+Após integração de `US-DS-002`, a próxima ação canônica deve ser:
 
-> `US-DS-002 — Integrar tipografia e assinatura de marca`
+> `US-DS-003 — Criar primitivos acessíveis essenciais`
