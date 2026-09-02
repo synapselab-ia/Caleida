@@ -1,8 +1,8 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; próximo incremento funcional ainda requer refino  
-**Último incremento detalhado:** `docs/INCREMENT_1_PLAN.md`  
-**Próxima ação operacional:** `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`
+**Status:** Incrementos 0 e 1 concluídos; Incremento 2 refinado e primeira Story pronta  
+**Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
+**Próxima ação operacional:** `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`
 
 ## Convenções
 
@@ -164,18 +164,77 @@ Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 
 ---
 
-# Próximo horizonte funcional — EPIC-02
+# Incremento 2 — Acesso controlado / EPIC-02
 
-O Project Design define:
+**Plano:** `docs/INCREMENT_2_PLAN.md`  
+**Refino:** `OPS-006` / Issue `#41`
 
-### EPIC-02 — Contas e autenticação
+## Objetivo
 
-Convites, cadastro, login, sessão, SMTP, papéis e auditoria básica, com relação direta a CAP-01, CAP-02, CAP-04 e CAP-35.
+Entregar contas e acesso seguro para o beta fechado de forma incremental, separando Auth gerenciado, autorização/papéis, controle de entrada, e-mail, cadastro, login/sessão e auditoria.
 
-O épico ainda **não está refinado em Stories técnicas executáveis** e toca Auth, segurança, autorização, e-mail e comportamento gerenciado do Neon. Implementação direta está proibida até o refino canônico.
+### US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão
+
+- **Prioridade:** P0
+- **Estado:** PRONTA
+- **Capacidade:** CAP-01
+- **Resultado esperado:** Neon Auth integrado ao Next.js 16 em branch Neon descartável, contrato server-side de sessão, variáveis documentadas sem valores e gate Neon-specific real, sem cadastro/login/Data API/e-mail/schema funcional.
+
+### US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Capacidades:** CAP-04, CAP-35
+- **Resultado esperado:** papéis de produto e autorização crítica verificados no servidor e no banco, com bootstrap administrativo controlado e auditável.
+
+### US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Capacidades:** CAP-02, CAP-35
+- **Resultado esperado:** estados, validade, limite de uso, destinatário opcional, aprovação e concorrência modelados antes do signup, sem envio de e-mail.
+
+### US-AUTH-004 — Selecionar e integrar e-mail transacional non-production
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Capacidades:** CAP-01, CAP-02
+- **Resultado esperado:** decisão documentada de provedor e transporte non-production para confirmação, convite e recuperação, com secrets server-only.
+
+### US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Capacidades:** CAP-01, CAP-02
+- **Resultado esperado:** signup direto sem autorização de entrada negado inclusive fora da UI; confirmação de e-mail e consumo seguro do mecanismo de entrada.
+
+### US-AUTH-006 — Implementar login, logout e proteção de sessão
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Capacidade:** CAP-01
+- **Resultado esperado:** login/logout e superfícies privadas protegidas por validação server-side, com estados acessíveis e sem flash de conteúdo privado.
+
+### US-AUTH-007 — Implementar recuperação de senha e gestão/revogação de sessões
+
+- **Prioridade:** P0
+- **Estado:** A FAZER
+- **Capacidades:** CAP-01, CAP-35
+- **Resultado esperado:** recuperação/alteração de senha e sessões consultáveis/revogáveis com semântica de cache explicitamente testada.
+
+### US-AUTH-008 — Consolidar auditoria e validar Incremento 2
+
+- **Prioridade:** P1
+- **Estado:** A FAZER
+- **Capacidades:** CAP-04, CAP-35
+- **Resultado esperado:** matriz adversarial integrada, auditoria sem secrets e evidência de encerramento do incremento.
+
+## Regra de execução
+
+Não antecipar Stories seguintes. Cada mudança de schema/RLS usa migration versionada e gate PostgreSQL 18; qualquer dependência de Neon Auth/Data API exige também branch Neon isolada conforme `ADR-008`.
 
 # Próxima ação operacional
 
-> `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`
+> `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`
 
-O refino deve verificar arquitetura/ADRs, estado real do Neon e documentação oficial corrente antes de decompor o épico e promover exatamente uma Story técnica.
+Não implementar convite, cadastro, papéis, e-mail, Data API ou Production dentro de US-AUTH-001.

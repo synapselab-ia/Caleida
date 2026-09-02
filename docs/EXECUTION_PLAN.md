@@ -188,61 +188,90 @@ Resultado:
 
 # OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)
 
+**Estado:** CONCLUÍDO  
+**Issue:** `#41`  
+**Tipo:** planejamento/refino; Auth não implementado  
+**Plano produzido:** `docs/INCREMENT_2_PLAN.md`
+
+## Resultado
+
+OPS-006 transformou EPIC-02 em `Incremento 2 — Acesso controlado`, com oito Stories pequenas e ordenadas:
+
+1. `US-AUTH-001` — fundação Neon Auth isolada e contrato de sessão;
+2. `US-AUTH-002` — papéis, autorização e bootstrap administrativo;
+3. `US-AUTH-003` — convites, solicitações e auditoria de entrada;
+4. `US-AUTH-004` — decisão/integração de e-mail transacional non-production;
+5. `US-AUTH-005` — cadastro controlado por convite ou aprovação;
+6. `US-AUTH-006` — login, logout e proteção de sessão;
+7. `US-AUTH-007` — recuperação de senha e gestão/revogação de sessões;
+8. `US-AUTH-008` — consolidação de auditoria e validação do incremento.
+
+### Revalidação técnica
+
+- Neon non-production real: `caleida-nonprod`, PostgreSQL 18, apenas branch baseline `main`, estado `ready`;
+- Neon Auth/Data API continuam não provisionados;
+- Production Neon continua inexistente;
+- somente a migration técnica `000001_migration_ledger.sql` existe;
+- Neon Auth corrente é Better Auth gerenciado e branch-scoped, usando SDK oficial `@neondatabase/auth`;
+- SDK Next.js corrente centraliza servidor por `createNeonAuth()` e documenta `NEON_AUTH_BASE_URL` + `NEON_AUTH_COOKIE_SECRET`;
+- cache de sessão assinado do SDK atual deve ser considerado explicitamente em revogação;
+- Neon Auth não permite presumir plugins/handlers server-side customizados de Better Auth, então o gate de beta fechado deve ser provado contra signup direto, não apenas pela UI;
+- Data API/RLS continua usando identidade documentada por `auth.user_id()` e exige RLS em tabelas expostas;
+- Next.js 16 pode usar `proxy.ts` como proteção antecipada, mas autorização real permanece server-side/banco.
+
+### Arquitetura
+
+Nenhum novo ADR é necessário em OPS-006. `ADR-004`, `ADR-005`, `ADR-007` e `ADR-008` já cobrem a plataforma atual.
+
+A escolha futura do provedor de e-mail permanece decisão aberta e deve ser registrada quando US-AUTH-004 for executada. Se o Neon Auth não oferecer superfície segura para impor o beta fechado, a implementação deve parar e registrar decisão arquitetural em vez de liberar signup público como workaround.
+
+### Non-goals preservados
+
+OPS-006 não:
+
+- provisionou Neon Auth/Data API;
+- criou migration funcional, schema ou RLS;
+- criou usuário remoto;
+- configurou SMTP/OAuth;
+- gerou ou versionou secrets;
+- criou Production Neon;
+- criou/importou projeto Vercel;
+- executou deployment.
+
+---
+
+# Incremento 2 — Acesso controlado / EPIC-02
+
+**Estado:** REFINADO; primeira Story PRONTA  
+**Plano:** `docs/INCREMENT_2_PLAN.md`
+
+## US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão
+
 **Estado:** NEXT_ACTION  
-**Tipo:** planejamento/refino; não implementar Auth  
-**Backlog:** próximo horizonte funcional do Project Design
+**Prioridade:** P0  
+**Capacidade:** CAP-01
 
-## Objetivo
+### Escopo limitado
 
-Transformar `EPIC-02 — Contas e autenticação` em um incremento técnico seguro, pequeno e executável antes de escrever qualquer fluxo de identidade.
+- branch Neon descartável para gate Neon-specific;
+- Neon Auth somente no ambiente isolado durante desenvolvimento/verificação;
+- SDK oficial `@neondatabase/auth` corrente;
+- contrato server-side de sessão no Next.js 16;
+- nomes `NEON_AUTH_BASE_URL` e `NEON_AUTH_COOKIE_SECRET` documentados sem valores;
+- fail-closed para configuração/sessão inválida;
+- testes proporcionais;
+- sem cadastro/login, convite, papéis, Data API, e-mail, OAuth, schema funcional, Production ou deployment.
 
-O Project Design associa o épico a convites, cadastro, login, sessão, SMTP, papéis e auditoria básica e às capacidades CAP-01, CAP-02, CAP-04 e CAP-35. Como o trabalho toca identidade, autorização, e-mail e comportamento gerenciado do Neon, o refino deve revalidar o estado externo e a documentação oficial corrente.
+### Gates
 
-## Inspecionar antes de editar
+- `npm run verify`;
+- PostgreSQL 18 + `npm run verify:db` como gate permanente;
+- Neon-specific **obrigatório**;
+- baseline Neon `main` não pode ser laboratório destrutivo;
+- browser real somente se houver superfície real a validar;
+- deployment Vercel proibido para IA.
 
-1. `docs/PROJECT_DESIGN.md`, especialmente CAP-01, CAP-02, CAP-04, CAP-35 e requisitos de privacidade/segurança;
-2. `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
-3. `docs/ARCHITECTURE.md` e `docs/NEON_PLATFORM.md`;
-4. `docs/adr/ADR-004-database-changes-by-migrations.md`;
-5. `docs/adr/ADR-005-neon-data-identity-platform.md`;
-6. `docs/adr/ADR-008-ephemeral-postgres-verification.md`;
-7. `docs/ENVIRONMENTS.md` e estado real do projeto `caleida-nonprod`;
-8. documentação oficial corrente de Neon Auth, Neon Data API/RLS e integração Next.js aplicável;
-9. contratos atuais de UI/acessibilidade produzidos no Incremento 1;
-10. limites de deployment definidos por `ADR-007`.
-
-## Escopo esperado
-
-- definir o próximo incremento funcional e sua porta de saída;
-- decompor EPIC-02 em Stories pequenas e ordenadas;
-- separar claramente fundação de Auth, convite/cadastro, login/sessão, papéis/autorização, e-mail/SMTP e auditoria quando necessário;
-- mapear quais Stories exigem migrations/RLS e quais dependem de comportamento Neon-specific;
-- definir casos adversariais mínimos: anônimo, usuário autenticado, usuário não autorizado, sessão inválida/revogada, manipulação de ID/ownership e papel administrativo;
-- definir contratos de secrets e ambientes sem valores reais;
-- verificar se a arquitetura corrente exige novo ADR antes de qualquer implementação;
-- promover exatamente uma primeira Story técnica executável.
-
-## Critérios de aceite
-
-1. CAP-01, CAP-02, CAP-04 e CAP-35 estão rastreadas para Stories do próximo incremento;
-2. dependências e ordem de Auth/convites/sessão/papéis/e-mail/auditoria estão explícitas;
-3. mudanças de schema/RLS previstas usam migrations e possuem estratégia PostgreSQL + Neon-specific adequada;
-4. documentação oficial corrente do Neon/Next.js foi revalidada para APIs/SDKs que a implementação realmente pretende usar;
-5. ambientes/secrets estão definidos sem versionar credenciais;
-6. nenhum fluxo de Auth, migration funcional, secret, usuário, SMTP/OAuth ou recurso Production é criado durante o refino;
-7. nenhum projeto/deployment Vercel é criado;
-8. documentação canônica fica com uma única `NEXT_ACTION` técnica.
-
-## Non-goals
-
-- implementar cadastro/login/logout;
-- ativar Neon Auth/Data API;
-- criar migration funcional ou políticas RLS;
-- configurar SMTP/OAuth;
-- criar usuários de teste remotos;
-- provisionar Neon Production;
-- criar/importar projeto Caleida na Vercel;
-- executar Preview/Production.
+Se branching/provisionamento isolado do Neon estiver indisponível, marcar `BLOCKED`; não degradar o gate.
 
 ---
 
