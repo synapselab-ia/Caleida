@@ -29,10 +29,13 @@ test("server auth boundary is lazy, server-only and fail-closed", () => {
   assert.doesNotMatch(authServer, /NEXT_PUBLIC_/);
 });
 
-test("route exposes only the current server auth GET and POST handler surface", () => {
-  assert.match(authRoute, /export\s+async\s+function\s+GET/);
-  assert.match(authRoute, /export\s+async\s+function\s+POST/);
-  assert.match(authRoute, /createServerAuth\(\)\.handler\(\)/);
+test("route exposes only GET/POST and forwards the catch-all context required by the SDK", () => {
+  assert.match(authRoute, /type\s+AuthRouteContext/);
+  assert.match(authRoute, /params:\s*Promise<\{\s*path:\s*string\[\]\s*\}>/);
+  assert.match(authRoute, /export\s+async\s+function\s+GET\(request:\s*NextRequest,\s*context:\s*AuthRouteContext\)/);
+  assert.match(authRoute, /export\s+async\s+function\s+POST\(request:\s*NextRequest,\s*context:\s*AuthRouteContext\)/);
+  assert.match(authRoute, /\.GET\(request,\s*context\)/);
+  assert.match(authRoute, /\.POST\(request,\s*context\)/);
   assert.match(authRoute, /force-dynamic/);
   assert.doesNotMatch(authRoute, /signUp|signIn|logout|Data API/i);
 });
