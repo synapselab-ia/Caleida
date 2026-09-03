@@ -1,29 +1,29 @@
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Status:** EM ANDAMENTO; US-AUTH-004 concluída, US-AUTH-005 é a próxima Story  
+**Status:** EM ANDAMENTO; US-AUTH-004 concluída após integração  
 **Origem:** `EPIC-02 — Contas e autenticação`  
 **Capacidades:** CAP-01, CAP-02, CAP-04 e CAP-35  
 **Prioridade:** P0/P1  
 **Stories concluídas:** `US-AUTH-001`, `US-AUTH-002`, `US-AUTH-003`, `US-AUTH-004`  
-**Próxima Story:** `US-AUTH-005 — Cadastro controlado por convite ou aprovação`
+**Próxima Story promovida:** `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
 
 ## 1. Objetivo
 
-Criar a fundação segura de identidade e entrada controlada do beta fechado, mantendo autenticação, autorização, convites, e-mail, cadastro e sessão em Stories separadas e verificáveis.
+Criar a fundação segura de identidade e entrada controlada do beta fechado, mantendo autenticação gerenciada, autorização, convites, e-mail, cadastro e gestão de sessão em Stories separadas e verificáveis.
 
 O incremento termina apenas quando:
 
-- Neon Auth estiver integrado em non-production;
-- cadastro só ocorrer por convite válido ou solicitação aprovada;
-- confirmação/recuperação por e-mail estiverem operacionais;
+- Neon Auth estiver integrado e reproduzível em non-production;
+- cadastro só puder ocorrer por convite válido ou solicitação aprovada;
 - login/logout e sessão estiverem protegidos/revogáveis;
-- papéis administrativos forem impostos no servidor/banco;
-- auditoria crítica existir sem secrets;
-- migrations/RLS aplicáveis forem reproduzíveis;
-- gates Neon-specific forem executados quando houver dependência real;
-- nenhuma publicação Vercel for automatizada/executada pela IA.
+- papéis administrativos forem verificados no servidor e no banco;
+- recuperação de senha e gestão de sessões estiverem implementadas;
+- eventos críticos de acesso estiverem auditados sem secrets;
+- migrations/RLS aplicáveis forem versionadas e verificadas;
+- comportamento Neon-specific for provado em branch isolada quando realmente existir dependência do serviço;
+- nenhum deployment Vercel automático ou executado por IA ocorrer.
 
-## 2. Estado integrado após US-AUTH-004
+## 2. Estado integrado atual
 
 ```text
 Projeto Neon: caleida-nonprod
@@ -35,196 +35,309 @@ Auth email provider: shared Neon
 Require email verification: false
 Migrations baseline: 000001 + 000002 + 000003
 Usuários Auth: 0
-Papéis: 0
+Papéis de produto: 0
 Convites: 0
-Solicitações: 0
+Solicitações de acesso: 0
 Data API: não provisionada
+Branch Neon temporária: verify-us-auth-004 / br-plain-pond-aw5f59ia / ready
 Production Neon: não provisionada
 Deployment Vercel: não executado
 ```
 
-Existe `verify-us-auth-004 / br-plain-pond-aw5f59ia`, criada durante a investigação inicial de SMTP externo. Ela não contém configuração externa e sua remoção é housekeeping não bloqueante sujeita a autorização destrutiva explícita.
+`verify-us-auth-004` foi criada durante a investigação inicial de SMTP externo, não recebeu configuração externa e tornou-se housekeeping não bloqueante. Sua exclusão exige autorização explícita.
 
-## 3. Decisões e gates
+## 3. Arquitetura e gates
 
 Decisões vigentes:
 
-- `ADR-004` — banco somente por migrations;
-- `ADR-005` — Neon como plataforma de dados/identidade;
-- `ADR-007` — deployment Vercel exclusivamente humano/manual;
-- `ADR-008` — PostgreSQL 18 efêmero como gate primário para SQL portável;
-- `ADR-009` — provider compartilhado do Neon Auth em desenvolvimento/non-production; SMTP externo adiado até necessidade real.
+- `ADR-004`: mudanças persistentes de banco somente por migrations;
+- `ADR-005`: Neon como plataforma canônica de dados/identidade;
+- `ADR-007`: deployment Vercel exclusivamente humano/manual;
+- `ADR-008`: PostgreSQL 18 descartável como gate primário para SQL portável; branch Neon isolada somente quando houver dependência real do serviço;
+- `ADR-009`: provider compartilhado do Neon Auth é suficiente para desenvolvimento/non-production enquanto adequado; provedor externo fica adiado até necessidade material.
 
 ### Neon Auth
 
-- Better Auth gerenciado permanece a identidade;
-- papéis Caleida continuam separados do Admin Better Auth;
-- ocultar signup na UI não é barreira válida;
-- `require_email_verification` continua `false` até US-AUTH-005 conectar o gate de entrada ao cadastro.
+- Managed Better Auth permanece a solução de identidade;
+- papéis de produto do Caleida permanecem separados do Admin Better Auth;
+- esconder signup na UI nunca será aceito como barreira de entrada;
+- US-AUTH-005 deve provar que criação direta sem autorização também é negada;
+- `require_email_verification` permanece `false` até o controle de signup estar comprovado de forma fail-closed.
 
-### E-mail
+### E-mail Auth
 
-- confirmação/recuperação de Auth usam o provider compartilhado do Neon enquanto adequado ao beta fechado;
-- não existe adapter Resend/SMTP próprio no estado atual;
-- provedor externo só será escolhido quando houver requisito real;
-- falha de transporte nunca pode ser usada como justificativa para consumir convite ou liberar entrada.
+- email/password está habilitado;
+- `email_provider.type=shared` foi confirmado na baseline;
+- confirmação/recuperação do Auth usam o transporte compartilhado do Neon nesta fase;
+- não existe adapter Resend, SMTP customizado, domínio próprio ou secret externo no resultado de US-AUTH-004;
+- provedor externo só será escolhido quando existir requisito real.
+
+### Data API e RLS
+
+A Data API continua não provisionada. Tabelas privadas permanecem fechadas a `PUBLIC` até existir uma superfície runtime real. Quando Data API/user context for introduzido, grants e RLS serão tratados separadamente e o gate Neon-specific será obrigatório se a política depender de identidade gerenciada.
 
 ## 4. Rastreamento de capacidades
 
 | Capacidade | Cobertura principal |
 |---|---|
-| CAP-01 — Contas, autenticação e sessões | US-AUTH-001, 004, 005, 006, 007 |
-| CAP-02 — Convites e entrada | US-AUTH-003, 005 |
-| CAP-04 — Papéis e permissões | US-AUTH-002, 008 |
-| CAP-35 — Auditoria | US-AUTH-002, 003, 007, 008 |
+| CAP-01 — Contas, autenticação e sessões | US-AUTH-001, 004, 005, 006 e 007 |
+| CAP-02 — Convites e controle de entrada | US-AUTH-003 e 005 |
+| CAP-04 — Papéis e permissões | US-AUTH-002 e 008 |
+| CAP-35 — Auditoria | US-AUTH-002, 003, 007 e 008 |
 
-Requisitos transversais: NFR-01, NFR-02, NFR-03, NFR-04, NFR-07, NFR-09, NFR-10, NFR-11.
+Requisitos transversais: NFR-01, NFR-02, NFR-03, NFR-04, NFR-07, NFR-09, NFR-10 e NFR-11.
 
 ## 5. Ordem das Stories
 
 ```text
-US-AUTH-001 fundação Auth + sessão — CONCLUÍDA (#43/#44)
+US-AUTH-001 — fundação Neon Auth + sessão — CONCLUÍDA (#43 / #44)
   ↓
-US-AUTH-002 papéis/autorização + bootstrap — CONCLUÍDA (#45/#46)
+US-AUTH-002 — papéis/autorização + bootstrap — CONCLUÍDA (#45 / #46)
   ↓
-US-AUTH-003 convites/solicitações + auditoria — CONCLUÍDA (#47/#48)
+US-AUTH-003 — convites/solicitações + auditoria — CONCLUÍDA (#47 / #48)
   ↓
-US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49/#50)
+US-AUTH-004 — e-mail Auth non-production — CONCLUÍDA (#49 / #50)
   ↓
-US-AUTH-005 cadastro controlado + confirmação — PRÓXIMA
+US-AUTH-005 — cadastro controlado + confirmação de e-mail — PRÓXIMA
   ↓
-US-AUTH-006 login/logout + proteção de sessão
+US-AUTH-006 — login/logout + proteção de sessão
   ↓
-US-AUTH-007 recuperação + gestão/revogação de sessões
+US-AUTH-007 — recuperação + gestão/revogação de sessões
   ↓
-US-AUTH-008 auditoria integrada + validação
+US-AUTH-008 — auditoria integrada + validação do incremento
 ```
 
 ---
 
-# US-AUTH-001 — Fundação Neon Auth
+# US-AUTH-001 — Fundação Neon Auth e contrato de sessão
 
-**Estado:** CONCLUÍDA — #43/#44  
+**Prioridade:** P0  
+**Estado:** CONCLUÍDA  
+**Issue:** `#43`  
+**PR:** `#44`  
+**Capacidade:** CAP-01  
 **Evidência:** `docs/US_AUTH_001_VERIFICATION.md`
 
-Resultado: SDK pinado, boundary server-only/fail-closed, Managed Better Auth promovido à baseline e CI pós-merge em PASS.
+Resultado:
 
-# US-AUTH-002 — Papéis e autorização
-
-**Estado:** CONCLUÍDA — #45/#46  
-**Evidência:** `docs/US_AUTH_002_VERIFICATION.md`
-
-Resultado: cinco papéis de produto, autorização server/banco, auditoria e bootstrap owner controlado.
-
-# US-AUTH-003 — Entrada controlada persistente
-
-**Estado:** CONCLUÍDA — #47/#48  
-**Evidência:** `docs/US_AUTH_003_VERIFICATION.md`  
-**Contrato:** `docs/ENTRY_CONTROL.md`
-
-Resultado: migration `000003`, convites digest-only, validade/capacidade/destinatário, solicitações, auditoria e concorrência serializada. CI pós-merge `33773379852` em PASS.
+- `@neondatabase/auth@0.5.0-beta` fixado;
+- boundary server-only/lazy/fail-closed;
+- handler Auth GET/POST catch-all;
+- cache de sessão explicitamente configurado;
+- Managed Better Auth provado em branch isolada e promovido à baseline;
+- CI pós-merge `33753190237`: `PASS`;
+- nenhum usuário real, Data API, e-mail customizado, OAuth customizado, Production ou deployment criado.
 
 ---
 
-# US-AUTH-004 — E-mail Auth non-production
+# US-AUTH-002 — Papéis, autorização e bootstrap administrativo
 
 **Prioridade:** P0  
-**Estado:** CONCLUÍDA — #49/#50  
-**Capacidades:** CAP-01  
-**Decisão:** `ADR-009`  
+**Estado:** CONCLUÍDA  
+**Issue:** `#45`  
+**PR:** `#46`  
+**Capacidades:** CAP-04, CAP-35  
+**Evidência:** `docs/US_AUTH_002_VERIFICATION.md`
+
+Resultado:
+
+- papéis `proprietário`, `administrador`, `moderador`, `curador`, `usuário`;
+- autorização por UUID Auth sem duplicar credenciais;
+- `caleida_auth.user_roles` e `caleida_audit.role_changes`;
+- política crítica no servidor e no banco;
+- autopromoção/elevação indevida negadas;
+- bootstrap owner explícito, auditável e idempotente;
+- migrations `000001`/`000002` promovidas à baseline;
+- CI pós-merge `33770088254`: `PASS`;
+- `verify-us-auth-002` removida após autorização explícita antes de US-AUTH-003.
+
+---
+
+# US-AUTH-003 — Convites, solicitações de acesso e auditoria de entrada
+
+**Prioridade:** P0  
+**Estado:** CONCLUÍDA APÓS INTEGRAÇÃO  
+**Issue:** `#47`  
+**PR:** `#48`  
+**Dependência:** US-AUTH-002  
+**Capacidades:** CAP-02, CAP-35  
+**Evidência:** `docs/US_AUTH_003_VERIFICATION.md`  
+**Contrato:** `docs/ENTRY_CONTROL.md`
+
+## Resultado
+
+- migration `000003_entry_control.sql`;
+- `caleida_access.invitations` para convites únicos/reutilizáveis, validade, destinatário opcional e capacidade;
+- token persistido somente como digest hexadecimal de 64 caracteres;
+- `caleida_access.invitation_uses` para usos numerados e vínculo futuro à conta;
+- `caleida_access.access_requests` para espera, aprovação, recusa e arquivamento;
+- `caleida_audit.entry_events` para auditoria compacta;
+- consumo de convite serializado com row lock PostgreSQL;
+- tabelas/funções privadas por padrão, sem Data API/browser;
+- rate limiting explicitamente adiado até existir endpoint externo.
+
+## Verificação
+
+- CI inicial `33771618637`: falha legítima apenas no teste SQL por variável ambígua; migration já aplicava corretamente;
+- teste corrigido sem relaxar regra;
+- CI técnico `33771989432`: `PASS`;
+- testes Node: `55/55 PASS`;
+- PostgreSQL 18 + `npm run verify:db`: `PASS`;
+- concorrência: duas sessões independentes disputando convite de uso único produziram exatamente um consumo;
+- checksum `000003`: `503700640a81cf41dfe56a0abe70fc581b9c64d8e9ad6585cbcb55d4751b7c5f`;
+- migration promovida à baseline sem fixtures;
+- estado baseline pós-promoção: zero usuários, papéis, convites, solicitações e eventos;
+- Neon-specific: `SKIPPED` corretamente porque a Story usa somente PostgreSQL portável;
+- browser real: `SKIPPED` por ausência deliberada de fluxo/UI;
+- e-mail/signup/Data API/Production: `SKIPPED/NON-GOAL`;
+- deployment: `SKIPPED/PROIBIDO`.
+
+---
+
+# US-AUTH-004 — Validar e-mail Auth non-production
+
+**Prioridade:** P0  
+**Estado:** CONCLUÍDA  
+**Issue:** `#49`  
+**PR:** `#50`  
+**Dependências:** US-AUTH-001 e US-AUTH-003  
+**Capacidade:** CAP-01  
+**Decisão:** `docs/adr/ADR-009-neon-shared-email-nonproduction.md`  
 **Contrato:** `docs/EMAIL_TRANSPORT.md`  
 **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`
 
 ## Resultado
 
-- readback confirmou Better Auth saudável na baseline;
+- readback da baseline confirmou Managed Better Auth saudável;
 - email/password está habilitado;
-- `email_provider.type=shared` já fornece transporte non-production;
+- `email_provider.type=shared` já fornece transporte Auth em non-production;
 - `require_email_verification=false` permanece até US-AUTH-005;
-- Resend/SMTP/domínio próprio foram retirados do escopo por não haver requisito material;
-- nenhum secret, migration ou adapter de e-mail externo foi introduzido;
-- provedor externo ficou explicitamente adiado para quando houver necessidade real.
+- Resend/SMTP/domínio próprio foram considerados inicialmente e removidos antes do merge por ausência de requisito material;
+- nenhum adapter, secret, variável externa ou migration de e-mail foi introduzido;
+- provedor externo ficou adiado até necessidade real de domínio, branding, volume, entregabilidade, observabilidade ou Production.
 
-A branch `verify-us-auth-004` criada durante a investigação tornou-se desnecessária; sua eventual exclusão depende de autorização explícita e não bloqueia US-AUTH-005.
+`verify-us-auth-004 / br-plain-pond-aw5f59ia` não contém SMTP externo e tornou-se housekeeping não bloqueante. Sua exclusão futura exige autorização explícita.
 
-## Non-goals preservados
+## Non-goals
 
-- signup;
+- signup completo;
 - login/logout;
 - OAuth customizado;
-- Production;
+- Production Neon;
 - deployment Vercel.
 
 ---
 
-# US-AUTH-005 — Cadastro controlado
+# US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação
 
 **Prioridade:** P0  
-**Estado:** PRONTA  
-**Dependências:** US-AUTH-002/003/004  
+**Estado:** PRONTA / próxima ação  
+**Dependências:** US-AUTH-002, 003 e 004  
 **Capacidades:** CAP-01, CAP-02
 
-Deve provar:
+## Objetivo
 
-- signup sem convite/aprovação é negado fora da UI;
+Permitir criação de conta somente quando existir autorização de entrada válida e concluir confirmação de e-mail usando o transporte do Neon Auth sem substituir o gate de entrada.
+
+## Regra crítica
+
+A implementação deve provar que:
+
+- signup direto sem convite válido/solicitação aprovada é negado;
 - convite expirado/revogado/esgotado é negado;
-- destinatário restrito não pode ser trocado;
-- consumo/vínculo com conta é atômico ou compensável;
-- concorrência não excede capacidade;
-- confirmação de e-mail usa Neon Auth e não substitui o gate de entrada;
-- qualquer ativação de `require_email_verification` ocorre somente depois do controle de signup estar fail-closed.
+- destinatário restrito não pode ser trocado por payload;
+- consumo do convite e vínculo com a conta são atômicos ou possuem compensação segura;
+- concorrência não excede limite de usos;
+- a superfície oficial suportada pelo Neon Auth permite impor o gate de forma segura antes/ao criar a conta;
+- `require_email_verification` só pode ser ativado depois que esse controle de signup estiver comprovado fail-closed.
 
-Se Neon Auth não permitir impor o beta fechado com segurança, parar e registrar decisão; nunca liberar signup público como workaround.
+Se a superfície gerenciada não permitir impor o beta fechado com segurança, registrar decisão arquitetural; não liberar signup público como workaround.
 
-# US-AUTH-006 — Login/logout e sessão
+---
 
-**Prioridade:** P0  
-**Estado:** A FAZER  
-**Dependência:** US-AUTH-005
-
-Validar sessão server-side, acesso direto por URL, ausência de enumeração indevida e UX acessível sem flash privado.
-
-# US-AUTH-007 — Recuperação e revogação de sessões
+# US-AUTH-006 — Implementar login, logout e proteção de sessão
 
 **Prioridade:** P0  
 **Estado:** A FAZER  
-**Dependências:** US-AUTH-004 e 006
+**Dependência:** US-AUTH-005  
+**Capacidade:** CAP-01
 
-Cobrir recuperação/alteração de senha, sessões consultáveis/revogáveis e impacto do cache de sessão. Nunca auditar senha/token.
+Deve cobrir credenciais inválidas sem enumeração indevida, sessão ausente/inválida, acesso direto por URL, autorização server-side e UX acessível sem flash de conteúdo privado.
 
-# US-AUTH-008 — Fechamento do incremento
+---
+
+# US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões
+
+**Prioridade:** P0  
+**Estado:** A FAZER  
+**Dependências:** US-AUTH-004 e 006  
+**Capacidades:** CAP-01, CAP-35
+
+Deve cobrir recuperação/alteração de senha, consulta/encerramento de sessões, revogação e teste explícito da semântica do cache de sessão. Eventos sensíveis não podem registrar senha/token/secret.
+
+---
+
+# US-AUTH-008 — Consolidar auditoria e validar Incremento 2
 
 **Prioridade:** P1  
 **Estado:** A FAZER  
-**Dependências:** US-AUTH-001 a 007
+**Dependências:** US-AUTH-001 a 007  
+**Capacidades:** CAP-04, CAP-35
 
-Executar matriz adversarial integrada e produzir evidência final.
+Deve fechar lacunas de auditoria, executar matriz adversarial integrada e produzir evidência de encerramento do incremento.
 
-## 6. Matriz transversal
+## 6. Matriz transversal de segurança
 
-Quando aplicável testar:
+Toda Story com operação protegida deve testar conforme aplicável:
 
-1. anônimo;
-2. autenticado autorizado;
-3. autenticado não autorizado com ID válido;
-4. manipulação de ID/ownership/papel;
-5. acesso direto sem UI;
+1. visitante/anônimo;
+2. usuário autenticado autorizado;
+3. usuário autenticado não autorizado conhecendo ID válido;
+4. manipulação de ID/ownership/papel no payload;
+5. acesso direto sem passar pela UI;
 6. sessão inválida/revogada;
 7. secret ausente/inválido;
-8. usuário comum em ação admin;
-9. concorrência crítica;
-10. ausência de vazamento em erro/loading.
+8. papel comum tentando ação administrativa;
+9. concorrência em alteração crítica;
+10. ausência de vazamento durante loading/erro.
 
-## 7. Gates
+Botão escondido não é prova de autorização.
 
-| Mudança | verify | PG18 | Neon-specific | Browser |
+## 7. Contrato de ambientes
+
+Auth/autorização existentes:
+
+```text
+NEON_AUTH_BASE_URL
+NEON_AUTH_COOKIE_SECRET
+CALEIDA_BOOTSTRAP_OWNER_USER_ID
+CALEIDA_BOOTSTRAP_REASON
+CALEIDA_ALLOW_OWNER_BOOTSTRAP
+```
+
+Nenhum valor real é versionado. O provider compartilhado de e-mail do Neon Auth não exige secret adicional do Caleida nesta fase. Variáveis de provedor externo só serão introduzidas se uma Story futura demonstrar necessidade.
+
+Production Neon continua inexistente e não é substituída pela baseline non-production.
+
+## 8. Gates por classe de mudança
+
+| Mudança | `npm run verify` | PostgreSQL 18 | Neon-specific | Browser real |
 |---|---:|---:|---:|---:|
-| Auth/sessão | obrigatório | CI permanente | quando depender do serviço | quando houver UI |
-| migration/RLS | obrigatório | obrigatório | se ligada ao Neon | conforme UI |
-| e-mail Auth shared | obrigatório | CI permanente | readback/config quando política mudar | quando fluxo existir |
-| cadastro/login | obrigatório | conforme schema | obrigatório | obrigatório |
-| docs-only | CI normal | sem gate extra | SKIPPED | SKIPPED |
+| Auth/sessão | obrigatório | gate permanente | quando depender do serviço | quando houver superfície |
+| migration/RLS portável | obrigatório | obrigatório | se ligada a Neon Auth/Data API | conforme UI |
+| papéis/autorização | obrigatório | obrigatório | quando usar identidade gerenciada | quando houver fluxo |
+| e-mail Auth | obrigatório | se schema mudar | se configuração/política Auth mudar | fluxo real quando existir |
+| cadastro/login/sessão | obrigatório | conforme schema | obrigatório quando ligado ao Auth | obrigatório |
+| docs-only | CI normal | sem gate adicional | `SKIPPED` | `SKIPPED` |
 
-## 8. Próxima ação única
+## 9. Porta de saída do Incremento 2
 
-> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`.
+O Incremento 2 só encerra quando CAP-01, CAP-02, CAP-04 e CAP-35 estiverem comprovadas com matriz adversarial, migrations reproduzíveis, gates Neon-specific aplicáveis, UI acessível onde existir, CI sem CD e nenhuma dependência de Production como laboratório.
+
+## 10. Próxima ação promovida
+
+Executar somente:
+
+> `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
+
+Não antecipar login, Production ou deployment Vercel dentro de US-AUTH-005.
