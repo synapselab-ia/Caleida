@@ -4,118 +4,247 @@
 **Regra:** uma `NEXT_ACTION` limitada por vez  
 **Roadmap de produto:** `docs/PRODUCT_BACKLOG.md`
 
-Este documento transforma o backlog em tarefas executáveis. Evidências detalhadas ficam nos documentos de verificação e Issues/PRs indicados.
+Este documento transforma o backlog macro em tarefas executáveis. Evidências detalhadas ficam nos documentos de validação/verificação e nos Issues/PRs indicados.
 
 ---
 
 # Operações canônicas concluídas
 
-- `OPS-001` — protocolo canônico v2: **CONCLUÍDO**.
-- `OPS-002` — pivot Supabase → Neon: **CONCLUÍDO**.
-- `OPS-003` — deployment Vercel exclusivamente humano/manual: **CONCLUÍDO**.
-- `OPS-004` — ADRs como autoridade arquitetural: **CONCLUÍDO**.
-- `OPS-005` — refino do Incremento 1: **CONCLUÍDO** (#31).
-- `OPS-006` — refino do EPIC-02: **CONCLUÍDO** (#41/#42).
+## OPS-001 — Modernizar o protocolo canônico
 
-# Incremento 0
+**Estado:** CONCLUÍDO
 
-**Estado:** CONCLUÍDO — `docs/INCREMENT_0_VALIDATION.md`.
+Resultado: Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Execution Plan e Checkpoint tornaram o repositório recuperável sem memória de chat.
 
-# Incremento 1
+## OPS-002 — Formalizar o pivot Supabase → Neon
 
-**Estado:** CONCLUÍDO — `docs/INCREMENT_1_VALIDATION.md`.
+**Estado:** CONCLUÍDO
+
+Resultado: plataforma Neon formalizada, ambientes isolados definidos, migrations/testes planejados em `database/`, Storage adiado e Project Design reconciliado por amendment.
+
+## OPS-003 — Reconciliar a política de deployment
+
+**Estado:** CONCLUÍDO
+
+Resultado: deployment Vercel passou a ser exclusivamente humano/manual; CI ficou separada de CD.
+
+## OPS-004 — Evoluir o registro de decisões para ADRs
+
+**Estado:** CONCLUÍDO
+
+Resultado: `docs/adr/` tornou-se autoridade arquitetural.
+
+## OPS-005 — Refinar o Incremento 1
+
+**Estado:** CONCLUÍDO  
+**Issue:** `#31`
+
+Resultado: EPIC-01 decomposto em quatro Stories ordenadas.
+
+## OPS-006 — Refinar EPIC-02 — Contas e autenticação
+
+**Estado:** CONCLUÍDO  
+**Issue:** `#41`  
+**PR:** `#42`  
+**Plano produzido:** `docs/INCREMENT_2_PLAN.md`
+
+Resultado: EPIC-02 decomposto em oito Stories de acesso controlado, com gates PostgreSQL/Neon-specific e non-goals explícitos.
+
+---
+
+# Incremento 0 — Fundação executável
+
+**Estado:** CONCLUÍDO  
+**Evidência:** `docs/INCREMENT_0_VALIDATION.md`
+
+Stories concluídas:
+
+- `US-PLAT-001` — aplicação Next.js executável;
+- `US-PLAT-002` — estrutura documental;
+- `US-PLAT-003` — ambiente local reproduzível;
+- `US-PLAT-004` — fundação Neon non-production;
+- `US-PLAT-005` — migrations/testes/RLS e ADR-008;
+- `US-PLAT-006` — `verify`/`verify:db`;
+- `US-PLAT-007` — CI permanente sem CD;
+- `US-PLAT-008` — hosting Vercel preparado para release manual;
+- `US-PLAT-009` — ambientes/variáveis separados;
+- `US-PLAT-010` — ciclo Issue → branch → CI → PR → review → merge validado.
+
+Estado técnico consolidado:
 
 ```text
-US-DS-001 — CONCLUÍDA (#33/#34)
-US-DS-002 — CONCLUÍDA (#35/#36)
-US-DS-003 — CONCLUÍDA (#37/#38)
-US-DS-004 — CONCLUÍDA (#39/#40)
+Next.js 16.3.3 / React 19.2.8
+TypeScript strict / Tailwind CSS 4
+Node 24.20.0 / npm 11.19.0
+CI: .github/workflows/ci.yml
+Banco canônico: Neon
+Non-production: caleida-nonprod / PostgreSQL 18 / branch main
+Production Neon: não provisionada
+Deployment: exclusivamente humano/manual
+```
+
+---
+
+# Incremento 1 — Fundação visual / EPIC-01
+
+**Estado:** CONCLUÍDO  
+**Plano:** `docs/INCREMENT_1_PLAN.md`  
+**Evidência:** `docs/INCREMENT_1_VALIDATION.md`
+
+```text
+US-DS-001 tokens/temas — CONCLUÍDA (#33 / #34)
+  ↓
+US-DS-002 tipografia/marca — CONCLUÍDA (#35 / #36)
+  ↓
+US-DS-003 primitivos acessíveis — CONCLUÍDA (#37 / #38)
+  ↓
+US-DS-004 fundação responsiva aplicada — CONCLUÍDA (#39 / #40)
 ```
 
 ---
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Estado:** EM ANDAMENTO; US-AUTH-004 concluída e US-AUTH-005 pronta  
+**Estado:** EM ANDAMENTO; US-AUTH-004 concluída e US-AUTH-005 promovida como NEXT_ACTION  
 **Plano:** `docs/INCREMENT_2_PLAN.md`
 
-## US-AUTH-001 — Fundação Neon Auth e sessão
+## US-AUTH-001 — Fundação Neon Auth e contrato de sessão
 
-**Estado:** CONCLUÍDA — #43/#44  
+**Estado:** CONCLUÍDA  
+**Issue:** `#43`  
+**PR:** `#44`  
+**Capacidade:** CAP-01  
 **Evidência:** `docs/US_AUTH_001_VERIFICATION.md`
 
-Managed Better Auth + boundary server-only/fail-closed. CI pós-merge `33753190237`: PASS.
+Resultado consolidado:
 
-## US-AUTH-002 — Papéis, autorização e bootstrap
-
-**Estado:** CONCLUÍDA — #45/#46  
-**Evidência:** `docs/US_AUTH_002_VERIFICATION.md`
-
-Cinco papéis Caleida, autorização server/banco, auditoria e bootstrap owner controlado. CI pós-merge `33770088254`: PASS.
-
-## US-AUTH-003 — Entrada controlada
-
-**Estado:** CONCLUÍDA — #47/#48  
-**Evidência:** `docs/US_AUTH_003_VERIFICATION.md`
-
-Migration `000003`, convites digest-only, solicitações, auditoria e concorrência serializada.
-
-```text
-Merge: 3cecfaf6eef357ece3096873d6847e334510db94
-CI final PR: 33773066584 — PASS
-CI pós-merge main: 33773379852 — PASS
-```
-
-## US-AUTH-004 — E-mail Auth non-production
-
-**Estado:** CONCLUÍDA — #49/#50  
-**Decisão:** `ADR-009`  
-**Contrato:** `docs/EMAIL_TRANSPORT.md`  
-**Evidência:** `docs/US_AUTH_004_VERIFICATION.md`
-
-Resultado:
-
-- baseline `caleida-nonprod/main` permanece em Better Auth saudável;
-- `email_provider.type=shared` atende desenvolvimento/non-production sem domínio próprio;
-- email/password está habilitado;
-- `require_email_verification=false` permanece até US-AUTH-005;
-- adapter/configuração Resend preparados inicialmente foram removidos antes do merge;
-- nenhum secret externo, migration ou deployment foi introduzido;
-- SMTP/provedor externo foi adiado até requisito real de beta público/Production.
-
-A branch Neon `verify-us-auth-004` criada durante a investigação não contém SMTP externo. Sua eventual exclusão é housekeeping não bloqueante e exige autorização destrutiva explícita.
-
-## US-AUTH-005 — Cadastro controlado por convite ou aprovação
-
-**Estado:** PRONTA  
-**Dependências:** US-AUTH-002/003/004  
-**Capacidades:** CAP-01, CAP-02
-
-Objetivo da próxima unidade:
-
-- impor signup fail-closed por convite válido ou solicitação aprovada fora da UI;
-- preservar destinatário/validade/capacidade e concorrência;
-- vincular/consumir entrada com segurança;
-- integrar confirmação de e-mail pelo Neon Auth sem transformar verificação em substituto do gate de entrada;
-- só ativar `require_email_verification` quando o controle de signup estiver comprovado.
-
-### Non-goals imediatos
-
-Não antecipar US-AUTH-006/007, OAuth, Production Neon ou deployment Vercel.
+- SDK Neon Auth pinado;
+- boundary server-only/lazy/fail-closed;
+- Managed Better Auth promovido à baseline depois dos gates;
+- CI pós-merge `33753190237`: `PASS`;
+- nenhum usuário real/Data API/Production/deployment criado.
 
 ---
 
-# Próxima ação única
+## US-AUTH-002 — Papéis, autorização e bootstrap administrativo
 
-> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`.
+**Estado:** CONCLUÍDA  
+**Issue:** `#45`  
+**PR:** `#46`  
+**Capacidades:** CAP-04, CAP-35  
+**Evidência:** `docs/US_AUTH_002_VERIFICATION.md`
+
+Resultado consolidado:
+
+- cinco papéis Caleida separados do Admin Better Auth;
+- migration `000002_product_authorization.sql`;
+- autorização crítica server-only + banco;
+- autopromoção/elevação indevida negadas;
+- bootstrap owner controlado;
+- migrations `000001`/`000002` promovidas à baseline;
+- CI pós-merge `33770088254`: `PASS`;
+- branch Neon de verificação removida após autorização explícita.
+
+---
+
+## US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
+
+**Estado:** CONCLUÍDA APÓS INTEGRAÇÃO  
+**Issue:** `#47`  
+**PR:** `#48`  
+**Prioridade:** P0  
+**Capacidades:** CAP-02, CAP-35  
+**Dependência:** US-AUTH-002 concluída  
+**Evidência:** `docs/US_AUTH_003_VERIFICATION.md`
+
+### Resultado
+
+- migration `000003_entry_control.sql` cria o modelo persistente de entrada fechada;
+- convite `unico`/`reutilizavel`, validade, destinatário opcional, capacidade e estados canônicos;
+- somente digest hexadecimal do token é persistido;
+- usos de convite são numerados e limitados atomicamente;
+- solicitações possuem espera/aprovação/recusa/arquivamento, ator e motivo;
+- auditoria compacta em `caleida_audit.entry_events`;
+- funções privadas `SECURITY DEFINER` com `search_path` fixo;
+- consumo serializado com row lock PostgreSQL;
+- teste concorrente com duas sessões `psql` independentes;
+- nenhuma UI, e-mail, signup, Data API ou Production criada;
+- nenhuma nova decisão arquitetural material exigiu ADR.
+
+### Verificação
+
+- CI inicial `33771618637`: `FAIL` legítimo somente por variável ambígua no teste SQL, após migration aplicar corretamente;
+- teste corrigido sem relaxar regras;
+- CI técnico `33771989432`: `PASS` para `npm ci`, `npm run verify`, 55/55 testes, build, PostgreSQL 18 e `npm run verify:db`;
+- concorrência: `PASS — exatamente uma de duas sessões consumiu convite de capacidade 1`;
+- checksum `000003`: `503700640a81cf41dfe56a0abe70fc581b9c64d8e9ad6585cbcb55d4751b7c5f`;
+- migration `000003` promovida à baseline `caleida-nonprod/main` sem fixtures;
+- baseline pós-promoção: zero usuários/papéis/convites/solicitações/eventos;
+- Neon-specific: `SKIPPED` porque a Story depende somente de PostgreSQL portável;
+- browser real: `SKIPPED` por ausência deliberada de fluxo/UI;
+- deployment Vercel: `SKIPPED/PROIBIDO`.
+
+---
+
+## US-AUTH-004 — Validar e-mail Auth non-production
+
+**Estado:** CONCLUÍDA  
+**Issue:** `#49`  
+**PR:** `#50`  
+**Prioridade:** P0  
+**Capacidade:** CAP-01  
+**Evidência:** `docs/US_AUTH_004_VERIFICATION.md`  
+**Decisão:** `docs/adr/ADR-009-neon-shared-email-nonproduction.md`
+
+### Resultado
+
+- readback remoto confirmou Better Auth saudável na baseline `caleida-nonprod/main`;
+- email/password está habilitado;
+- `email_provider.type=shared` já fornece transporte de e-mail Auth em non-production;
+- `require_email_verification=false` permanece até US-AUTH-005 impor o gate de cadastro controlado;
+- Resend/SMTP/domínio próprio foram considerados inicialmente, mas removidos do resultado final por ausência de requisito material;
+- nenhum adapter, secret, variável externa, migration ou deployment foi introduzido;
+- provedor externo ficou adiado até necessidade real de domínio, branding, volume, entregabilidade, observabilidade ou Production.
+
+### Housekeeping Neon
+
+`verify-us-auth-004 / br-plain-pond-aw5f59ia` foi criada durante a investigação inicial de SMTP, permanece com provider `shared` e nunca recebeu configuração externa. Sua eventual exclusão exige autorização explícita e não bloqueia US-AUTH-005.
+
+---
+
+## US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação
+
+**Estado:** NEXT_ACTION  
+**Prioridade:** P0  
+**Capacidades:** CAP-01, CAP-02  
+**Dependências:** US-AUTH-002/003/004 concluídas
+
+### Objetivo
+
+Implementar signup fail-closed por convite válido ou solicitação aprovada, preservando validade/capacidade/destinatário, concorrência e vínculo seguro com a conta Neon Auth.
+
+### Regras centrais
+
+- signup sem autorização de entrada deve ser negado inclusive fora da UI;
+- confirmação de e-mail não substitui o gate de convite/aprovação;
+- `require_email_verification` só pode ser ativado quando o controle de signup estiver comprovado;
+- não antecipar login/logout, OAuth, Production Neon ou deployment Vercel.
+
+---
 
 # Contrato de execução
 
-1. recuperar estado canônico + remoto;
-2. executar somente a `NEXT_ACTION`;
-3. manter Issue/branch/PR limitadas;
-4. verificar antes de concluir;
-5. registrar decisões materiais em ADR;
-6. nunca versionar/expor secret;
-7. nunca executar deployment Vercel;
-8. deixar exatamente uma próxima ação.
+Para cada tarefa:
+
+1. recuperar estado pelo protocolo;
+2. confirmar `NEXT_ACTION`;
+3. inspecionar repositório/documentação/estado externo aplicável;
+4. resolver `MANUAL_ACTION_REQUIRED` que seja pré-condição;
+5. criar/usar Issue e branch limitadas;
+6. implementar somente o necessário;
+7. executar Verification Protocol;
+8. revisar diff;
+9. atualizar docs/ADRs quando aplicável;
+10. atualizar Checkpoint/Backlog/Changelog;
+11. abrir/revisar/mergear PR;
+12. deixar uma única próxima ação.
