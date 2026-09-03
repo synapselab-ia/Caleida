@@ -1,8 +1,8 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-004 bloqueada apenas pelo gate live externo  
+**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-004 concluída  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** `US-AUTH-004 — configurar e provar Resend/SMTP em verify-us-auth-004`
+**Próxima ação operacional:** `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`
 
 ## Convenções
 
@@ -70,47 +70,34 @@ Entregar contas e acesso seguro para o beta fechado separando Auth, autorizaçã
 - **Evidência:** `docs/US_AUTH_003_VERIFICATION.md`.
 - **Contrato:** `docs/ENTRY_CONTROL.md`.
 
-### US-AUTH-004 — E-mail transacional non-production
+### US-AUTH-004 — E-mail Auth non-production
 
 - **Prioridade:** P0
-- **Estado:** EM ANDAMENTO / MANUAL_ACTION_REQUIRED
+- **Estado:** CONCLUÍDA
 - **Issue/PR:** #49/#50
-- **Git branch:** `feat/us-auth-004-transactional-email`
-- **Neon gate branch:** `verify-us-auth-004 / br-plain-pond-aw5f59ia`
-- **Capacidades:** CAP-01, CAP-02
-- **Decisão:** `ADR-009 — Resend como transporte transacional non-production`
+- **Capacidade:** CAP-01
+- **Decisão:** `ADR-009 — e-mail compartilhado do Neon Auth em non-production`
 - **Contrato:** `docs/EMAIL_TRANSPORT.md`
 - **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`
 
-**Já realizado:**
+**Resultado:**
 
-- provedores/preços/limites/regiões/privacidade revalidados;
-- Resend selecionado após comparação com Brevo, Mailgun e SES;
-- boundary `src/lib/email/server.ts` server-only via `fetch` nativo;
-- API key somente server-side `sending_access`;
-- idempotência obrigatória;
-- falhas rede/429/5xx recuperáveis e sanitizadas;
-- transporte não acessa banco nem consome convite;
-- variáveis documentadas sem valores;
-- CI técnico `33786184072`: 60/60 testes + build + PostgreSQL 18/verify:db em PASS;
-- branch Neon `verify-us-auth-004` criada a partir da baseline, `ready`, com Better Auth herdado, provider de e-mail ainda `shared` e `require_email_verification=false`.
+- readback confirmou `email_provider.type=shared` na baseline Neon;
+- email/password está habilitado;
+- `require_email_verification=false` permanece até o gate seguro de US-AUTH-005;
+- Resend/SMTP/domínio próprio foram retirados do escopo por não existir requisito material nesta fase;
+- nenhum adapter, secret, variável externa ou migration de e-mail foi introduzido;
+- provedor externo ficou adiado para quando domínio, volume, branding, entregabilidade ou Production realmente exigirem.
 
-**Pendência real:**
-
-- conta/domínio/remetente Resend non-production;
-- API key real guardada fora do Git/chat;
-- SMTP Resend configurado e testado **somente em `verify-us-auth-004`**;
-- revalidação isolada antes de qualquer promoção para a baseline;
-- autorização destrutiva separada para apagar a branch depois do gate.
-
-US-AUTH-004 permanece aberta até esse gate. Não promover a Story seguinte por conveniência.
+A branch Neon `verify-us-auth-004` criada durante a investigação não contém SMTP externo e tornou-se housekeeping não bloqueante; sua exclusão futura exige autorização explícita.
 
 ### US-AUTH-005 — Cadastro controlado por convite ou aprovação
 
 - **Prioridade:** P0
-- **Estado:** A FAZER / BLOQUEADA por US-AUTH-004
+- **Estado:** PRONTA
 - **Capacidades:** CAP-01, CAP-02
-- **Resultado esperado:** signup sem autorização negado fora da UI; confirmação de e-mail e vínculo/consumo seguro da entrada.
+- **Dependências:** US-AUTH-002/003/004 concluídas.
+- **Resultado esperado:** signup sem autorização negado fora da UI; confirmação de e-mail integrada sem substituir o gate de entrada; vínculo/consumo seguro da entrada.
 
 ### US-AUTH-006 — Login, logout e proteção de sessão
 
@@ -136,4 +123,4 @@ Não antecipar Stories seguintes. Mudança persistente usa migration + PostgreSQ
 
 # Próxima ação operacional
 
-> `US-AUTH-004 — configurar e provar Resend/SMTP na branch Neon isolada verify-us-auth-004 sem expor secrets`.
+> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`.
