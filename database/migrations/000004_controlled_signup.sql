@@ -38,15 +38,18 @@ CREATE TABLE caleida_access.signup_permits (
 
 CREATE UNIQUE INDEX signup_permits_claimed_user_key
   ON caleida_access.signup_permits (claimed_auth_user_id)
-  WHERE claimed_auth_user_id IS NOT NULL;
+  WHERE claimed_auth_user_id IS NOT NULL
+    AND state IN ('reivindicado', 'vinculado');
 
-CREATE UNIQUE INDEX signup_permits_access_request_key
+CREATE UNIQUE INDEX signup_permits_active_access_request_key
   ON caleida_access.signup_permits (access_request_id)
-  WHERE access_request_id IS NOT NULL;
+  WHERE access_request_id IS NOT NULL
+    AND state IN ('reservado', 'reivindicado', 'vinculado');
 
 CREATE UNIQUE INDEX signup_permits_active_invitation_email_key
   ON caleida_access.signup_permits (invitation_id, recipient_email)
-  WHERE invitation_id IS NOT NULL AND state IN ('reservado', 'reivindicado');
+  WHERE invitation_id IS NOT NULL
+    AND state IN ('reservado', 'reivindicado');
 
 CREATE INDEX signup_permits_email_state_expires_idx
   ON caleida_access.signup_permits (recipient_email, state, expires_at);
@@ -218,6 +221,11 @@ BEGIN
         terminal_at = CURRENT_TIMESTAMP
     WHERE id = current_invitation.id;
 
+    UPDATE caleida_access.signup_permits
+    SET state = 'expirado'
+    WHERE invitation_id = current_invitation.id
+      AND state = 'reservado';
+
     INSERT INTO caleida_audit.entry_events (
       entity_type, entity_id, event_type, actor_auth_user_id,
       previous_state, new_state, reason
@@ -235,6 +243,12 @@ BEGIN
     RETURN;
   END IF;
 
+  UPDATE caleida_access.signup_permits
+  SET state = 'expirado'
+  WHERE invitation_id = current_invitation.id
+    AND state IN ('reservado', 'reivindicado')
+    AND expires_at <= CURRENT_TIMESTAMP;
+
   SELECT *
   INTO existing_permit
   FROM caleida_access.signup_permits
@@ -250,12 +264,6 @@ BEGIN
     RETURN QUERY SELECT existing_permit.id, existing_permit.expires_at;
     RETURN;
   END IF;
-
-  UPDATE caleida_access.signup_permits
-  SET state = 'expirado'
-  WHERE invitation_id = current_invitation.id
-    AND state = 'reservado'
-    AND expires_at <= CURRENT_TIMESTAMP;
 
   SELECT count(*)::integer
   INTO active_permits
@@ -328,6 +336,13 @@ DECLARE
 BEGIN
   normalized_recipient := caleida_access.normalize_email(p_recipient_email);
 
+  IF p_event_id IS NULL
+     OR p_auth_user_id IS NULL
+     OR NOT caleida_access.is_valid_email(normalized_recipient) THEN
+    RETURN QUERY SELECT FALSE, NULL::bigint, 'invalid_input'::text;
+    RETURN;
+  END IF;
+
   SELECT *
   INTO existing_event
   FROM caleida_audit.auth_webhook_events
@@ -342,17 +357,10 @@ BEGIN
     RETURN;
   END IF;
 
-  IF p_event_id IS NULL
-     OR p_auth_user_id IS NULL
-     OR NOT caleida_access.is_valid_email(normalized_recipient) THEN
-    RETURN QUERY SELECT FALSE, NULL::bigint, 'invalid_input'::text;
-    RETURN;
-  END IF;
-
   UPDATE caleida_access.signup_permits
   SET state = 'expirado'
   WHERE recipient_email = normalized_recipient
-    AND state = 'reservado'
+    AND state IN ('reservado', 'reivindicado')
     AND expires_at <= CURRENT_TIMESTAMP;
 
   SELECT *
@@ -360,6 +368,7 @@ BEGIN
   FROM caleida_access.signup_permits
   WHERE recipient_email = normalized_recipient
     AND state = 'reivindicado'
+    AND expires_at > CURRENT_TIMESTAMP
   ORDER BY claimed_at DESC
   LIMIT 1
   FOR UPDATE;
@@ -390,6 +399,8 @@ BEGIN
     END IF;
     RETURN;
   END IF;
+
+  current_permit.id := NULL;
 
   SELECT *
   INTO current_permit
@@ -432,34 +443,73 @@ BEGIN
     FOR UPDATE;
 
     IF FOUND THEN
-      INSERT INTO caleida_access.signup_permits (
-        source_type,
-        access_request_id,
-        recipient_email,
-        expires_at
-      )
-      VALUES (
-        'access_request',
-        current_request.id,
-        normalized_recipient,
-        CURRENT_TIMESTAMP + interval '30 minutes'
-      )
-      RETURNING id INTO created_permit_id;
-
       SELECT *
       INTO current_permit
       FROM caleida_access.signup_permits
-      WHERE id = created_permit_id
+      WHERE access_request_id = current_request.id
+        AND state IN ('reservado', 'reivindicado')
+        AND expires_at > CURRENT_TIMESTAMP
+      ORDER BY created_at DESC
+      LIMIT 1
       FOR UPDATE;
 
-      INSERT INTO caleida_audit.entry_events (
-        entity_type, entity_id, event_type, actor_auth_user_id,
-        previous_state, new_state, reason
-      )
-      VALUES (
-        'signup_permit', created_permit_id, 'signup_permit_issued', NULL,
-        NULL, 'reservado', 'autorização de cadastro emitida por solicitação aprovada'
-      );
+      IF FOUND AND current_permit.state = 'reivindicado' THEN
+        IF current_permit.claimed_auth_user_id = p_auth_user_id THEN
+          INSERT INTO caleida_audit.auth_webhook_events (
+            event_id, event_type, auth_user_id, recipient_email,
+            signup_permit_id, outcome, reason_code
+          )
+          VALUES (
+            p_event_id, 'user.before_create', p_auth_user_id, normalized_recipient,
+            current_permit.id, 'allowed', 'already_claimed'
+          );
+
+          RETURN QUERY SELECT TRUE, current_permit.id, 'already_claimed'::text;
+        ELSE
+          INSERT INTO caleida_audit.auth_webhook_events (
+            event_id, event_type, auth_user_id, recipient_email,
+            signup_permit_id, outcome, reason_code
+          )
+          VALUES (
+            p_event_id, 'user.before_create', p_auth_user_id, normalized_recipient,
+            current_permit.id, 'denied', 'email_claimed'
+          );
+
+          RETURN QUERY SELECT FALSE, current_permit.id, 'email_claimed'::text;
+        END IF;
+        RETURN;
+      END IF;
+
+      IF NOT FOUND THEN
+        INSERT INTO caleida_access.signup_permits (
+          source_type,
+          access_request_id,
+          recipient_email,
+          expires_at
+        )
+        VALUES (
+          'access_request',
+          current_request.id,
+          normalized_recipient,
+          CURRENT_TIMESTAMP + interval '30 minutes'
+        )
+        RETURNING id INTO created_permit_id;
+
+        SELECT *
+        INTO current_permit
+        FROM caleida_access.signup_permits
+        WHERE id = created_permit_id
+        FOR UPDATE;
+
+        INSERT INTO caleida_audit.entry_events (
+          entity_type, entity_id, event_type, actor_auth_user_id,
+          previous_state, new_state, reason
+        )
+        VALUES (
+          'signup_permit', created_permit_id, 'signup_permit_issued', NULL,
+          NULL, 'reservado', 'autorização de cadastro emitida por solicitação aprovada'
+        );
+      END IF;
     END IF;
   END IF;
 
@@ -481,7 +531,22 @@ BEGIN
   SET state = 'reivindicado',
       claimed_auth_user_id = p_auth_user_id,
       claimed_at = CURRENT_TIMESTAMP
-  WHERE id = current_permit.id;
+  WHERE id = current_permit.id
+    AND state = 'reservado';
+
+  IF NOT FOUND THEN
+    INSERT INTO caleida_audit.auth_webhook_events (
+      event_id, event_type, auth_user_id, recipient_email,
+      signup_permit_id, outcome, reason_code
+    )
+    VALUES (
+      p_event_id, 'user.before_create', p_auth_user_id, normalized_recipient,
+      current_permit.id, 'denied', 'permit_not_reservable'
+    );
+
+    RETURN QUERY SELECT FALSE, current_permit.id, 'permit_not_reservable'::text;
+    RETURN;
+  END IF;
 
   INSERT INTO caleida_audit.entry_events (
     entity_type, entity_id, event_type, actor_auth_user_id,
@@ -527,9 +592,15 @@ DECLARE
   current_request caleida_access.access_requests%ROWTYPE;
   next_use_number integer;
   is_exhausted boolean;
-  created_use_id bigint;
 BEGIN
   normalized_recipient := caleida_access.normalize_email(p_recipient_email);
+
+  IF p_event_id IS NULL
+     OR p_auth_user_id IS NULL
+     OR NOT caleida_access.is_valid_email(normalized_recipient) THEN
+    RETURN QUERY SELECT FALSE, NULL::bigint, 'invalid_input'::text;
+    RETURN;
+  END IF;
 
   SELECT *
   INTO existing_event
@@ -545,19 +616,13 @@ BEGIN
     RETURN;
   END IF;
 
-  IF p_event_id IS NULL
-     OR p_auth_user_id IS NULL
-     OR NOT caleida_access.is_valid_email(normalized_recipient) THEN
-    RETURN QUERY SELECT FALSE, NULL::bigint, 'invalid_input'::text;
-    RETURN;
-  END IF;
-
   SELECT *
   INTO current_permit
   FROM caleida_access.signup_permits
   WHERE claimed_auth_user_id = p_auth_user_id
     AND recipient_email = normalized_recipient
     AND state IN ('reivindicado', 'vinculado')
+  ORDER BY claimed_at DESC NULLS LAST
   LIMIT 1
   FOR UPDATE;
 
@@ -596,24 +661,17 @@ BEGIN
     WHERE id = current_permit.invitation_id
     FOR UPDATE;
 
-    IF NOT FOUND
-       OR current_invitation.state <> 'enviado'
-       OR current_invitation.use_count >= current_invitation.max_uses
-       OR current_permit.claimed_at > current_invitation.expires_at THEN
-      UPDATE caleida_access.signup_permits
-      SET state = 'cancelado'
-      WHERE id = current_permit.id;
-
+    IF NOT FOUND OR current_invitation.use_count >= current_invitation.max_uses THEN
       INSERT INTO caleida_audit.auth_webhook_events (
         event_id, event_type, auth_user_id, recipient_email,
         signup_permit_id, outcome, reason_code
       )
       VALUES (
         p_event_id, 'user.created', p_auth_user_id, normalized_recipient,
-        current_permit.id, 'unlinked', 'invitation_no_longer_valid'
+        current_permit.id, 'unlinked', 'invitation_capacity_inconsistent'
       );
 
-      RETURN QUERY SELECT FALSE, current_permit.id, 'invitation_no_longer_valid'::text;
+      RETURN QUERY SELECT FALSE, current_permit.id, 'invitation_capacity_inconsistent'::text;
       RETURN;
     END IF;
 
@@ -633,8 +691,7 @@ BEGIN
       normalized_recipient,
       p_auth_user_id,
       CURRENT_TIMESTAMP
-    )
-    RETURNING id INTO created_use_id;
+    );
 
     UPDATE caleida_access.invitations
     SET use_count = next_use_number,
@@ -666,20 +723,16 @@ BEGIN
          current_request.created_auth_user_id IS NOT NULL
          AND current_request.created_auth_user_id <> p_auth_user_id
        ) THEN
-      UPDATE caleida_access.signup_permits
-      SET state = 'cancelado'
-      WHERE id = current_permit.id;
-
       INSERT INTO caleida_audit.auth_webhook_events (
         event_id, event_type, auth_user_id, recipient_email,
         signup_permit_id, outcome, reason_code
       )
       VALUES (
         p_event_id, 'user.created', p_auth_user_id, normalized_recipient,
-        current_permit.id, 'unlinked', 'access_request_no_longer_valid'
+        current_permit.id, 'unlinked', 'access_request_inconsistent'
       );
 
-      RETURN QUERY SELECT FALSE, current_permit.id, 'access_request_no_longer_valid'::text;
+      RETURN QUERY SELECT FALSE, current_permit.id, 'access_request_inconsistent'::text;
       RETURN;
     END IF;
 
@@ -702,7 +755,8 @@ BEGIN
   UPDATE caleida_access.signup_permits
   SET state = 'vinculado',
       linked_at = CURRENT_TIMESTAMP
-  WHERE id = current_permit.id;
+  WHERE id = current_permit.id
+    AND state = 'reivindicado';
 
   INSERT INTO caleida_audit.entry_events (
     entity_type, entity_id, event_type, actor_auth_user_id,
@@ -723,6 +777,125 @@ BEGIN
   );
 
   RETURN QUERY SELECT TRUE, current_permit.id, 'identity_linked'::text;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION caleida_access.transition_invitation(
+  p_invitation_id bigint,
+  p_actor_auth_user_id uuid,
+  p_new_state text,
+  p_reason text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, caleida_access, caleida_audit
+AS $$
+DECLARE
+  current_invitation caleida_access.invitations%ROWTYPE;
+  claimed_permits integer;
+BEGIN
+  IF p_actor_auth_user_id IS NULL THEN
+    RAISE EXCEPTION 'O ator da transição é obrigatório.' USING ERRCODE = '22004';
+  END IF;
+
+  IF p_reason IS NULL OR char_length(btrim(p_reason)) NOT BETWEEN 1 AND 500 THEN
+    RAISE EXCEPTION 'O motivo da transição deve possuir entre 1 e 500 caracteres.' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_new_state NOT IN ('enviado', 'expirado', 'revogado', 'cancelado') THEN
+    RAISE EXCEPTION 'Estado de convite não permitido para transição administrativa.' USING ERRCODE = '22023';
+  END IF;
+
+  SELECT *
+  INTO current_invitation
+  FROM caleida_access.invitations
+  WHERE id = p_invitation_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Convite inexistente.' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF current_invitation.state = p_new_state THEN
+    RETURN FALSE;
+  END IF;
+
+  IF current_invitation.state = 'criado' AND p_new_state NOT IN ('enviado', 'expirado', 'cancelado') THEN
+    RAISE EXCEPTION 'Transição de convite inválida.' USING ERRCODE = '22023';
+  END IF;
+
+  IF current_invitation.state = 'enviado' AND p_new_state NOT IN ('expirado', 'revogado', 'cancelado') THEN
+    RAISE EXCEPTION 'Transição de convite inválida.' USING ERRCODE = '22023';
+  END IF;
+
+  IF current_invitation.state IN ('utilizado', 'expirado', 'revogado', 'cancelado') THEN
+    RAISE EXCEPTION 'Convite em estado terminal não pode transicionar.' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_new_state = 'enviado' AND current_invitation.expires_at <= CURRENT_TIMESTAMP THEN
+    RAISE EXCEPTION 'Convite expirado não pode ser enviado.' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_new_state = 'expirado' AND current_invitation.expires_at > CURRENT_TIMESTAMP THEN
+    RAISE EXCEPTION 'Convite ainda válido não pode ser marcado como expirado.' USING ERRCODE = '22023';
+  END IF;
+
+  UPDATE caleida_access.signup_permits
+  SET state = 'expirado'
+  WHERE invitation_id = current_invitation.id
+    AND state IN ('reservado', 'reivindicado')
+    AND expires_at <= CURRENT_TIMESTAMP;
+
+  SELECT count(*)::integer
+  INTO claimed_permits
+  FROM caleida_access.signup_permits
+  WHERE invitation_id = current_invitation.id
+    AND state = 'reivindicado';
+
+  IF p_new_state IN ('expirado', 'revogado', 'cancelado') AND claimed_permits > 0 THEN
+    RAISE EXCEPTION 'Convite possui cadastro autorizado em andamento.' USING ERRCODE = '55006';
+  END IF;
+
+  IF p_new_state IN ('expirado', 'revogado', 'cancelado') THEN
+    UPDATE caleida_access.signup_permits
+    SET state = CASE WHEN p_new_state = 'expirado' THEN 'expirado' ELSE 'cancelado' END
+    WHERE invitation_id = current_invitation.id
+      AND state = 'reservado';
+  END IF;
+
+  UPDATE caleida_access.invitations
+  SET state = p_new_state,
+      sent_at = CASE
+        WHEN p_new_state = 'enviado' THEN COALESCE(sent_at, CURRENT_TIMESTAMP)
+        ELSE sent_at
+      END,
+      terminal_at = CASE
+        WHEN p_new_state IN ('expirado', 'revogado', 'cancelado') THEN CURRENT_TIMESTAMP
+        ELSE NULL
+      END
+  WHERE id = p_invitation_id;
+
+  INSERT INTO caleida_audit.entry_events (
+    entity_type,
+    entity_id,
+    event_type,
+    actor_auth_user_id,
+    previous_state,
+    new_state,
+    reason
+  )
+  VALUES (
+    'invitation',
+    p_invitation_id,
+    'invitation_state_changed',
+    p_actor_auth_user_id,
+    current_invitation.state,
+    p_new_state,
+    btrim(p_reason)
+  );
+
+  RETURN TRUE;
 END;
 $$;
 
@@ -773,13 +946,28 @@ BEGIN
         terminal_at = CURRENT_TIMESTAMP
     WHERE id = current_invitation.id;
 
+    UPDATE caleida_access.signup_permits
+    SET state = 'expirado'
+    WHERE invitation_id = current_invitation.id
+      AND state = 'reservado';
+
     INSERT INTO caleida_audit.entry_events (
-      entity_type, entity_id, event_type, actor_auth_user_id,
-      previous_state, new_state, reason
+      entity_type,
+      entity_id,
+      event_type,
+      actor_auth_user_id,
+      previous_state,
+      new_state,
+      reason
     )
     VALUES (
-      'invitation', current_invitation.id, 'invitation_state_changed', NULL,
-      current_invitation.state, 'expirado', 'validade encerrada durante tentativa de consumo'
+      'invitation',
+      current_invitation.id,
+      'invitation_state_changed',
+      NULL,
+      current_invitation.state,
+      'expirado',
+      'validade encerrada durante tentativa de consumo'
     );
 
     RETURN;
@@ -790,12 +978,17 @@ BEGIN
     RETURN;
   END IF;
 
+  UPDATE caleida_access.signup_permits
+  SET state = 'expirado'
+  WHERE invitation_id = current_invitation.id
+    AND state IN ('reservado', 'reivindicado')
+    AND expires_at <= CURRENT_TIMESTAMP;
+
   SELECT count(*)::integer
   INTO active_permits
   FROM caleida_access.signup_permits
   WHERE invitation_id = current_invitation.id
-    AND state IN ('reservado', 'reivindicado')
-    AND expires_at > CURRENT_TIMESTAMP;
+    AND state IN ('reservado', 'reivindicado');
 
   IF current_invitation.use_count + active_permits >= current_invitation.max_uses THEN
     RETURN;
@@ -823,11 +1016,19 @@ BEGIN
   WHERE id = current_invitation.id;
 
   INSERT INTO caleida_audit.entry_events (
-    entity_type, entity_id, event_type, actor_auth_user_id,
-    previous_state, new_state, reason
+    entity_type,
+    entity_id,
+    event_type,
+    actor_auth_user_id,
+    previous_state,
+    new_state,
+    reason
   )
   VALUES (
-    'invitation', current_invitation.id, 'invitation_consumed', NULL,
+    'invitation',
+    current_invitation.id,
+    'invitation_consumed',
+    NULL,
     current_invitation.state,
     CASE WHEN is_exhausted THEN 'utilizado' ELSE current_invitation.state END,
     'consumo de convite registrado'
@@ -843,14 +1044,6 @@ BEGIN
 END;
 $$;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'caleida_runtime') THEN
-    CREATE ROLE caleida_runtime NOLOGIN;
-  END IF;
-END;
-$$;
-
 REVOKE ALL ON TABLE caleida_access.signup_permits FROM PUBLIC;
 REVOKE ALL ON TABLE caleida_access.signup_rate_limits FROM PUBLIC;
 REVOKE ALL ON TABLE caleida_audit.auth_webhook_events FROM PUBLIC;
@@ -859,9 +1052,3 @@ REVOKE ALL ON FUNCTION caleida_access.consume_signup_rate_limit(text, integer, i
 REVOKE ALL ON FUNCTION caleida_access.issue_signup_permit_from_invitation(text, text, integer) FROM PUBLIC;
 REVOKE ALL ON FUNCTION caleida_access.claim_signup_authorization(uuid, uuid, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION caleida_access.finalize_signup_authorization(uuid, uuid, text) FROM PUBLIC;
-
-GRANT USAGE ON SCHEMA caleida_access TO caleida_runtime;
-GRANT EXECUTE ON FUNCTION caleida_access.consume_signup_rate_limit(text, integer, integer) TO caleida_runtime;
-GRANT EXECUTE ON FUNCTION caleida_access.issue_signup_permit_from_invitation(text, text, integer) TO caleida_runtime;
-GRANT EXECUTE ON FUNCTION caleida_access.claim_signup_authorization(uuid, uuid, text) TO caleida_runtime;
-GRANT EXECUTE ON FUNCTION caleida_access.finalize_signup_authorization(uuid, uuid, text) TO caleida_runtime;
