@@ -1,159 +1,127 @@
 # Arquitetura técnica
 
-**Status:** arquitetura de referência vigente após US-PLAT-005.
+**Status:** arquitetura de referência vigente durante US-AUTH-004.
 
 ## 1. Visão geral
 
 ```text
 GitHub
-  ├── código
-  ├── documentação
-  ├── backlog, Issues e Checkpoint
-  └── pull requests / CI
-        ↓
+  ├── código / documentação / Issues / PRs / CI
+  ↓
 Next.js + React + TypeScript
-        ↓
+  ├── server-only integrations
+  │    ├── Neon Auth
+  │    ├── Neon Postgres / futura Data API
+  │    └── Resend REST — e-mail transacional da aplicação
+  ↓
 Vercel
   └── destino de hosting; release exclusivamente manual pelo usuário
-        ↓
+
 Neon
-  ├── Neon Auth
-  ├── Neon Data API
+  ├── Better Auth gerenciado
+  │    └── SMTP customizado Resend quando gate non-production for configurado
   ├── Postgres
-  └── PostgreSQL Row Level Security
+  ├── futura Data API
+  └── PostgreSQL RLS
 
 Object Storage
   └── provider separado e ainda não escolhido
 ```
 
-Os amendments ativos são:
+Amendments ativos:
 
-- `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md` — plataforma de dados/identidade;
-- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` — hosting, CI e release.
+- `docs/PROJECT_DESIGN_PLATFORM_AMENDMENT.md`;
+- `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md`.
+
+Decisões relevantes: `ADR-004`, `ADR-005`, `ADR-007`, `ADR-008`, `ADR-009`.
 
 ## 2. Stack de referência
 
-- Next.js;
-- React;
-- TypeScript em modo estrito;
-- Tailwind CSS;
+- Next.js 16 / React / TypeScript strict;
+- Tailwind CSS + design system próprio;
 - Neon Postgres;
-- Neon Auth;
-- Neon Data API quando o acesso sob contexto de usuário exigir API HTTP;
+- Neon Auth/Better Auth;
+- Neon Data API quando CRUD user-scoped realmente exigir HTTP/JWT;
 - PostgreSQL RLS;
+- Resend como transporte transacional non-production conforme `ADR-009`;
 - Vercel como destino de hosting com deployment humano/manual;
-- GitHub Actions para CI/validação, sem CD;
-- Object Storage provider-independent, a decidir em Story própria.
+- GitHub Actions para CI, sem CD;
+- Object Storage provider-independent, ainda a decidir.
 
-Versões implementadas ficam registradas no repositório e tecnologias externas devem ser conferidas na documentação oficial corrente quando a tarefa depender delas.
+Tecnologias externas devem ser revalidadas na documentação oficial quando a tarefa depender delas.
 
 ## 3. Ambientes
 
-### Desenvolvimento local da aplicação
+### Local
 
-- Next.js executado localmente;
-- variáveis de ambiente locais fora do Git;
-- dados exclusivamente fictícios ou anonimizados;
-- integração real de banco/Auth contra ambiente Neon não produtivo quando necessária.
+- aplicação Next.js local;
+- secrets em `.env.local`/secret store, nunca Git;
+- somente recursos descartáveis/non-production;
+- nenhum envio externo no CI padrão.
 
-### PostgreSQL descartável de verificação
+### PostgreSQL descartável
 
-Para migrations, constraints e RLS portáveis:
-
-- PostgreSQL da mesma versão major do projeto Neon atual;
-- banco efêmero criado limpo para cada verificação;
+- PostgreSQL 18;
+- migrations desde banco limpo;
 - sem credencial Neon;
-- migrations aplicadas desde a baseline conhecida;
-- testes de banco executados antes do merge.
+- gate primário para SQL/constraints/RLS portáveis conforme `ADR-008`.
 
-Em `US-PLAT-005`, a referência é PostgreSQL 18 conforme `ADR-008`.
+### Neon non-production
 
-### Neon Non-Production
+- projeto `caleida-nonprod`;
+- baseline `main` como staging integrado;
+- branches curtas apenas quando comportamento Neon-specific justificar;
+- baseline não é laboratório destrutivo.
 
-Projeto Neon dedicado a staging e integração com o serviço gerenciado.
+### Production
 
-- branch canônica de staging/homologação;
-- branches temporárias para verificação Neon-specific e desenvolvimento integrado quando necessárias;
-- branches descartáveis devem ser resetadas/removidas após uso;
-- nenhuma branch temporária é fonte canônica de schema;
-- baseline `main` não é laboratório destrutivo.
+Projeto Neon separado ainda não provisionado. Secrets, Auth, banco e e-mail Production serão próprios.
 
-### Neon Production
+### Vercel
 
-Projeto Neon separado do non-production.
-
-- utilizado pelo beta real e futura operação pública;
-- secrets próprios;
-- sem testes destrutivos;
-- migrations chegam a partir do Git depois dos gates aplicáveis.
-
-### Vercel Preview
-
-Preview é ambiente de publicação opcional e manual.
-
-- não é criado automaticamente por PR/branch;
-- não é gate obrigatório de merge;
-- quando usado, deve receber configuração non-production apropriada;
-- só é publicado pelo usuário.
-
-### Vercel Production
-
-Production é ambiente de release manual.
-
-- somente o usuário inicia publicação;
-- IA pode preparar release candidate/runbook e verificar estado já publicado;
-- merge na `main` não publica automaticamente.
+Preview/Production são publicações opcionais e manuais. Merge nunca publica automaticamente.
 
 ## 4. Domínios previstos
 
 - identidade e acesso;
 - perfis e privacidade;
-- catálogo;
-- integrações externas;
-- biblioteca e progresso;
-- avaliações e resenhas;
-- coleções e rankings;
-- diário e atividades;
-- metas e estatísticas;
-- comunidade;
-- moderação;
-- administração;
+- catálogo e integrações externas;
+- biblioteca/progresso;
+- avaliações/resenhas;
+- coleções/rankings;
+- diário/atividades;
+- metas/estatísticas;
+- comunidade/moderação/administração;
 - arquivos;
-- exportação e recuperação.
+- exportação/recuperação.
 
-Os domínios devem permanecer separados, mas podem compartilhar componentes e serviços claramente definidos.
+Domínios permanecem separados, com boundaries explícitas.
 
 ## 5. Princípios de dados
 
-- catálogo global separado dos dados pessoais;
-- uma relação de biblioteca por usuário e obra;
-- identificadores externos únicos por provedor quando aplicável;
+- catálogo global separado de dados pessoais;
+- migrations no Git como história canônica;
 - RLS desde a primeira tabela privada/user-scoped exposta;
-- dados externos normalizados e preservados localmente apenas quando necessários;
-- cache com expiração e limpeza;
 - auditoria compacta e sem secrets;
-- migrations no Git como história canônica do schema.
+- dados externos mínimos e normalizados;
+- falha de integração externa não corrompe estado canônico.
 
-## 6. Autenticação e acesso a dados
+## 6. Autenticação e autorização
 
-Neon Auth será a identidade canônica inicial.
-
-Para CRUD normal sob contexto de usuário, a arquitetura prefere Neon Data API com JWT e RLS quando esse caminho for adequado ao caso de uso.
+Neon Auth é a identidade canônica inicial.
 
 Regras:
 
 - autenticação não substitui autorização;
-- `authenticated` não concede acesso genérico a linhas;
-- ownership/visibilidade deve ser imposta por RLS;
-- helper/API de identidade deve seguir documentação oficial corrente;
+- papel Admin Better Auth não substitui papéis de produto Caleida;
+- ownership/visibilidade deve ser imposta server-side/banco/RLS conforme a superfície;
 - credencial privilegiada nunca é enviada ao browser;
-- owner/BYPASSRLS não é utilizado como caminho normal de CRUD.
+- owner/BYPASSRLS não é caminho de CRUD comum;
+- confirmação obrigatória de e-mail só será ativada quando o cadastro controlado de US-AUTH-005 estiver pronto para impor o gate de entrada.
 
-Operações server-side confiáveis podem usar conexão direta ao Postgres com least privilege e autorização própria comprovada.
+## 7. Banco
 
-## 7. Estratégia de banco
-
-Layout canônico:
+Layout:
 
 ```text
 database/migrations/
@@ -161,79 +129,90 @@ database/scripts/
 database/tests/
 ```
 
-- toda mudança estrutural é migration versionada;
-- nenhuma alteração importante existe somente no Console;
+- toda mudança persistente é migration versionada;
 - migrations aplicadas não são reescritas;
-- correções usam novas migrations;
-- testes de constraints e RLS devem ser executáveis;
-- SQL PostgreSQL portável é verificado primeiro em PostgreSQL 18 descartável;
-- comportamento específico do Neon exige verificação adicional em branch Neon isolada quando aplicável;
+- PostgreSQL portável é testado primeiro em PostgreSQL 18;
+- comportamento Neon-specific exige branch isolada quando aplicável;
 - Production nunca é ambiente de teste destrutivo.
 
-O tooling usa Node.js + `psql`, sem ORM introduzido apenas para migrations. A política de ambientes de teste segue `ADR-008`.
+Tooling: Node.js + `psql`, sem ORM introduzido só para migrations.
 
-## 8. Estratégia de integração externa
+## 8. Integrações externas
 
-APIs externas serão acessadas preferencialmente por rotas server-side quando houver segredo ou necessidade de controle.
+Integrações com segredo ficam server-side. O browser nunca recebe API key privada.
 
-O cliente não recebe chaves privadas. Resultados são normalizados antes de chegar à interface. A indisponibilidade de um provedor não pode remover obras já salvas.
+A boundary deve:
 
-## 9. Estratégia de imagens e arquivos
+- validar configuração;
+- reduzir payload ao necessário;
+- normalizar respostas;
+- sanitizar falhas;
+- distinguir falha recuperável quando a semântica permitir;
+- não transformar indisponibilidade do provedor em mutação irreversível de negócio.
 
-- capas externas permanecem por URL quando os termos permitirem;
-- conteúdo próprio como avatar/banner exige Object Storage privado e controlado;
-- o provedor de Storage ainda não foi escolhido;
-- uploads futuros terão validação, compressão, limites e limpeza de órfãos;
-- metadados de arquivo devem permanecer desacoplados do provedor.
+## 9. E-mail transacional
 
-## 10. CI e deployment
+### Decisão
 
-### CI
+`ADR-009` seleciona Resend para non-production.
 
-O fluxo normal é:
+### Aplicação
+
+`src/lib/email/server.ts` usa `fetch` nativo para `POST /emails`:
+
+- server-only;
+- `RESEND_API_KEY` apenas no servidor;
+- idempotency key obrigatória;
+- rede/429/5xx tratados como recuperáveis;
+- resposta externa reduzida a `messageId`;
+- sem SDK Resend obrigatório;
+- sem acesso ao banco.
+
+Para convites, a ordem futura é:
+
+```text
+convite criado
+  ↓
+envio confirmado pelo provedor
+  ↓
+transição criado → enviado
+```
+
+Falha de e-mail não consome convite e não marca envio como concluído.
+
+### Neon Auth
+
+O Auth pode usar SMTP customizado do mesmo Resend para confirmação/recuperação. A configuração real exige domínio e chave externos e permanece fora do Git/chat. Até o gate live ser executado, o provider Auth da baseline continua compartilhado do Neon.
+
+### Privacidade
+
+A região São Paulo do Resend controla roteamento, não residência de dados. Metadados/logs/API permanecem nos Estados Unidos segundo a documentação corrente; minimizar conteúdo e revalidar DPA/subprocessadores antes do beta real.
+
+## 10. Imagens e arquivos
+
+- capas externas permanecem por URL quando permitido;
+- avatar/banner futuro exige Object Storage privado;
+- provedor ainda não escolhido;
+- metadados devem permanecer desacoplados do fornecedor.
+
+## 11. CI e deployment
+
+Fluxo normal:
 
 ```text
 branch → implementação → lint/typecheck/test/build → PR → review → merge
 ```
 
-GitHub Actions valida, mas não publica.
+GitHub Actions valida aplicação + PostgreSQL 18, sem secret Resend e sem envio externo.
 
-### Guardrail Vercel
+`vercel.json` mantém Git deployment desabilitado. IA não executa Preview, Production, promote, rollback ou redeploy.
 
-Quando `vercel.json` existir, a configuração deve desabilitar Git deployments automáticos conforme a documentação oficial corrente. Em OPS-003, o contrato validado é:
+## 12. Decisões ainda pendentes
 
-```json
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": {
-    "deploymentEnabled": false
-  }
-}
-```
-
-### Release
-
-Release é separada do ciclo de integração:
-
-```text
-release candidate verificada
-  ↓
-MANUAL_ACTION_REQUIRED quando necessário
-  ↓
-usuário publica manualmente
-```
-
-IA não executa Preview, Production, promote, rollback ou redeploy.
-
-## 11. Decisões ainda pendentes
-
-Serão decididas em tarefas específicas:
-
-- ferramenta de testes unitários além do runner nativo atual, se houver necessidade;
-- ferramenta de testes end-to-end;
-- biblioteca de componentes acessíveis, se utilizada;
-- provedor de Object Storage;
-- provedor/configuração de e-mail transacional;
-- serviço/estratégia de backup de longo prazo;
-- monitoramento e rastreamento de erros;
-- estratégia final de domínio.
+- ferramenta E2E quando necessária;
+- biblioteca acessível adicional se necessária;
+- Object Storage;
+- backup de longo prazo;
+- monitoramento/error tracking;
+- estratégia final de domínio;
+- política/infra de e-mail Production após revalidação do `ADR-009`.
