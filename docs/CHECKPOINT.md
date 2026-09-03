@@ -10,16 +10,16 @@
 **ACTIVE_ISSUE:** `#49`  
 **ACTIVE_BRANCH:** `feat/us-auth-004-transactional-email`  
 **ACTIVE_PR:** `#50`  
-**NEXT_ACTION:** `US-AUTH-004 — concluir gate live Resend/Neon Auth non-production sem expor secrets`  
-**BLOCKERS:** `envio live e SMTP customizado não podem ser provados sem conta Resend, domínio/remetente apropriado e credencial sending_access externa`  
+**NEXT_ACTION:** `US-AUTH-004 — configurar e provar Resend/SMTP na branch Neon isolada verify-us-auth-004 sem expor secrets`  
+**BLOCKERS:** `o gate live exige conta Resend, domínio/remetente verificado e credencial sending_access externa`  
 **ON_HOLD:** none  
-**MANUAL_ACTION_REQUIRED:** `configurar externamente o Resend non-production e o SMTP customizado do Neon Auth; nunca enviar a API key pelo chat/Git`
+**MANUAL_ACTION_REQUIRED:** `configurar Resend SMTP somente em verify-us-auth-004 e executar um teste live seguro; nunca enviar API key/senha pelo chat ou Git`
 
 ## Comando de continuação
 
 > Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
 
-Recupere o estado real no GitHub e Neon antes de agir. Não refaça Stories concluídas, não invente secrets e não execute deployment Vercel.
+Recupere GitHub e Neon antes de agir. Não refaça Stories concluídas, não invente secrets e não execute deployment Vercel.
 
 ## Incrementos concluídos
 
@@ -58,23 +58,25 @@ CI final PR: 33773066584 — PASS
 CI pós-merge main: 33773379852 — PASS
 ```
 
-A evidência pós-merge foi registrada na discussão da PR #48. A migration `000003_entry_control.sql` permanece integrada na baseline Neon sem fixtures.
+A evidência pós-merge foi registrada na PR #48. A migration `000003_entry_control.sql` permanece integrada na baseline sem fixtures.
 
-## Neon non-production — estado confirmado antes de US-AUTH-004
+## Neon non-production — estado atual
 
 ```text
 Projeto: caleida-nonprod
 Project ID: patient-glade-95136440
 PostgreSQL: 18
 Baseline: main / br-restless-cherry-awpcwy6r / ready
-Branches descartáveis: nenhuma
-Managed Better Auth: habilitado
-Email provider Auth: shared Neon
-Require email verification: false
+Gate SMTP: verify-us-auth-004 / br-plain-pond-aw5f59ia / ready
+Managed Better Auth: habilitado em ambas
+Email provider Auth em ambas: shared Neon
+Require email verification em ambas: false
 Data API: não provisionada
 ```
 
-Ledger confirmado:
+`verify-us-auth-004` foi criada em 03/09/2026 a partir da baseline exclusivamente para o gate Neon-specific de SMTP de US-AUTH-004. A criação não alterou `main`. A branch será descartável e sua exclusão futura exigirá autorização explícita porque a ferramenta classifica `delete_branch` como destrutiva.
+
+Ledger da baseline confirmado antes da criação da branch:
 
 ```text
 000001_migration_ledger.sql
@@ -89,56 +91,83 @@ Ledger confirmado:
 
 Contadores confirmados em zero: Auth users, papéis, role_changes, convites, usos, solicitações e entry_events.
 
-## US-AUTH-004 — trabalho já materializado na PR #50
+## US-AUTH-004 — trabalho materializado na PR #50
 
 ### Decisão
 
 - `ADR-009` seleciona **Resend** para e-mail transacional non-production;
 - comparação corrente considerou Resend, Brevo, Mailgun e Amazon SES;
 - Resend Free observado em 03/09/2026: 3.000 e-mails/mês e 100/dia, REST + SMTP;
-- chave operacional deve ser `sending_access`, preferencialmente limitada ao domínio;
-- idempotência do `POST /emails` é usada por contrato;
-- região São Paulo pode ser usada para roteamento, mas metadados/logs/API do Resend permanecem armazenados nos EUA.
+- chave deve ser `sending_access`, preferencialmente limitada ao domínio;
+- idempotência de envio é obrigatória por contrato;
+- região São Paulo pode ser usada para roteamento, mas metadados/logs/API permanecem armazenados nos EUA segundo a documentação corrente.
 
 ### Implementação
 
-- `src/lib/email/server.ts` — boundary server-only usando `fetch` nativo, sem SDK do provedor;
-- `tests/email-transport-contract.test.mjs` — contrato de secrets, idempotência, falhas e ausência de mutação de convite;
-- `.env.example` — adiciona somente nomes comentados `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME`;
-- `docs/EMAIL_TRANSPORT.md` — contrato operacional, Resend REST e SMTP Neon Auth;
-- `docs/adr/ADR-009-resend-transactional-email.md` — decisão arquitetural.
+- `src/lib/email/server.ts` — boundary server-only usando `fetch` nativo;
+- `tests/email-transport-contract.test.mjs` — secrets, idempotência, falhas sanitizadas e ausência de mutação de convite;
+- `.env.example` — somente nomes comentados `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME`;
+- `docs/EMAIL_TRANSPORT.md`;
+- `docs/adr/ADR-009-resend-transactional-email.md`;
+- `docs/US_AUTH_004_VERIFICATION.md`.
 
 ### Invariantes
 
 - falha de transporte não chama `consume_invitation`;
-- convite só poderá transicionar para `enviado` após confirmação de envio no fluxo futuro;
+- convite futuro só poderá transicionar para `enviado` após confirmação do provedor;
 - rede/429/5xx são recuperáveis; erros retornados são sanitizados;
 - nenhuma chave/API secret é registrada;
 - `require_email_verification` continua `false` até US-AUTH-005;
 - não existe endpoint/signup/login/Production/deployment nesta Story.
 
-## Gate externo pendente
+### CI técnico
 
-A Story não pode ser declarada concluída sem prova live non-production. A ação humana necessária é, fora do chat/Git:
+```text
+Run: 33786184072
+Head técnico: 9de864fd17a515207e123cfb3cb88344a83f08fe
+npm ci: PASS / 0 vulnerabilidades reportadas
+npm run verify: PASS
+Node tests: 60/60 PASS
+build: PASS
+PostgreSQL 18 + npm run verify:db: PASS
+```
 
-1. criar/usar conta Resend non-production e aceitar os termos aplicáveis;
-2. verificar domínio/subdomínio de envio apropriado com SPF/DKIM;
+Novos commits documentais e a criação da branch Neon dispararão/requererão um CI final do head antes de qualquer merge.
+
+## Gate externo pendente — sequência correta
+
+A Story não pode ser declarada concluída sem prova live. Fora do chat/Git:
+
+1. criar/usar conta Resend non-production;
+2. verificar domínio/subdomínio apropriado com SPF/DKIM;
 3. criar chave `sending_access`, preferencialmente restrita ao domínio;
-4. guardar a chave em local seguro fora do Git/chat;
-5. configurar no Neon Auth da baseline non-production um provider SMTP customizado Resend, com secret inserido diretamente no Console/secret surface;
-6. não habilitar ainda confirmação obrigatória de e-mail;
-7. avisar somente que a configuração terminou, sem colar a chave.
+4. guardar a chave em secret store/local seguro;
+5. abrir **Neon → branch `verify-us-auth-004` → Auth → configuração de e-mail**;
+6. configurar SMTP Resend somente nessa branch, usando `smtp.resend.com`, usuário `resend`, a credencial secreta e o remetente verificado;
+7. manter `require_email_verification=false`;
+8. executar o teste de envio seguro disponível no Resend/Neon para um endereço controlado;
+9. avisar no chat apenas que **o SMTP da branch `verify-us-auth-004` foi configurado e o teste passou**, sem colar API key, senha, connection string ou Auth URL.
 
-Depois disso, uma sessão pode revalidar a configuração Neon com secrets redigidos, executar o teste live aplicável, fechar #49/#50 se todos os gates passarem e só então promover US-AUTH-005.
+Depois disso, a IA deve:
+
+1. revalidar `verify-us-auth-004` com secrets redigidos;
+2. confirmar que a baseline ainda usa o provider compartilhado;
+3. registrar o gate isolado como PASS;
+4. orientar/configurar a promoção para a baseline por superfície segura sem expor secret;
+5. revalidar baseline;
+6. pedir autorização explícita antes de excluir `verify-us-auth-004`;
+7. executar CI final, review e merge #50 somente quando todos os gates aplicáveis estiverem satisfeitos.
 
 ## Gates US-AUTH-004
 
 - fontes oficiais/provider comparison: `PASS`;
 - decisão arquitetural: `PASS — ADR-009`;
-- código/testes/CI da PR: `PENDING` enquanto o run atual não concluir;
-- PostgreSQL 18: executado pelo CI permanente, sem migration nova;
-- Neon-specific SMTP: `MANUAL_ACTION_REQUIRED`;
+- código/testes/CI técnico: `PASS — 33786184072`;
+- PostgreSQL 18: `PASS`;
+- branch Neon isolada para SMTP: `PASS — criada e Auth herdado`;
+- configuração SMTP Resend isolada: `MANUAL_ACTION_REQUIRED`;
 - envio Resend live: `MANUAL_ACTION_REQUIRED`;
+- promoção SMTP para baseline: `PENDING após gate isolado`;
 - browser real: `SKIPPED — nenhuma superfície funcional criada`;
 - Production Neon: `SKIPPED/NON-GOAL`;
 - deployment Vercel: `SKIPPED/PROIBIDO`.
