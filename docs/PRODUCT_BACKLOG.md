@@ -2,7 +2,7 @@
 
 **Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-004 bloqueada apenas pelo gate live externo  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** `US-AUTH-004 — concluir gate live Resend/Neon Auth non-production`
+**Próxima ação operacional:** `US-AUTH-004 — configurar e provar Resend/SMTP em verify-us-auth-004`
 
 ## Convenções
 
@@ -75,7 +75,8 @@ Entregar contas e acesso seguro para o beta fechado separando Auth, autorizaçã
 - **Prioridade:** P0
 - **Estado:** EM ANDAMENTO / MANUAL_ACTION_REQUIRED
 - **Issue/PR:** #49/#50
-- **Branch:** `feat/us-auth-004-transactional-email`
+- **Git branch:** `feat/us-auth-004-transactional-email`
+- **Neon gate branch:** `verify-us-auth-004 / br-plain-pond-aw5f59ia`
 - **Capacidades:** CAP-01, CAP-02
 - **Decisão:** `ADR-009 — Resend como transporte transacional non-production`
 - **Contrato:** `docs/EMAIL_TRANSPORT.md`
@@ -83,7 +84,7 @@ Entregar contas e acesso seguro para o beta fechado separando Auth, autorizaçã
 
 **Já realizado:**
 
-- provedores/preços/limites/regiões/privacidade revalidados em fontes oficiais;
+- provedores/preços/limites/regiões/privacidade revalidados;
 - Resend selecionado após comparação com Brevo, Mailgun e SES;
 - boundary `src/lib/email/server.ts` server-only via `fetch` nativo;
 - API key somente server-side `sending_access`;
@@ -91,14 +92,16 @@ Entregar contas e acesso seguro para o beta fechado separando Auth, autorizaçã
 - falhas rede/429/5xx recuperáveis e sanitizadas;
 - transporte não acessa banco nem consome convite;
 - variáveis documentadas sem valores;
-- CI `33786184072`: 60/60 testes + build + PostgreSQL 18/verify:db em PASS.
+- CI técnico `33786184072`: 60/60 testes + build + PostgreSQL 18/verify:db em PASS;
+- branch Neon `verify-us-auth-004` criada a partir da baseline, `ready`, com Better Auth herdado, provider de e-mail ainda `shared` e `require_email_verification=false`.
 
 **Pendência real:**
 
 - conta/domínio/remetente Resend non-production;
 - API key real guardada fora do Git/chat;
-- SMTP Resend configurado no Neon Auth por superfície segura;
-- prova live com secrets redigidos.
+- SMTP Resend configurado e testado **somente em `verify-us-auth-004`**;
+- revalidação isolada antes de qualquer promoção para a baseline;
+- autorização destrutiva separada para apagar a branch depois do gate.
 
 US-AUTH-004 permanece aberta até esse gate. Não promover a Story seguinte por conveniência.
 
@@ -107,7 +110,7 @@ US-AUTH-004 permanece aberta até esse gate. Não promover a Story seguinte por 
 - **Prioridade:** P0
 - **Estado:** A FAZER / BLOQUEADA por US-AUTH-004
 - **Capacidades:** CAP-01, CAP-02
-- **Resultado esperado:** signup sem autorização negado inclusive fora da UI; confirmação de e-mail e vínculo/consumo seguro do mecanismo de entrada.
+- **Resultado esperado:** signup sem autorização negado fora da UI; confirmação de e-mail e vínculo/consumo seguro da entrada.
 
 ### US-AUTH-006 — Login, logout e proteção de sessão
 
@@ -133,4 +136,4 @@ Não antecipar Stories seguintes. Mudança persistente usa migration + PostgreSQ
 
 # Próxima ação operacional
 
-> `US-AUTH-004 — concluir gate live Resend/Neon Auth non-production sem expor secrets`.
+> `US-AUTH-004 — configurar e provar Resend/SMTP na branch Neon isolada verify-us-auth-004 sem expor secrets`.
