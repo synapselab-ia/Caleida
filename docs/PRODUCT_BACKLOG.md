@@ -1,8 +1,8 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; Incremento 2 refinado e primeira Story pronta  
+**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-001 concluída  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`
+**Próxima ação operacional:** `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`
 
 ## Convenções
 
@@ -44,7 +44,7 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Resultado:** projeto Neon `caleida-nonprod` provisionado; branch Neon `main` adotada como baseline canônica non-production/staging; convenção de branches temporárias documentada; Production/Auth/Data API/Storage/schema de produto não provisionados.
+- **Resultado:** projeto Neon `caleida-nonprod` provisionado; branch Neon `main` adotada como baseline canônica non-production/staging; convenção de branches temporárias documentada; naquele momento Production/Auth/Data API/Storage/schema de produto não estavam provisionados.
 
 ### US-PLAT-005 — Definir migrations, testes de banco e RLS
 
@@ -88,10 +88,6 @@ Deployment real não é gate técnico. Vercel permanece preparada para release m
 - **Resultado:** ciclo real `Issue → branch → CI → PR → review → merge → CI main` validado com gates aplicáveis em PASS; ausência de deployment automático comprovada; Neon-specific `SKIPPED` corretamente.
 - **Evidência:** `docs/INCREMENT_0_VALIDATION.md`.
 
-## Critério de encerramento do Incremento 0
-
-Todos os gates de fundação executável, banco portável, CI sem CD, ambientes e ciclo de entrega foram concluídos.
-
 **Incremento 0: CONCLUÍDO.**
 
 ---
@@ -113,9 +109,7 @@ Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 - **Estado:** CONCLUÍDA
 - **Issue:** `#33`
 - **PR:** `#34`
-- **Resultado:** paleta aprovada, temas light/dark e aliases semânticos codificados em `src/app/globals.css`; categorias documentadas; contraste protegido por teste automatizado.
-- **Documentação:** `docs/DESIGN_TOKENS.md`.
-- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
+- **Resultado:** paleta aprovada, temas light/dark e aliases semânticos codificados; contraste protegido por teste automatizado.
 
 ### US-DS-002 — Integrar tipografia e assinatura de marca
 
@@ -123,9 +117,7 @@ Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 - **Estado:** CONCLUÍDA
 - **Issue:** `#35`
 - **PR:** `#36`
-- **Resultado:** Manrope/Newsreader integradas via `next/font`; logo horizontal oficial integrado por `next/image`; variantes ausentes permanecem pendências reais.
-- **Documentação:** `docs/BRAND_TYPOGRAPHY.md`.
-- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
+- **Resultado:** Manrope/Newsreader integradas; logo horizontal oficial integrado por `next/image`.
 
 ### US-DS-003 — Criar primitivos acessíveis essenciais
 
@@ -133,41 +125,24 @@ Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 - **Estado:** CONCLUÍDA
 - **Issue:** `#37`
 - **PR:** `#38`
-- **Resultado:** `Button`, `FormField` e `Feedback` mínimos e tipados, com HTML nativo, focus-visible explícito, label/descrição/erro associados e live-region roles proporcionais.
-- **Documentação:** `docs/UI_PRIMITIVES.md`.
-- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
+- **Resultado:** `Button`, `FormField` e `Feedback` mínimos e tipados com HTML nativo e relações acessíveis.
 
 ### US-DS-004 — Consolidar fundação responsiva e aplicar identidade à base
 
 - **Prioridade:** P1
-- **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO
+- **Estado:** CONCLUÍDA
 - **Issue:** `#39`
 - **PR:** `#40`
-- **Resultado:** página base cultural/editorial, mobile-first e sem fluxo falso; tokens, tipografia e logo oficial aplicados; sete categorias preservam texto além da cor; nenhuma animação/hover obrigatório; contrato responsivo automatizado.
-- **Guardrail:** `tests/base-visual-foundation-contract.test.mjs`.
-- **Verificação:** CI inicial `33662849749` falhou legitimamente em contrato legado do logo; contrato corrigido sem relaxar gate; head técnico `a4198a7c7508ae9ede628c59455a64d00cd55d94`, CI `33663025148` em `PASS` para `npm run verify`, PostgreSQL 18 e `verify:db`.
-- **Browser real:** `SKIPPED` por indisponibilidade de checkout/dev server local na sessão; nenhum deployment foi criado como atalho.
-- **Banco/Neon:** Neon-specific `SKIPPED` por escopo.
+- **Resultado:** página base cultural/editorial mobile-first, sem fluxo falso; CI final e pós-merge em PASS.
 
-## Critério de encerramento do Incremento 1
-
-- tokens e temas reutilizáveis: `PASS`;
-- tipografia e marca: `PASS`;
-- primitivos acessíveis: `PASS`;
-- composição responsiva sem fluxo falso: `PASS` por código/contrato/build;
-- browser real: `SKIPPED` com motivo explícito;
-- lint/typecheck/test/build: `PASS` no head técnico corrigido;
-- banco/infraestrutura criados por conveniência visual: nenhum;
-- deployment: não executado.
-
-**Incremento 1: CONCLUÍDO após CI final da PR #40 e CI pós-merge da `main` em PASS.**
+**Incremento 1: CONCLUÍDO.**
 
 ---
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
 **Plano:** `docs/INCREMENT_2_PLAN.md`  
-**Refino:** `OPS-006` / Issue `#41`
+**Refino:** `OPS-006` / Issue `#41` / PR `#42`
 
 ## Objetivo
 
@@ -176,16 +151,21 @@ Entregar contas e acesso seguro para o beta fechado de forma incremental, separa
 ### US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
+- **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO
+- **Issue:** `#43`
+- **PR:** `#44`
 - **Capacidade:** CAP-01
-- **Resultado esperado:** Neon Auth integrado ao Next.js 16 em branch Neon descartável, contrato server-side de sessão, variáveis documentadas sem valores e gate Neon-specific real, sem cadastro/login/Data API/e-mail/schema funcional.
+- **Resultado:** `@neondatabase/auth@0.5.0-beta` fixado; fronteira server-only/lazy/fail-closed; handler GET/POST catch-all; variáveis Auth documentadas sem valores; gate Neon-specific em branch isolada; Neon Auth Better Auth promovido à baseline `caleida-nonprod/main` somente após gates; nenhum usuário/Data API/schema de produto/e-mail/OAuth/Production/deployment criado.
+- **Evidência:** `docs/US_AUTH_001_VERIFICATION.md`.
+- **Operação:** branch Neon descartável `verify-us-auth-001` permanece pendente de exclusão explícita por ser ação destrutiva no conector.
 
 ### US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Capacidades:** CAP-04, CAP-35
 - **Resultado esperado:** papéis de produto e autorização crítica verificados no servidor e no banco, com bootstrap administrativo controlado e auditável.
+- **Pré-condição:** remover a branch Neon descartável de US-AUTH-001 após autorização explícita antes de criar o próximo ambiente isolado.
 
 ### US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
 
@@ -235,6 +215,6 @@ Não antecipar Stories seguintes. Cada mudança de schema/RLS usa migration vers
 
 # Próxima ação operacional
 
-> `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`
+> `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`
 
-Não implementar convite, cadastro, papéis, e-mail, Data API ou Production dentro de US-AUTH-001.
+Antes de iniciar US-AUTH-002, resolver a pendência operacional de exclusão da branch Neon descartável de US-AUTH-001 mediante autorização explícita.

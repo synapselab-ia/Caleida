@@ -1,25 +1,25 @@
 # Checkpoint — Caleida
 
-**PROJECT_STATUS:** READY  
-**CURRENT_PHASE:** Incremento 2 — Acesso controlado / EPIC-02 refinado  
+**PROJECT_STATUS:** MANUAL_ACTION_REQUIRED  
+**CURRENT_PHASE:** Incremento 2 — Acesso controlado / EPIC-02 em andamento  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `OPS-006 — Refinar o próximo incremento funcional (EPIC-02 — Contas e autenticação)`  
-**LAST_COMPLETED_ISSUE:** `#41`  
-**LAST_COMPLETED_PR:** `#42`  
+**LAST_COMPLETED_TASK:** `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`  
+**LAST_COMPLETED_ISSUE:** `#43`  
+**LAST_COMPLETED_PR:** `#44`  
 **ACTIVE_TASK:** none  
 **ACTIVE_ISSUE:** none  
 **ACTIVE_BRANCH:** none  
 **ACTIVE_PR:** none  
-**NEXT_ACTION:** `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`  
-**BLOCKERS:** none  
+**NEXT_ACTION:** `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`  
+**BLOCKERS:** `US-AUTH-002 não deve abrir nova branch Neon isolada enquanto verify-us-auth-001 não for removida`  
 **ON_HOLD:** none  
-**MANUAL_ACTION_REQUIRED:** none
+**MANUAL_ACTION_REQUIRED:** `autorizar explicitamente a exclusão da branch Neon descartável verify-us-auth-001 (br-snowy-hall-aw9uv2gn)`
 
 ## Comando de continuação
 
 > Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
 
-Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça Stories concluídas.
+Recupere o estado real no GitHub e Neon antes de agir. Não refaça Stories concluídas e resolva a ação manual pendente antes de criar novo ambiente Neon isolado.
 
 ## Incrementos concluídos
 
@@ -31,69 +31,12 @@ Recupere o estado real no GitHub e siga os documentos canônicos. Não refaça S
 
 **CONCLUÍDO.** Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 
-```text
-US-DS-001 tokens/temas — CONCLUÍDA (#33 / #34)
-  ↓
-US-DS-002 tipografia/marca — CONCLUÍDA (#35 / #36)
-  ↓
-US-DS-003 primitivos acessíveis — CONCLUÍDA (#37 / #38)
-  ↓
-US-DS-004 fundação responsiva aplicada — CONCLUÍDA (#39 / #40)
-```
-
-## OPS-006 — resultado
+## Incremento 2 — estado atual
 
 ```text
-Issue: #41
-Branch: ops/006-refine-epic-02
-PR: #42
-Plano: docs/INCREMENT_2_PLAN.md
-```
-
-OPS-006 refinou `EPIC-02 — Contas e autenticação` sem implementar Auth e promoveu exatamente uma próxima Story técnica.
-
-### Estado real reconciliado
-
-- `main` de partida: `a42b8bdcd78293e797cdb6e2aff3e3cf02c495a2`;
-- CI integrada de partida: run `33664145901` — `PASS`;
-- antes de OPS-006 não havia Issue ou PR aberta;
-- Neon non-production: `caleida-nonprod`, PostgreSQL 18, região `aws-us-east-1`;
-- baseline Neon: `main` / `br-restless-cherry-awpcwy6r`, estado `ready`;
-- branches Neon existentes no refino: somente a baseline `main`;
-- Neon Auth/Data API: não provisionados;
-- Production Neon: não provisionada;
-- schema funcional de produto: inexistente;
-- migrations: somente `database/migrations/000001_migration_ledger.sql`;
-- Vercel: nenhum projeto/deployment do Caleida criado.
-
-### Revalidação técnica de OPS-006
-
-Documentação oficial corrente foi revalidada para o desenho da próxima Story:
-
-- Neon Auth atual é Better Auth gerenciado, branch-scoped, com schema `neon_auth` e SDK oficial `@neondatabase/auth`;
-- integração server-side Next.js corrente usa `createNeonAuth()`;
-- variáveis correntes previstas para a fundação são `NEON_AUTH_BASE_URL` e `NEON_AUTH_COOKIE_SECRET`, sempre sem valores no Git;
-- cache de sessão assinado do SDK atual possui TTL e deve ser considerado explicitamente na futura revogação de sessão;
-- Neon Auth não deve ser tratado como Better Auth self-hosted com plugins/handlers server-side customizados presumidos;
-- o futuro gate de beta fechado deve negar signup direto sem convite/aprovação, e não apenas ocultar interface;
-- Neon Data API/RLS continua exigindo RLS em tabelas expostas e usa a identidade documentada por `auth.user_id()`;
-- Next.js 16 pode usar `proxy.ts` para proteção antecipada, mas autorização real permanece server-side e/ou no banco.
-
-Referências e consequências estão registradas em `docs/INCREMENT_2_PLAN.md`.
-
-### Arquitetura
-
-- nenhum novo ADR foi necessário em OPS-006;
-- `ADR-004`, `ADR-005`, `ADR-007` e `ADR-008` permanecem suficientes;
-- provedor de e-mail transacional continua deliberadamente não escolhido e deve ser decidido/documentado na Story própria;
-- se o Neon Auth não permitir impor com segurança o controle de entrada do beta, a futura Story deve parar e registrar decisão arquitetural em vez de liberar signup público como workaround.
-
-### Incremento 2 refinado
-
-```text
-US-AUTH-001 fundação Neon Auth + sessão — PRONTA / NEXT_ACTION
+US-AUTH-001 fundação Neon Auth + sessão — CONCLUÍDA (#43 / #44)
   ↓
-US-AUTH-002 papéis/autorização + bootstrap administrativo
+US-AUTH-002 papéis/autorização + bootstrap administrativo — PRÓXIMA
   ↓
 US-AUTH-003 convites/solicitações + auditoria de entrada
   ↓
@@ -110,37 +53,95 @@ US-AUTH-008 auditoria integrada + validação do incremento
 
 Plano detalhado: `docs/INCREMENT_2_PLAN.md`.
 
-## Verificação de OPS-006
+## US-AUTH-001 — resultado integrado
 
-OPS-006 é uma mudança documental de planejamento.
+### GitHub
 
-- coerência Project Design / amendments / ADRs: `PASS` por inspeção;
-- CAP-01/CAP-02/CAP-04/CAP-35 rastreadas: `PASS`;
-- estado GitHub/CI de partida confrontado com Checkpoint: `PASS`;
-- estado Neon non-production lido sem mutação: `PASS`;
-- documentação oficial Neon Auth/Data API/RLS + Next.js 16 revalidada: `PASS`;
-- migrations/schema funcional: `PASS — nenhuma alteração`;
-- dependencies/package-lock: `PASS — nenhuma alteração`;
-- Neon Auth/Data API/usuários/SMTP/OAuth: `PASS — nenhum recurso criado`;
-- gate Neon-specific: `SKIPPED — OPS-006 não muta comportamento gerenciado do Neon`;
-- browser real: `SKIPPED — tarefa somente documental`;
+```text
+Issue: #43
+Branch: feat/us-auth-001-neon-auth-foundation
+PR: #44
+Baseline de partida: 42f5c8245f7b92eefaf3b9bc9ce06d84851eb7c8
+Head técnico corrigido: d289e9bdde563b8161e2603a9fccc4df50a081c7
+CI técnico: 33679442415 — PASS
+Head documental pré-fechamento: 56089bde529f5d6914bc6b756db51374a582ec76
+CI desse head: 33680234236 — PASS
+```
+
+O primeiro CI da PR (`33679115854`) falhou legitimamente no typecheck porque o handler Neon Auth corrente exige `request` e o contexto catch-all. A implementação foi corrigida sem relaxar gates; o run intermediário foi cancelado por novo head e não conta como evidência de PASS.
+
+### Implementação
+
+- `@neondatabase/auth@0.5.0-beta` fixado exatamente;
+- lockfile reproduzível;
+- fronteira server-only/lazy/fail-closed em `src/lib/auth/server.ts`;
+- handler GET/POST em `src/app/api/auth/[...path]/route.ts` com encaminhamento do contexto catch-all;
+- `NEON_AUTH_BASE_URL` e `NEON_AUTH_COOKIE_SECRET` documentados sem valores;
+- `sessionDataTtl` fixado em 300 segundos;
+- teste de contrato/regressão em `tests/auth-foundation-contract.test.mjs`;
+- contrato técnico em `docs/AUTH_FOUNDATION.md`.
+
+### Neon-specific
+
+Estado inicial:
+
+- `caleida-nonprod/main` / `br-restless-cherry-awpcwy6r` em PostgreSQL 18;
+- Neon Auth desabilitado na baseline;
+- nenhuma branch descartável existente.
+
+Gate realizado:
+
+```text
+Branch: verify-us-auth-001
+Branch ID: br-snowy-hall-aw9uv2gn
+Parent: br-restless-cherry-awpcwy6r
+Auth provider: better_auth
+Auth schema: neon_auth
+```
+
+A baseline foi relida durante a experimentação e permaneceu sem Auth. Depois dos gates técnicos em PASS, Neon Auth Better Auth foi promovido deliberadamente para a baseline non-production e `get_auth`/inspeção do branch confirmaram o schema gerenciado `neon_auth`.
+
+Estado atual confirmado em 03/09/2026:
+
+- baseline `main`: `ready`, Neon Auth Better Auth habilitado;
+- branch descartável `verify-us-auth-001`: ainda existe e está `ready`;
+- Neon Data API: não provisionada;
+- usuários remotos do Caleida: nenhum criado pela Story;
+- schema/RLS funcional de produto: inexistente;
+- Production Neon: não provisionada;
+- deployment Vercel: não executado.
+
+## Verificação de US-AUTH-001
+
+- coerência CAP-01 / ADR-005 / ADR-008: `PASS`;
+- SDK/API Neon Auth corrente revalidada durante a Story: `PASS`;
+- `npm ci`: `PASS`;
+- `npm run verify`: `PASS`;
+- PostgreSQL 18 + `npm run verify:db`: `PASS`;
+- gate Neon-specific isolado: `PASS`;
+- baseline preservada durante experimentação: `PASS`;
+- promoção deliberada Auth non-production após gates: `PASS`;
+- configuração/session fail-closed: `PASS` por contrato/typecheck/test/build;
+- secrets reais no Git/PR/docs: `PASS — nenhum`;
+- usuário/Data API/schema funcional/SMTP/OAuth/Production: `PASS — nenhum criado`;
+- browser real: `SKIPPED — não existe fluxo/UI funcional nesta Story e nenhuma superfície foi fabricada apenas para teste`;
 - deployment Vercel: `SKIPPED/PROIBIDO` conforme `ADR-007`;
-- CI do head documental final da PR #42: **deve estar `PASS` antes do merge**;
-- CI pós-merge da `main`: **deve estar `PASS` antes do fechamento operacional; evidência final deve ser registrada em #41/#42**.
+- branch Neon descartável: `MANUAL_ACTION_REQUIRED — exclusão destrutiva exige autorização explícita`;
+- CI pós-merge da `main`: deve ser confirmado após integração de #44 e registrado na discussão da Issue/PR se não puder ser materializado neste mesmo commit.
 
-## Próxima ação — US-AUTH-001
+Evidência detalhada: `docs/US_AUTH_001_VERIFICATION.md`.
+
+## Próxima ação — US-AUTH-002
 
 Executar somente:
 
-> `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`
+> `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`
 
-Limites obrigatórios:
+Antes de criar a branch Neon isolada dessa Story:
 
-1. começar pela leitura do estado real e da documentação oficial corrente;
-2. usar branch Neon descartável para qualquer gate Neon Auth específico;
-3. se branching/provisionamento isolado estiver indisponível, marcar `BLOCKED`; não usar a baseline Neon `main` como laboratório;
-4. integrar somente a fundação Neon Auth/session do Next.js 16;
-5. documentar nomes de variáveis sem valores e manter secrets server-only;
-6. não implementar cadastro/login, convite, papéis, Data API, SMTP/e-mail, OAuth ou schema funcional de produto;
-7. não provisionar Production Neon;
-8. não criar/importar projeto Caleida na Vercel nem executar deployment.
+1. obter autorização explícita do usuário para apagar `verify-us-auth-001`;
+2. remover a branch descartável;
+3. confirmar que `caleida-nonprod/main` continua saudável com Neon Auth habilitado;
+4. então abrir Issue/branch Git limitadas para US-AUTH-002 e seguir `docs/INCREMENT_2_PLAN.md`.
+
+Não antecipar convites, cadastro, e-mail, Data API, login/logout ou Production dentro de US-AUTH-002.
