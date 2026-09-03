@@ -25,6 +25,13 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `docs/UI_PRIMITIVES.md` como contrato canônico de botão, form-field e feedback acessíveis materializado em US-DS-003.
 - `docs/AUTH_FOUNDATION.md` como contrato da fundação Neon Auth/session de US-AUTH-001, incluindo configuração fail-closed, cache de sessão e riscos da dependência beta.
 - `docs/US_AUTH_001_VERIFICATION.md` como evidência do gate Neon-specific, promoção non-production e histórico de CI da Story.
+- `docs/AUTHORIZATION.md` como contrato da autorização de produto de US-AUTH-002, separando os cinco papéis Caleida do Admin Better Auth.
+- `docs/US_AUTH_002_VERIFICATION.md` como evidência de PostgreSQL 18, gate Neon-specific, promoção à baseline e histórico de CI da Story.
+- `database/migrations/000002_product_authorization.sql` com `caleida_auth.user_roles`, `caleida_audit.role_changes`, bootstrap inicial e mutação controlada de papel.
+- `database/tests/000003_product_authorization.sql` com matriz adversarial de autopromoção, limites do administrador, auditoria e ACLs.
+- `database/scripts/bootstrap-owner.mjs` e `npm run db:bootstrap-owner` como operação server-only explícita para o primeiro proprietário por UUID Neon Auth já existente.
+- `src/lib/auth/authorization.ts` como fronteira server-only de papéis e política de mutação coerente com o banco.
+- `tests/authorization-contract.test.mjs` para proteger separação de papéis, boundary server-only, migration/auditoria e guardrails do bootstrap.
 - `docs/adr/README.md` como índice canônico de Architecture Decision Records.
 - `docs/adr/TEMPLATE.md` como formato mínimo de ADR.
 - `ADR-001` — catálogo global separado da biblioteca pessoal.
@@ -100,8 +107,10 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - `US-AUTH-001` integrou a fundação Neon Auth ao Next.js sem antecipar signup/login, papéis, convites, e-mail, Data API ou schema funcional.
 - `@neondatabase/auth` foi fixado em `0.5.0-beta`; a inicialização é lazy para manter build/CI padrão sem secrets externos.
 - A baseline `caleida-nonprod/main` recebeu Neon Auth Better Auth somente depois do gate em branch descartável e dos gates de aplicação/banco em PASS.
-- `docs/ENVIRONMENTS.md`, `docs/NEON_NONPROD.md`, `docs/NEON_PLATFORM.md`, `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_2_PLAN.md` e `docs/CHECKPOINT.md` foram reconciliados com o estado real após US-AUTH-001.
-- A próxima Story promovida é `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`, com limpeza da branch Neon descartável como pré-condição operacional.
+- `US-AUTH-002` separou autorização do produto da administração do provedor Auth, materializando os cinco papéis canônicos por UUID Neon Auth e auditoria compacta de mudanças.
+- A baseline `caleida-nonprod/main` recebeu as migrations `000001` e `000002` somente após PostgreSQL 18 e gate Neon-specific em PASS; os checksums remotos são idênticos aos validados pelo runner.
+- `docs/ENVIRONMENTS.md`, `docs/NEON_NONPROD.md`, `docs/NEON_PLATFORM.md`, `docs/EXECUTION_PLAN.md`, `docs/PRODUCT_BACKLOG.md`, `docs/INCREMENT_2_PLAN.md` e `docs/CHECKPOINT.md` foram reconciliados com o estado real após US-AUTH-002.
+- A próxima Story promovida é `US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada`, com limpeza de `verify-us-auth-002` como ação manual antes de abrir outro branch Neon descartável.
 
 ### Corrigido
 
@@ -125,6 +134,7 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - O primeiro CI de #40 expôs que o contrato antigo do logo dependia da sequência literal de classes; o teste foi atualizado para exigir a caixa responsiva mais forte (`block`/`shrink-0`/`object-left`) sem relaxar os demais requisitos.
 - O refino de EPIC-02 deixou explícito que ocultar signup na UI não satisfaz o beta fechado: a futura Story deve negar também a criação direta de conta sem convite válido ou solicitação aprovada.
 - O primeiro CI de #44 expôs a assinatura real do handler Neon Auth catch-all: GET/POST exigem `request` e contexto com `params`; a rota e o teste foram corrigidos sem relaxar o typecheck.
+- O primeiro CI de #46 expôs uma diferença do próprio teste de ACL: PostgreSQL 18 não resolve `PUBLIC` como role concreta em `has_*_privilege`; a suíte passou a criar um role `NOLOGIN` realmente não privilegiado sem alterar a migration nem relaxar as revogações.
 
 ### Segurança e operação
 
@@ -134,27 +144,27 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - A baseline Neon `main` não é usada como laboratório destrutivo.
 - Production e non-production Neon permanecem separados por decisão; Production ainda não foi provisionada.
 - `DATABASE_URL`, `DATABASE_URL_UNPOOLED` e `NEON_AUTH_COOKIE_SECRET` são server-only; nenhum secret pode usar `NEXT_PUBLIC_*`.
-- O tooling atual não possui alvo Production e nenhum alvo fictício foi criado em US-PLAT-009.
+- O tooling atual não possui alvo Production e nenhum alvo fictício foi criado.
 - Desenvolvimento local e futuro Preview não podem reutilizar credenciais Production; futura Production deve possuir recursos e secrets próprios.
 - Deployment continua exclusivamente humano/manual; IA e CI não publicam.
 - O CI permanente usa somente `permissions: contents: read`, PostgreSQL efêmero e não necessita repository secrets externos.
 - Nenhum token Vercel, deploy hook ou `id-token: write` foi introduzido no CI.
 - Git deployments Vercel ficam desabilitados por `vercel.json`; `.vercel/` permanece ignorado e não há Project Linking versionado.
-- A Vercel foi verificada antes, durante e depois do merge de US-PLAT-010 e permaneceu sem projeto Caleida; nenhum Preview/Production foi executado.
-- Neon permaneceu com apenas `caleida-nonprod/main`, PostgreSQL 18 e uma branch durante OPS-006; `caleida-production` não foi provisionado.
-- Gate Neon-specific de US-AUTH-001 foi executado primeiro em `verify-us-auth-001`; a baseline permaneceu sem Auth durante o experimento e só recebeu Better Auth depois dos gates.
-- Nenhum usuário, Data API, Object Storage, schema/RLS funcional, SMTP, OAuth ou Production Neon foi criado em US-AUTH-001.
-- O SDK beta atual traz warnings transitivos de peer dependency/depreciação; o Caleida não declara/importa Auth UI diretamente e o risco upstream está documentado para reavaliação antes de ampliar Auth.
-- A branch Neon descartável `verify-us-auth-001` permanece pendente de exclusão porque `delete_branch` é ação destrutiva que exige autorização explícita do usuário.
+- Gate Neon-specific de US-AUTH-001 foi executado primeiro em `verify-us-auth-001`; a baseline só recebeu Better Auth depois dos gates.
+- `verify-us-auth-001` foi excluída depois de autorização explícita do usuário.
+- Gate Neon-specific de US-AUTH-002 foi executado em `verify-us-auth-002`, com identidades sintéticas confinadas à branch descartável.
+- A baseline pós-US-AUTH-002 permanece com zero usuários Auth, zero papéis de produto e zero eventos `role_changes`; nenhum proprietário sintético foi criado apenas para fechar a Story.
+- Neon Data API, Object Storage, SMTP, OAuth e Production Neon continuam ausentes.
+- A branch Neon descartável `verify-us-auth-002` permanece pendente de exclusão porque `delete_branch` é ação destrutiva que exige nova autorização explícita do usuário.
 - Nenhuma connection string, senha, Neon API key, Auth base URL real, cookie secret ou Vercel token foi versionado.
 - Browser real de US-DS-004 ficou `SKIPPED` porque a sessão não conseguiu obter checkout/dev server local; nenhum Preview/Production foi usado para contornar esse limite.
-- Browser real de US-AUTH-001 ficou `SKIPPED` porque não existe fluxo/UI funcional e nenhuma superfície fictícia foi criada apenas para satisfazer o gate.
+- Browser real de US-AUTH-001 e US-AUTH-002 ficou `SKIPPED` porque não existia fluxo/UI funcional e nenhuma superfície fictícia foi criada apenas para satisfazer o gate.
 
 ### Observação operacional
 
 - OPS-002, OPS-003 e OPS-004 foram mudanças documentais/arquiteturais; OPS-005 e OPS-006 são refinos documentais de incrementos.
 - Workflows GitHub Actions usados em US-PLAT-001, US-PLAT-003, US-PLAT-005 e US-PLAT-006 foram descartáveis para verificação e não integram a `main`.
-- Em US-PLAT-005, as rotas de branching/migration temporária do conector Neon apresentaram incompatibilidade camelCase/snake_case; a limitação fica registrada para gates Neon-specific futuros.
+- Em US-PLAT-005, as rotas de branching/migration temporária do conector Neon apresentaram incompatibilidade camelCase/snake_case; a limitação ficou registrada historicamente.
 - A fundação de migrations foi provada em PostgreSQL 18 descartável com aplicação, testes, reaplicação do ledger e reconstrução do zero em PASS.
 - Em US-PLAT-006, `npm ci`, `npm run verify` e `npm run verify:db` contra PostgreSQL 18 passaram em runner descartável.
 - Em US-PLAT-007, o workflow permanente `CI` passou na PR #23 com runtime pinado, `npm ci`, `verify`, PostgreSQL 18 e `verify:db`.
@@ -170,9 +180,10 @@ Todas as mudanças relevantes do Caleida serão registradas neste arquivo.
 - Na PR #38, o run inicial `33656150580` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db`, incluindo o novo contrato de primitivos acessíveis.
 - Na PR #40, o run inicial `33662849749` falhou somente no contrato legado do logo; lint, typecheck e os seis testes novos de US-DS-004 passaram.
 - Após reconciliar o contrato responsivo do logo, o head técnico `a4198a7c7508ae9ede628c59455a64d00cd55d94` passou `npm run verify`, PostgreSQL 18 e `npm run verify:db` no run `33663025148`.
-- Em OPS-006, a baseline integrada de partida `a42b8bdcd78293e797cdb6e2aff3e3cf02c495a2` passou no CI `33664145901`; o Neon foi somente lido e permaneceu `caleida-nonprod`, PostgreSQL 18, branch única `main`, sem Auth/Data API/Production.
-- Em OPS-006, documentação oficial corrente confirmou o SDK Neon Auth Next.js com `createNeonAuth()`, configuração explícita de sessão e a limitação de não presumir plugins/handlers server-side customizados de Better Auth gerenciado.
+- Em OPS-006, a baseline integrada de partida `a42b8bdcd78293e797cdb6e2aff3e3cf02c495a2` passou no CI `33664145901`; o Neon foi somente lido e permaneceu sem Auth/Data API/Production naquela etapa.
 - Em US-AUTH-001, o run inicial `33679115854` falhou legitimamente no typecheck do handler catch-all; a causa foi corrigida sem relaxar gates.
 - O head técnico `d289e9bdde563b8161e2603a9fccc4df50a081c7` passou `npm ci`, `npm run verify`, PostgreSQL 18 e `npm run verify:db` no run `33679442415`.
-- O head documental `56089bde529f5d6914bc6b756db51374a582ec76` passou o CI `33680234236` antes da reconciliação final de Checkpoint/plano/changelog.
-- A próxima ação canônica após integração de #44 é `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`, precedida pela autorização explícita para excluir `verify-us-auth-001`.
+- O CI pós-merge de US-AUTH-001 na `main` passou no run `33753190237`.
+- Em US-AUTH-002, o run inicial `33765866322` passou aplicação/migrations e falhou apenas no teste ACL descrito acima.
+- O head corrigido `2b5c20d47137e880c7c535b04a025d532d6e685b` passou `npm ci`, `npm run verify`, 49/49 testes, build, PostgreSQL 18 e `npm run verify:db` no run `33766333312`.
+- A próxima ação canônica após integração de #46 é `US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada`, precedida por autorização explícita para excluir `verify-us-auth-002` antes de qualquer novo branch Neon descartável.
