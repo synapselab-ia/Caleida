@@ -1,11 +1,11 @@
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Status:** EM ANDAMENTO; US-AUTH-004 em `MANUAL_ACTION_REQUIRED`  
+**Status:** EM ANDAMENTO; US-AUTH-004 concluída, US-AUTH-005 é a próxima Story  
 **Origem:** `EPIC-02 — Contas e autenticação`  
 **Capacidades:** CAP-01, CAP-02, CAP-04 e CAP-35  
 **Prioridade:** P0/P1  
-**Stories concluídas:** `US-AUTH-001`, `US-AUTH-002`, `US-AUTH-003`  
-**Story ativa:** `US-AUTH-004 — Selecionar e integrar e-mail transacional non-production`
+**Stories concluídas:** `US-AUTH-001`, `US-AUTH-002`, `US-AUTH-003`, `US-AUTH-004`  
+**Próxima Story:** `US-AUTH-005 — Cadastro controlado por convite ou aprovação`
 
 ## 1. Objetivo
 
@@ -23,14 +23,13 @@ O incremento termina apenas quando:
 - gates Neon-specific forem executados quando houver dependência real;
 - nenhuma publicação Vercel for automatizada/executada pela IA.
 
-## 2. Estado integrado antes do gate live de US-AUTH-004
+## 2. Estado integrado após US-AUTH-004
 
 ```text
 Projeto Neon: caleida-nonprod
 Project ID: patient-glade-95136440
 PostgreSQL: 18
 Baseline: main / br-restless-cherry-awpcwy6r / ready
-Branches Neon descartáveis: nenhuma
 Managed Better Auth: habilitado
 Auth email provider: shared Neon
 Require email verification: false
@@ -44,6 +43,8 @@ Production Neon: não provisionada
 Deployment Vercel: não executado
 ```
 
+Existe `verify-us-auth-004 / br-plain-pond-aw5f59ia`, criada durante a investigação inicial de SMTP externo. Ela não contém configuração externa e sua remoção é housekeeping não bloqueante sujeita a autorização destrutiva explícita.
+
 ## 3. Decisões e gates
 
 Decisões vigentes:
@@ -52,7 +53,7 @@ Decisões vigentes:
 - `ADR-005` — Neon como plataforma de dados/identidade;
 - `ADR-007` — deployment Vercel exclusivamente humano/manual;
 - `ADR-008` — PostgreSQL 18 efêmero como gate primário para SQL portável;
-- `ADR-009` — Resend como transporte transacional non-production.
+- `ADR-009` — provider compartilhado do Neon Auth em desenvolvimento/non-production; SMTP externo adiado até necessidade real.
 
 ### Neon Auth
 
@@ -63,18 +64,17 @@ Decisões vigentes:
 
 ### E-mail
 
-- app usa boundary server-only por REST Resend;
-- Neon Auth deve usar SMTP Resend no gate live;
-- API key nunca entra no browser/Git/chat;
-- falha de transporte não consome convite;
-- região de envio não deve ser confundida com data residency.
+- confirmação/recuperação de Auth usam o provider compartilhado do Neon enquanto adequado ao beta fechado;
+- não existe adapter Resend/SMTP próprio no estado atual;
+- provedor externo só será escolhido quando houver requisito real;
+- falha de transporte nunca pode ser usada como justificativa para consumir convite ou liberar entrada.
 
 ## 4. Rastreamento de capacidades
 
 | Capacidade | Cobertura principal |
 |---|---|
 | CAP-01 — Contas, autenticação e sessões | US-AUTH-001, 004, 005, 006, 007 |
-| CAP-02 — Convites e entrada | US-AUTH-003, 004, 005 |
+| CAP-02 — Convites e entrada | US-AUTH-003, 005 |
 | CAP-04 — Papéis e permissões | US-AUTH-002, 008 |
 | CAP-35 — Auditoria | US-AUTH-002, 003, 007, 008 |
 
@@ -89,9 +89,9 @@ US-AUTH-002 papéis/autorização + bootstrap — CONCLUÍDA (#45/#46)
   ↓
 US-AUTH-003 convites/solicitações + auditoria — CONCLUÍDA (#47/#48)
   ↓
-US-AUTH-004 e-mail transacional non-production — EM ANDAMENTO / MANUAL_ACTION_REQUIRED (#49/#50)
+US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49/#50)
   ↓
-US-AUTH-005 cadastro controlado + confirmação
+US-AUTH-005 cadastro controlado + confirmação — PRÓXIMA
   ↓
 US-AUTH-006 login/logout + proteção de sessão
   ↓
@@ -126,58 +126,32 @@ Resultado: migration `000003`, convites digest-only, validade/capacidade/destina
 
 ---
 
-# US-AUTH-004 — E-mail transacional non-production
+# US-AUTH-004 — E-mail Auth non-production
 
 **Prioridade:** P0  
-**Estado:** EM ANDAMENTO / MANUAL_ACTION_REQUIRED  
-**Issue:** `#49`  
-**PR:** `#50`  
-**Branch:** `feat/us-auth-004-transactional-email`  
-**Dependências:** US-AUTH-001 e 003  
-**Capacidades:** CAP-01, CAP-02  
+**Estado:** CONCLUÍDA — #49/#50  
+**Capacidades:** CAP-01  
 **Decisão:** `ADR-009`  
 **Contrato:** `docs/EMAIL_TRANSPORT.md`  
 **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`
 
-## Objetivo
+## Resultado
 
-Integrar transporte non-production para convites, confirmação e recuperação sem expor secret e sem antecipar cadastro.
+- readback confirmou Better Auth saudável na baseline;
+- email/password está habilitado;
+- `email_provider.type=shared` já fornece transporte non-production;
+- `require_email_verification=false` permanece até US-AUTH-005;
+- Resend/SMTP/domínio próprio foram retirados do escopo por não haver requisito material;
+- nenhum secret, migration ou adapter de e-mail externo foi introduzido;
+- provedor externo ficou explicitamente adiado para quando houver necessidade real.
 
-## Trabalho materializado
+A branch `verify-us-auth-004` criada durante a investigação tornou-se desnecessária; sua eventual exclusão depende de autorização explícita e não bloqueia US-AUTH-005.
 
-- comparação oficial Resend/Brevo/Mailgun/SES;
-- Resend escolhido;
-- `src/lib/email/server.ts` com `fetch` nativo;
-- `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME` como contrato server-only;
-- idempotência obrigatória;
-- erros sanitizados;
-- rede/429/5xx recuperáveis;
-- transporte sem acesso ao banco;
-- CI `33786184072`: `60/60 PASS`, build e PostgreSQL 18/verify:db em PASS.
-
-## Gate externo obrigatório
-
-Não concluir a Story até existir prova live non-production.
-
-Ação humana, fora do Git/chat:
-
-1. criar/usar conta Resend;
-2. verificar domínio/subdomínio com SPF/DKIM;
-3. criar chave `sending_access` restrita ao domínio quando possível;
-4. armazenar secret em superfície segura;
-5. configurar SMTP customizado Resend no Neon Auth non-production;
-6. manter `require_email_verification=false`;
-7. informar apenas que a configuração está pronta.
-
-Depois, revalidar config com secrets redigidos, executar teste live, CI final, review, merge e CI pós-merge.
-
-## Non-goals
+## Non-goals preservados
 
 - signup;
 - login/logout;
-- OAuth;
-- templates finais;
-- fila/outbox persistente sem necessidade;
+- OAuth customizado;
 - Production;
 - deployment Vercel.
 
@@ -186,7 +160,7 @@ Depois, revalidar config com secrets redigidos, executar teste live, CI final, r
 # US-AUTH-005 — Cadastro controlado
 
 **Prioridade:** P0  
-**Estado:** BLOQUEADA por US-AUTH-004  
+**Estado:** PRONTA  
 **Dependências:** US-AUTH-002/003/004  
 **Capacidades:** CAP-01, CAP-02
 
@@ -197,7 +171,8 @@ Deve provar:
 - destinatário restrito não pode ser trocado;
 - consumo/vínculo com conta é atômico ou compensável;
 - concorrência não excede capacidade;
-- confirmação de e-mail integra o transporte aprovado.
+- confirmação de e-mail usa Neon Auth e não substitui o gate de entrada;
+- qualquer ativação de `require_email_verification` ocorre somente depois do controle de signup estar fail-closed.
 
 Se Neon Auth não permitir impor o beta fechado com segurança, parar e registrar decisão; nunca liberar signup público como workaround.
 
@@ -246,12 +221,10 @@ Quando aplicável testar:
 |---|---:|---:|---:|---:|
 | Auth/sessão | obrigatório | CI permanente | quando depender do serviço | quando houver UI |
 | migration/RLS | obrigatório | obrigatório | se ligada ao Neon | conforme UI |
-| e-mail | obrigatório | CI permanente, sem schema novo | obrigatório para SMTP Auth live | quando fluxo existir |
+| e-mail Auth shared | obrigatório | CI permanente | readback/config quando política mudar | quando fluxo existir |
 | cadastro/login | obrigatório | conforme schema | obrigatório | obrigatório |
 | docs-only | CI normal | sem gate extra | SKIPPED | SKIPPED |
 
 ## 8. Próxima ação única
 
-> `US-AUTH-004 — concluir gate live Resend/Neon Auth non-production sem expor secrets`.
-
-US-AUTH-005 não é promovida enquanto #49/#50 permanecerem abertas.
+> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`.
