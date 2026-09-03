@@ -4,233 +4,187 @@
 **Regra:** uma `NEXT_ACTION` limitada por vez  
 **Roadmap de produto:** `docs/PRODUCT_BACKLOG.md`
 
-Este documento transforma o backlog macro em tarefas executáveis. Evidências detalhadas ficam nos documentos de validação/verificação e nos Issues/PRs indicados.
+Este documento transforma o backlog em tarefas executáveis. Evidências detalhadas ficam nos documentos de verificação e Issues/PRs indicados.
 
 ---
 
 # Operações canônicas concluídas
 
-## OPS-001 — Modernizar o protocolo canônico
-
-**Estado:** CONCLUÍDO
-
-Resultado: Source of Truth, AI Work Protocol, Verification Protocol, Deployment Policy, Execution Plan e Checkpoint tornaram o repositório recuperável sem memória de chat.
-
-## OPS-002 — Formalizar o pivot Supabase → Neon
-
-**Estado:** CONCLUÍDO
-
-Resultado: plataforma Neon formalizada, ambientes isolados definidos, migrations/testes planejados em `database/`, Storage adiado e Project Design reconciliado por amendment.
-
-## OPS-003 — Reconciliar a política de deployment
-
-**Estado:** CONCLUÍDO
-
-Resultado: deployment Vercel passou a ser exclusivamente humano/manual; CI ficou separada de CD.
-
-## OPS-004 — Evoluir o registro de decisões para ADRs
-
-**Estado:** CONCLUÍDO
-
-Resultado: `docs/adr/` tornou-se autoridade arquitetural.
-
-## OPS-005 — Refinar o Incremento 1
-
-**Estado:** CONCLUÍDO  
-**Issue:** `#31`
-
-Resultado: EPIC-01 decomposto em quatro Stories ordenadas.
-
-## OPS-006 — Refinar EPIC-02 — Contas e autenticação
-
-**Estado:** CONCLUÍDO  
-**Issue:** `#41`  
-**PR:** `#42`  
-**Plano produzido:** `docs/INCREMENT_2_PLAN.md`
-
-Resultado: EPIC-02 decomposto em oito Stories de acesso controlado, com gates PostgreSQL/Neon-specific e non-goals explícitos.
-
----
+- `OPS-001` — protocolo canônico v2: **CONCLUÍDO**.
+- `OPS-002` — pivot Supabase → Neon: **CONCLUÍDO**.
+- `OPS-003` — deployment Vercel exclusivamente humano/manual: **CONCLUÍDO**.
+- `OPS-004` — ADRs como autoridade arquitetural: **CONCLUÍDO**.
+- `OPS-005` — refino do Incremento 1: **CONCLUÍDO** (#31).
+- `OPS-006` — refino do EPIC-02: **CONCLUÍDO** (#41 / #42).
 
 # Incremento 0 — Fundação executável
 
 **Estado:** CONCLUÍDO  
 **Evidência:** `docs/INCREMENT_0_VALIDATION.md`
 
-Stories concluídas:
-
-- `US-PLAT-001` — aplicação Next.js executável;
-- `US-PLAT-002` — estrutura documental;
-- `US-PLAT-003` — ambiente local reproduzível;
-- `US-PLAT-004` — fundação Neon non-production;
-- `US-PLAT-005` — migrations/testes/RLS e ADR-008;
-- `US-PLAT-006` — `verify`/`verify:db`;
-- `US-PLAT-007` — CI permanente sem CD;
-- `US-PLAT-008` — hosting Vercel preparado para release manual;
-- `US-PLAT-009` — ambientes/variáveis separados;
-- `US-PLAT-010` — ciclo Issue → branch → CI → PR → review → merge validado.
-
-Estado técnico consolidado:
-
-```text
-Next.js 16.3.3 / React 19.2.8
-TypeScript strict / Tailwind CSS 4
-Node 24.20.0 / npm 11.19.0
-CI: .github/workflows/ci.yml
-Banco canônico: Neon
-Non-production: caleida-nonprod / PostgreSQL 18 / branch main
-Production Neon: não provisionada
-Deployment: exclusivamente humano/manual
-```
-
----
+Inclui Next.js/TypeScript/Tailwind, Neon non-production, migrations/testes, CI sem CD, Vercel preparado para release manual e ciclo Issue → branch → PR → CI → merge validado.
 
 # Incremento 1 — Fundação visual / EPIC-01
 
 **Estado:** CONCLUÍDO  
-**Plano:** `docs/INCREMENT_1_PLAN.md`  
 **Evidência:** `docs/INCREMENT_1_VALIDATION.md`
 
 ```text
 US-DS-001 tokens/temas — CONCLUÍDA (#33 / #34)
-  ↓
 US-DS-002 tipografia/marca — CONCLUÍDA (#35 / #36)
-  ↓
 US-DS-003 primitivos acessíveis — CONCLUÍDA (#37 / #38)
-  ↓
-US-DS-004 fundação responsiva aplicada — CONCLUÍDA (#39 / #40)
+US-DS-004 fundação responsiva — CONCLUÍDA (#39 / #40)
 ```
 
 ---
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Estado:** EM ANDAMENTO; US-AUTH-003 concluída após integração da PR #48  
+**Estado:** EM ANDAMENTO; US-AUTH-004 aguarda gate externo  
 **Plano:** `docs/INCREMENT_2_PLAN.md`
 
-## US-AUTH-001 — Fundação Neon Auth e contrato de sessão
+## US-AUTH-001 — Fundação Neon Auth e sessão
 
 **Estado:** CONCLUÍDA  
-**Issue:** `#43`  
-**PR:** `#44`  
-**Capacidade:** CAP-01  
+**Issue/PR:** `#43 / #44`  
 **Evidência:** `docs/US_AUTH_001_VERIFICATION.md`
 
-Resultado consolidado:
+Resultado: Managed Better Auth, boundary server-only/fail-closed, sessão cacheada de forma explícita e CI pós-merge `33753190237` em PASS.
 
-- SDK Neon Auth pinado;
-- boundary server-only/lazy/fail-closed;
-- Managed Better Auth promovido à baseline depois dos gates;
-- CI pós-merge `33753190237`: `PASS`;
-- nenhum usuário real/Data API/Production/deployment criado.
-
----
-
-## US-AUTH-002 — Papéis, autorização e bootstrap administrativo
+## US-AUTH-002 — Papéis, autorização e bootstrap
 
 **Estado:** CONCLUÍDA  
-**Issue:** `#45`  
-**PR:** `#46`  
-**Capacidades:** CAP-04, CAP-35  
+**Issue/PR:** `#45 / #46`  
 **Evidência:** `docs/US_AUTH_002_VERIFICATION.md`
 
-Resultado consolidado:
+Resultado: cinco papéis Caleida separados do Admin Better Auth, migration `000002`, auditoria, autopromoção negada e bootstrap owner controlado. CI pós-merge `33770088254` em PASS.
 
-- cinco papéis Caleida separados do Admin Better Auth;
-- migration `000002_product_authorization.sql`;
-- autorização crítica server-only + banco;
-- autopromoção/elevação indevida negadas;
-- bootstrap owner controlado;
-- migrations `000001`/`000002` promovidas à baseline;
-- CI pós-merge `33770088254`: `PASS`;
-- branch Neon de verificação removida após autorização explícita.
+## US-AUTH-003 — Convites, solicitações e auditoria de entrada
 
----
-
-## US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
-
-**Estado:** CONCLUÍDA APÓS INTEGRAÇÃO  
-**Issue:** `#47`  
-**PR:** `#48`  
-**Prioridade:** P0  
-**Capacidades:** CAP-02, CAP-35  
-**Dependência:** US-AUTH-002 concluída  
+**Estado:** CONCLUÍDA  
+**Issue/PR:** `#47 / #48`  
 **Evidência:** `docs/US_AUTH_003_VERIFICATION.md`
 
-### Resultado
+Resultado:
 
-- migration `000003_entry_control.sql` cria o modelo persistente de entrada fechada;
-- convite `unico`/`reutilizavel`, validade, destinatário opcional, capacidade e estados canônicos;
-- somente digest hexadecimal do token é persistido;
-- usos de convite são numerados e limitados atomicamente;
-- solicitações possuem espera/aprovação/recusa/arquivamento, ator e motivo;
-- auditoria compacta em `caleida_audit.entry_events`;
-- funções privadas `SECURITY DEFINER` com `search_path` fixo;
-- consumo serializado com row lock PostgreSQL;
-- teste concorrente com duas sessões `psql` independentes;
-- nenhuma UI, e-mail, signup, Data API ou Production criada;
-- nenhuma nova decisão arquitetural material exigiu ADR.
+- migration `000003_entry_control.sql`;
+- convite único/reutilizável com digest, validade, destinatário e capacidade;
+- solicitações em espera/aprovadas/recusadas/arquivadas;
+- auditoria compacta;
+- row lock + prova concorrente real;
+- migration promovida à baseline sem fixtures.
 
-### Verificação
+Fechamento:
 
-- CI inicial `33771618637`: `FAIL` legítimo somente por variável ambígua no teste SQL, após migration aplicar corretamente;
-- teste corrigido sem relaxar regras;
-- CI técnico `33771989432`: `PASS` para `npm ci`, `npm run verify`, 55/55 testes, build, PostgreSQL 18 e `npm run verify:db`;
-- concorrência: `PASS — exatamente uma de duas sessões consumiu convite de capacidade 1`;
-- checksum `000003`: `503700640a81cf41dfe56a0abe70fc581b9c64d8e9ad6585cbcb55d4751b7c5f`;
-- migration `000003` promovida à baseline `caleida-nonprod/main` sem fixtures;
-- baseline pós-promoção: zero usuários/papéis/convites/solicitações/eventos;
-- Neon-specific: `SKIPPED` porque a Story depende somente de PostgreSQL portável;
-- browser real: `SKIPPED` por ausência deliberada de fluxo/UI;
-- deployment Vercel: `SKIPPED/PROIBIDO`.
-
----
+```text
+Merge: 3cecfaf6eef357ece3096873d6847e334510db94
+CI final PR: 33773066584 — PASS
+CI pós-merge main: 33773379852 — PASS
+```
 
 ## US-AUTH-004 — Selecionar e integrar e-mail transacional non-production
 
-**Estado:** NEXT_ACTION  
+**Estado:** EM ANDAMENTO / MANUAL_ACTION_REQUIRED  
+**Issue:** `#49`  
+**PR:** `#50`  
+**Branch:** `feat/us-auth-004-transactional-email`  
 **Prioridade:** P0  
 **Capacidades:** CAP-01, CAP-02  
-**Dependências:** fundação Auth e contratos de entrada concluídos
+**Decisão:** `ADR-009`  
+**Contrato:** `docs/EMAIL_TRANSPORT.md`  
+**Evidência:** `docs/US_AUTH_004_VERIFICATION.md`
 
-### Objetivo
+### Decisão
 
-Escolher e integrar o transporte non-production necessário para confirmação de e-mail, convite e recuperação de senha sem acoplar o produto silenciosamente a um provedor.
+Resend foi selecionado para non-production após revalidação oficial de pricing/limites/privacidade e comparação com Brevo, Mailgun e Amazon SES.
 
-### Escopo limitado
+Guardrails principais:
 
-- revalidar provedores, pricing, limites, regiões e privacidade na execução;
-- escolher somente depois da comparação corrente;
-- registrar ADR se a escolha criar compromisso arquitetural/operacional material;
-- introduzir secrets somente server-side e separados por ambiente;
-- integrar transporte/testabilidade em non-production;
-- definir comportamento recuperável quando o provedor estiver indisponível;
-- preservar o mecanismo de entrada sem consumir convite indevidamente por falha de transporte.
+- REST da aplicação por `fetch` nativo, sem SDK obrigatório;
+- SMTP customizado do mesmo provedor para Neon Auth quando credencial real existir;
+- `RESEND_API_KEY` somente server-side com `sending_access`, preferencialmente limitada ao domínio;
+- idempotência obrigatória em envios da aplicação;
+- região São Paulo pode controlar roteamento, não residência de dados;
+- metadados/logs/API do Resend permanecem nos EUA conforme documentação verificada;
+- Production exige revalidação e credenciais próprias.
 
-### Non-goals
+### Implementação já realizada
+
+- `src/lib/email/server.ts` — boundary server-only;
+- `.env.example` — nomes de configuração sem valores;
+- `tests/email-transport-contract.test.mjs` — 5 contratos novos;
+- `docs/adr/ADR-009-resend-transactional-email.md`;
+- `docs/EMAIL_TRANSPORT.md`;
+- reconciliação de arquitetura/ambientes/estado.
+
+### Invariante de entrada
+
+A boundary de e-mail não acessa banco. No fluxo futuro, convite só muda `criado → enviado` depois de confirmação do provedor. Falha de transporte não chama `consume_invitation` e não consome capacidade.
+
+### CI técnico
+
+```text
+Run: 33786184072
+Head: 9de864fd17a515207e123cfb3cb88344a83f08fe
+npm ci: PASS / 0 vulnerabilities
+npm run verify: PASS
+Node tests: 60/60 PASS
+build: PASS
+PostgreSQL 18 + verify:db: PASS
+```
+
+Nenhuma migration foi adicionada em US-AUTH-004.
+
+### Gate externo pendente
+
+Não declarar a Story concluída e não promover US-AUTH-005 enquanto não houver prova live non-production.
+
+Ação externa necessária, sem compartilhar secret pelo chat/Git:
+
+1. criar/usar conta Resend non-production;
+2. verificar domínio/subdomínio apropriado (SPF/DKIM);
+3. criar API key `sending_access`, preferencialmente restrita ao domínio;
+4. armazenar a chave fora do Git/chat;
+5. configurar o email provider do Neon Auth non-production como SMTP Resend diretamente em superfície segura;
+6. manter `require_email_verification=false`;
+7. avisar apenas que a configuração está pronta.
+
+Depois disso:
+
+1. revalidar configuração Neon com secrets redigidos;
+2. executar envio/teste live permitido;
+3. registrar resultado em `docs/US_AUTH_004_VERIFICATION.md`;
+4. executar CI final do head;
+5. review;
+6. merge #50;
+7. confirmar Issue #49 fechada e CI pós-merge;
+8. somente então promover `US-AUTH-005`.
+
+### Non-goals preservados
 
 - signup completo;
 - login/logout;
 - OAuth;
+- `require_email_verification=true` antes de US-AUTH-005;
+- fila/outbox persistente sem necessidade;
 - Production Neon;
-- deployment Vercel;
-- reutilizar non-production como Production.
+- deployment Vercel.
 
 ---
 
+# Próxima ação única
+
+> `US-AUTH-004 — concluir gate live Resend/Neon Auth non-production sem expor secrets`.
+
+US-AUTH-005 **não** é a próxima ação enquanto #49/#50 estiverem abertas.
+
 # Contrato de execução
 
-Para cada tarefa:
-
-1. recuperar estado pelo protocolo;
-2. confirmar `NEXT_ACTION`;
-3. inspecionar repositório/documentação/estado externo aplicável;
-4. resolver `MANUAL_ACTION_REQUIRED` que seja pré-condição;
-5. criar/usar Issue e branch limitadas;
-6. implementar somente o necessário;
-7. executar Verification Protocol;
-8. revisar diff;
-9. atualizar docs/ADRs quando aplicável;
-10. atualizar Checkpoint/Backlog/Changelog;
-11. abrir/revisar/mergear PR;
-12. deixar uma única próxima ação.
+1. recuperar estado canônico + remoto;
+2. executar somente a `NEXT_ACTION`;
+3. manter Issue/branch/PR limitadas;
+4. verificar antes de concluir;
+5. atualizar ADR/docs quando material;
+6. nunca versionar secret;
+7. nunca executar deployment Vercel;
+8. deixar exatamente uma próxima ação.
