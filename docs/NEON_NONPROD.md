@@ -1,9 +1,9 @@
 # Neon Non-Production — Caleida
 
-**Status:** provisionado; Auth, autorização e entrada controlada integrados na baseline  
+**Status:** provisionado; Auth, autorização e entrada controlada integrados; SMTP customizado pendente  
 **Data de referência:** 2026-09-03  
 **Projeto relacionado:** `docs/NEON_PLATFORM.md`  
-**Decisões:** `ADR-004`, `ADR-005` e `ADR-008`
+**Decisões:** `ADR-004`, `ADR-005`, `ADR-008`, `ADR-009`
 
 ## 1. Recurso remoto canônico
 
@@ -17,22 +17,22 @@ Branch ID: br-restless-cherry-awpcwy6r
 Database default: neondb
 ```
 
-Os IDs acima identificam recursos e **não são credenciais**. Senhas, connection strings, Auth URLs e API keys nunca são registradas neste arquivo.
+Os IDs acima não são credenciais. Senhas, connection strings, Auth URLs, SMTP passwords e API keys nunca são registradas aqui.
 
-## 2. Papel do branch `main`
+## 2. Baseline `main`
 
-No projeto Neon `caleida-nonprod`, o branch `main` é a baseline canônica de non-production/staging e não deve ser confundido com a branch Git `main`.
+A branch Neon `main` é a baseline canônica non-production/staging e não é a branch Git `main`.
 
 Responsabilidades:
 
-- receber somente mudanças persistentes aprovadas depois dos gates aplicáveis;
-- representar o estado integrado de non-production;
-- servir de parent para branches descartáveis quando um gate Neon-specific realmente exigir isolamento;
+- receber apenas mudanças aprovadas após gates;
+- representar estado integrado non-production;
+- servir de parent para branches descartáveis quando comportamento Neon-specific exigir;
 - nunca receber experimentos destrutivos diretamente.
 
-## 3. Convenção de branches temporárias
+## 3. Branches temporárias
 
-Quando necessárias:
+Convenção:
 
 ```text
 verify/<task-id>
@@ -41,73 +41,70 @@ dev/<task-id>
 
 Regras:
 
-- derivar da baseline apropriada;
-- usar isolamento apenas quando a mudança depender de comportamento específico do Neon;
-- remover a branch depois da tarefa mediante autorização explícita quando a ferramenta classificar a exclusão como destrutiva;
-- não manter branches temporárias como ambientes permanentes;
+- usar somente quando houver necessidade Neon-specific;
+- remover depois do gate quando autorizado se a ação for destrutiva;
+- não manter como ambiente permanente;
 - nunca usar Production como laboratório.
 
-`ADR-008` não exige branch Neon para provar SQL PostgreSQL portável.
-
-## 4. Histórico recente de gates Neon
-
-### US-AUTH-001
-
-`verify-us-auth-001` provou Managed Better Auth branch-scoped antes da promoção Auth para a baseline. A branch foi removida posteriormente mediante autorização explícita.
-
-### US-AUTH-002
-
-`verify-us-auth-002` herdou Managed Better Auth, recebeu identidades sintéticas apenas para o gate de autorização e provou vínculo por UUID, bootstrap e negações administrativas. A branch foi removida em 03/09/2026 após autorização explícita do usuário, antes do início de US-AUTH-003.
-
-### US-AUTH-003
-
-Nenhuma branch Neon descartável foi criada.
-
-A Story utiliza somente SQL PostgreSQL portável e UUIDs opacos, sem consultar `neon_auth`, Data API, roles/helpers gerenciados ou outra semântica específica do serviço. O gate adicional Neon foi corretamente `SKIPPED` conforme `ADR-008`.
-
-Estado atual de branches:
+Estado atual:
 
 ```text
 main / br-restless-cherry-awpcwy6r / ready / default
 ```
 
-Não existe branch descartável pendente de limpeza.
+Não existe branch descartável pendente.
+
+## 4. Histórico de gates
+
+### US-AUTH-001
+
+`verify-us-auth-001` provou Managed Better Auth branch-scoped antes da promoção. Depois foi removida com autorização explícita.
+
+### US-AUTH-002
+
+`verify-us-auth-002` provou autorização/bootstrap com identidades sintéticas isoladas. Foi removida em 03/09/2026 após autorização explícita.
+
+### US-AUTH-003
+
+Nenhuma branch Neon foi criada: a Story dependia somente de PostgreSQL portável. Neon-specific foi `SKIPPED` conforme ADR-008.
+
+### US-AUTH-004
+
+Nenhuma branch Neon foi aberta até o momento.
+
+A configuração real de SMTP do Neon Auth depende de uma credencial Resend e remetente externos. Criar um branch apenas para existir um gate, antes desses secrets estarem disponíveis em superfície segura, não acrescentaria evidência.
+
+Quando a configuração externa estiver pronta, reavaliar se o gate SMTP deve ocorrer em branch Auth isolada antes de qualquer alteração da baseline. Se for criada branch descartável, sua remoção voltará a exigir autorização explícita quando a ferramenta a classificar como destrutiva.
 
 ## 5. Credenciais e tooling
 
-Nenhum valor real é versionado.
-
 Contrato atual:
 
-- `DATABASE_URL` — conexão pooled para runtime server-side futuro quando apropriado;
-- `DATABASE_URL_UNPOOLED` — conexão PostgreSQL direta usada por migrations/testes/bootstrap operacional;
-- `CALEIDA_DB_TARGET=ephemeral` — gate primário PostgreSQL descartável;
-- `CALEIDA_DB_TARGET=neon-isolated` + `CALEIDA_NEON_BRANCH_ID` — gate Neon-specific quando necessário;
-- `CALEIDA_DB_TARGET=baseline` + branch ID canônico + `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES` — promoção deliberada para a baseline;
-- `NEON_AUTH_BASE_URL` — endpoint Auth branch-scoped fora do Git;
-- `NEON_AUTH_COOKIE_SECRET` — secret server-only fora do Git;
-- `CALEIDA_BOOTSTRAP_OWNER_USER_ID`, `CALEIDA_BOOTSTRAP_REASON` e `CALEIDA_ALLOW_OWNER_BOOTSTRAP=YES` — contrato operacional do bootstrap inicial futuro.
+- `DATABASE_URL` — runtime pooled futuro;
+- `DATABASE_URL_UNPOOLED` — migrations/testes/bootstrap;
+- `CALEIDA_DB_TARGET=ephemeral` — gate PostgreSQL;
+- `CALEIDA_DB_TARGET=neon-isolated` + `CALEIDA_NEON_BRANCH_ID` — gate Neon-specific;
+- `CALEIDA_DB_TARGET=baseline` + `CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES` — promoção deliberada de migration;
+- `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET` — Auth server-only;
+- `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME` — transporte de e-mail non-production;
+- `CALEIDA_BOOTSTRAP_OWNER_*` — bootstrap owner futuro.
 
-Neon API key, connection strings, Auth URLs reais, cookie secrets e credenciais owner/admin permanecem fora do Git e do browser.
+Todos os valores sensíveis permanecem fora do Git/chat/browser.
 
-## 6. Estado integrado após US-AUTH-003
+## 6. Estado integrado da baseline
 
 A baseline possui:
 
-- Managed Better Auth no schema gerenciado `neon_auth`;
-- migration ledger `caleida_internal.schema_migrations`;
-- `000001_migration_ledger.sql`;
-- `000002_product_authorization.sql`;
-- `000003_entry_control.sql`;
+- Managed Better Auth no schema `neon_auth`;
+- migration ledger;
+- migrations `000001`, `000002`, `000003`;
 - `caleida_auth.user_roles`;
 - `caleida_audit.role_changes`;
-- `caleida_access.invitations`;
-- `caleida_access.invitation_uses`;
-- `caleida_access.access_requests`;
+- `caleida_access.invitations`, `invitation_uses`, `access_requests`;
 - `caleida_audit.entry_events`;
-- funções controladas de autorização e entrada com acesso público revogado.
+- funções controladas com acesso público revogado.
 
-Checksums confirmados no ledger:
+Checksums:
 
 ```text
 000001_migration_ledger.sql
@@ -120,7 +117,7 @@ Checksums confirmados no ledger:
 503700640a81cf41dfe56a0abe70fc581b9c64d8e9ad6585cbcb55d4751b7c5f
 ```
 
-Estado de dados confirmado imediatamente depois da promoção de `000003`:
+Contadores confirmados antes de US-AUTH-004:
 
 ```text
 neon_auth.user: 0
@@ -132,21 +129,31 @@ caleida_access.access_requests: 0
 caleida_audit.entry_events: 0
 ```
 
-Nenhum fixture do CI foi promovido.
+## 7. E-mail Auth atual
 
-Deliberadamente **não** existem ainda:
+Inspeção em 03/09/2026:
 
-- conta real do beta ou proprietário bootstrapado;
-- convite real emitido;
-- solicitação real de acesso;
-- Neon Data API habilitada para o produto;
+```text
+Auth provider: Better Auth
+Email provider: shared Neon
+Require email verification: false
+```
+
+`ADR-009` escolheu Resend para non-production, mas a baseline ainda **não** foi alterada para SMTP customizado. O gate real exige credencial/domínio configurados fora do Git/chat.
+
+Quando aplicado, o provider SMTP deve usar os campos suportados pelo Neon Auth (`host`, `port`, `username`, `password`, `sender_email`, `sender_name`) e permanecer com `require_email_verification=false` até US-AUTH-005.
+
+## 8. Deliberadamente ausente
+
+- conta real do beta/proprietário;
+- convite/solicitação real;
+- Data API;
 - Object Storage;
-- projeto Neon de Production;
-- SMTP/e-mail/OAuth;
-- projeto/deployment Vercel do Caleida.
+- Production Neon;
+- SMTP Resend configurado na baseline;
+- OAuth customizado;
+- deployment Vercel executado por IA.
 
-## 7. Production
+## 9. Production
 
-`caleida-production` **não existe por decisão deliberada nesta fase**.
-
-Production será um projeto Neon separado quando uma Story futura exigir ambiente real de produção. Non-production não deve compartilhar secrets, usuários ou dados reais com Production.
+`caleida-production` não existe nesta fase. Production deve usar projeto, users, secrets, domínio/remetente e credencial de e-mail próprios, com revalidação de ADR-009 antes da operação real.
