@@ -36,7 +36,7 @@ US-DS-004 — CONCLUÍDA (#39/#40)
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Estado:** EM ANDAMENTO; US-AUTH-004 aguarda configuração/teste live isolados  
+**Estado:** EM ANDAMENTO; US-AUTH-004 concluída e US-AUTH-005 pronta  
 **Plano:** `docs/INCREMENT_2_PLAN.md`
 
 ## US-AUTH-001 — Fundação Neon Auth e sessão
@@ -66,102 +66,48 @@ CI final PR: 33773066584 — PASS
 CI pós-merge main: 33773379852 — PASS
 ```
 
-## US-AUTH-004 — E-mail transacional non-production
+## US-AUTH-004 — E-mail Auth non-production
 
-**Estado:** EM ANDAMENTO / MANUAL_ACTION_REQUIRED  
-**Issue:** `#49`  
-**PR:** `#50`  
-**Git branch:** `feat/us-auth-004-transactional-email`  
-**Neon gate branch:** `verify-us-auth-004 / br-plain-pond-aw5f59ia`  
+**Estado:** CONCLUÍDA — #49/#50  
 **Decisão:** `ADR-009`  
 **Contrato:** `docs/EMAIL_TRANSPORT.md`  
 **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`
 
-### Decisão e implementação
+Resultado:
 
-Resend foi selecionado após revalidação oficial e comparação com Brevo, Mailgun e SES.
+- baseline `caleida-nonprod/main` permanece em Better Auth saudável;
+- `email_provider.type=shared` atende desenvolvimento/non-production sem domínio próprio;
+- email/password está habilitado;
+- `require_email_verification=false` permanece até US-AUTH-005;
+- adapter/configuração Resend preparados inicialmente foram removidos antes do merge;
+- nenhum secret externo, migration ou deployment foi introduzido;
+- SMTP/provedor externo foi adiado até requisito real de beta público/Production.
 
-Implementado:
+A branch Neon `verify-us-auth-004` criada durante a investigação não contém SMTP externo. Sua eventual exclusão é housekeeping não bloqueante e exige autorização destrutiva explícita.
 
-- `src/lib/email/server.ts` server-only via `fetch` nativo;
-- `RESEND_API_KEY` somente server-side com `sending_access`;
-- idempotência obrigatória;
-- rede/429/5xx recuperáveis;
-- erros sanitizados;
-- transporte sem acesso ao banco/convites;
-- `.env.example`, ADR-009, contrato e evidência versionados.
+## US-AUTH-005 — Cadastro controlado por convite ou aprovação
 
-### CI técnico
+**Estado:** PRONTA  
+**Dependências:** US-AUTH-002/003/004  
+**Capacidades:** CAP-01, CAP-02
 
-```text
-Run: 33786184072
-Head técnico: 9de864fd17a515207e123cfb3cb88344a83f08fe
-npm ci: PASS / 0 vulnerabilidades reportadas
-npm run verify: PASS
-Node tests: 60/60 PASS
-build: PASS
-PostgreSQL 18 + verify:db: PASS
-```
+Objetivo da próxima unidade:
 
-Nenhuma migration nova.
+- impor signup fail-closed por convite válido ou solicitação aprovada fora da UI;
+- preservar destinatário/validade/capacidade e concorrência;
+- vincular/consumir entrada com segurança;
+- integrar confirmação de e-mail pelo Neon Auth sem transformar verificação em substituto do gate de entrada;
+- só ativar `require_email_verification` quando o controle de signup estiver comprovado.
 
-### Gate Neon-specific preparado
+### Non-goals imediatos
 
-Criada `verify-us-auth-004` a partir da baseline `main`.
-
-Confirmado após criação:
-
-```text
-state: ready
-Auth provider: Better Auth
-Email provider: shared Neon
-Require email verification: false
-```
-
-A baseline não foi alterada. A branch existe somente para provar SMTP Resend isoladamente.
-
-### Próxima ação obrigatória
-
-Fora do Git/chat:
-
-1. criar/usar conta Resend non-production;
-2. verificar domínio/subdomínio com SPF/DKIM;
-3. criar API key `sending_access`, limitada ao domínio quando possível;
-4. armazenar a chave em superfície segura;
-5. no Neon Console, selecionar **`verify-us-auth-004`**;
-6. configurar SMTP Resend somente nessa branch (`smtp.resend.com`, usuário `resend`, secret e remetente verificado);
-7. manter `require_email_verification=false`;
-8. executar teste de envio para endereço controlado;
-9. informar no chat apenas que **o SMTP da branch `verify-us-auth-004` foi configurado e o teste passou**, sem expor API key/senha/connection string/Auth URL.
-
-Depois da confirmação:
-
-1. revalidar a branch com secrets redigidos;
-2. confirmar baseline ainda em provider compartilhado;
-3. registrar PASS do gate isolado;
-4. promover SMTP deliberadamente para baseline por superfície segura;
-5. revalidar baseline;
-6. solicitar autorização explícita antes de `delete_branch` de `verify-us-auth-004`;
-7. executar CI final do head;
-8. review e merge #50;
-9. confirmar fechamento #49 e CI pós-merge;
-10. só então promover US-AUTH-005.
-
-### Non-goals
-
-- signup/login/logout/OAuth;
-- `require_email_verification=true` nesta Story;
-- fila/outbox sem necessidade demonstrada;
-- Production Neon;
-- deployment Vercel.
+Não antecipar US-AUTH-006/007, OAuth, Production Neon ou deployment Vercel.
 
 ---
 
 # Próxima ação única
 
-> `US-AUTH-004 — configurar e provar Resend/SMTP na branch Neon isolada verify-us-auth-004 sem expor secrets`.
-
-US-AUTH-005 não é promovida enquanto #49/#50 estiverem abertas.
+> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`.
 
 # Contrato de execução
 
