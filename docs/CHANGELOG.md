@@ -14,6 +14,7 @@ Mudanças relevantes do Caleida. Evidências detalhadas de cada entrega ficam no
 - `ADR-006` manteve Object Storage desacoplado e adiado.
 - `ADR-007` tornou deployment Vercel exclusivamente humano/manual; IA e CI não publicam.
 - `ADR-008` separou PostgreSQL 18 descartável como gate primário de SQL portável e branch Neon isolada apenas para comportamento Neon-specific.
+- `ADR-009` definiu o provider compartilhado do Neon Auth como transporte de e-mail para desenvolvimento/non-production enquanto adequado; SMTP/provedor externo foi adiado até existir necessidade real.
 
 ### Incremento 0 — Fundação executável
 
@@ -113,6 +114,24 @@ Verificação/operação:
 - baseline pós-promoção: zero usuários Auth, papéis, convites, usos, solicitações e eventos de entrada;
 - nenhuma UI, endpoint público, e-mail, signup, Data API, Production Neon ou deployment Vercel criada.
 
+#### US-AUTH-004 — E-mail Auth non-production (#49/#50)
+
+Decisão e verificação:
+
+- readback remoto confirmou `caleida-nonprod/main` com Better Auth saudável, email/password habilitado, `email_provider.type=shared` e `require_email_verification=false`;
+- o provider compartilhado do Neon Auth foi considerado suficiente para desenvolvimento/non-production e beta fechado inicial;
+- `ADR-009` formalizou essa decisão e adiou SMTP/provedor externo até existir requisito material de domínio, branding, volume, entregabilidade, observabilidade ou Production;
+- Resend, domínio próprio e SMTP customizado preparados inicialmente foram retirados do resultado final antes do merge;
+- `src/lib/email/server.ts`, testes de contrato Resend e variáveis `RESEND_*`/remetente foram removidos do diff final;
+- nenhuma migration, secret ou deployment foi introduzido;
+- `require_email_verification` permanece `false` até US-AUTH-005 impor o cadastro controlado de forma fail-closed.
+
+Housekeeping Neon:
+
+- `verify-us-auth-004 / br-plain-pond-aw5f59ia` foi criada durante a investigação inicial de SMTP;
+- readback confirmou provider `shared` e ausência de configuração externa;
+- a branch tornou-se desnecessária, mas sua exclusão exige autorização explícita por ser ação destrutiva e não bloqueia US-AUTH-005.
+
 ### Estado de segurança e operação
 
 - Secrets permanecem proibidos no Git.
@@ -121,13 +140,11 @@ Verificação/operação:
 - Banco persiste mudanças somente por migrations versionadas.
 - PostgreSQL 18 descartável permanece o gate primário para SQL portável.
 - Baseline Neon `main` não é laboratório destrutivo.
-- Não existe branch Neon descartável pendente após US-AUTH-003.
+- Existe apenas a branch temporária `verify-us-auth-004`, sem estado exclusivo do produto e pendente de eventual limpeza autorizada.
 - Neon Data API e Object Storage continuam não provisionados para o produto.
 - `caleida-production` continua inexistente.
 - Vercel continua sem deployment executado por IA e CI permanece sem CD.
 
 ### Próxima ação canônica
 
-> `US-AUTH-004 — Selecionar e integrar e-mail transacional non-production`
-
-A próxima Story deve revalidar provedores, pricing, limites, regiões e privacidade antes de escolher transporte; registrar ADR se a escolha for material; usar apenas non-production e secrets server-only; e não antecipar signup/login/Production/deployment.
+> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`

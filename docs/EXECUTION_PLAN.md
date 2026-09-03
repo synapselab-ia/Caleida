@@ -105,7 +105,7 @@ US-DS-004 fundação responsiva aplicada — CONCLUÍDA (#39 / #40)
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Estado:** EM ANDAMENTO; US-AUTH-003 concluída após integração da PR #48  
+**Estado:** EM ANDAMENTO; US-AUTH-004 concluída e US-AUTH-005 promovida como NEXT_ACTION  
 **Plano:** `docs/INCREMENT_2_PLAN.md`
 
 ## US-AUTH-001 — Fundação Neon Auth e contrato de sessão
@@ -186,35 +186,49 @@ Resultado consolidado:
 
 ---
 
-## US-AUTH-004 — Selecionar e integrar e-mail transacional non-production
+## US-AUTH-004 — Validar e-mail Auth non-production
+
+**Estado:** CONCLUÍDA  
+**Issue:** `#49`  
+**PR:** `#50`  
+**Prioridade:** P0  
+**Capacidade:** CAP-01  
+**Evidência:** `docs/US_AUTH_004_VERIFICATION.md`  
+**Decisão:** `docs/adr/ADR-009-neon-shared-email-nonproduction.md`
+
+### Resultado
+
+- readback remoto confirmou Better Auth saudável na baseline `caleida-nonprod/main`;
+- email/password está habilitado;
+- `email_provider.type=shared` já fornece transporte de e-mail Auth em non-production;
+- `require_email_verification=false` permanece até US-AUTH-005 impor o gate de cadastro controlado;
+- Resend/SMTP/domínio próprio foram considerados inicialmente, mas removidos do resultado final por ausência de requisito material;
+- nenhum adapter, secret, variável externa, migration ou deployment foi introduzido;
+- provedor externo ficou adiado até necessidade real de domínio, branding, volume, entregabilidade, observabilidade ou Production.
+
+### Housekeeping Neon
+
+`verify-us-auth-004 / br-plain-pond-aw5f59ia` foi criada durante a investigação inicial de SMTP, permanece com provider `shared` e nunca recebeu configuração externa. Sua eventual exclusão exige autorização explícita e não bloqueia US-AUTH-005.
+
+---
+
+## US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação
 
 **Estado:** NEXT_ACTION  
 **Prioridade:** P0  
 **Capacidades:** CAP-01, CAP-02  
-**Dependências:** fundação Auth e contratos de entrada concluídos
+**Dependências:** US-AUTH-002/003/004 concluídas
 
 ### Objetivo
 
-Escolher e integrar o transporte non-production necessário para confirmação de e-mail, convite e recuperação de senha sem acoplar o produto silenciosamente a um provedor.
+Implementar signup fail-closed por convite válido ou solicitação aprovada, preservando validade/capacidade/destinatário, concorrência e vínculo seguro com a conta Neon Auth.
 
-### Escopo limitado
+### Regras centrais
 
-- revalidar provedores, pricing, limites, regiões e privacidade na execução;
-- escolher somente depois da comparação corrente;
-- registrar ADR se a escolha criar compromisso arquitetural/operacional material;
-- introduzir secrets somente server-side e separados por ambiente;
-- integrar transporte/testabilidade em non-production;
-- definir comportamento recuperável quando o provedor estiver indisponível;
-- preservar o mecanismo de entrada sem consumir convite indevidamente por falha de transporte.
-
-### Non-goals
-
-- signup completo;
-- login/logout;
-- OAuth;
-- Production Neon;
-- deployment Vercel;
-- reutilizar non-production como Production.
+- signup sem autorização de entrada deve ser negado inclusive fora da UI;
+- confirmação de e-mail não substitui o gate de convite/aprovação;
+- `require_email_verification` só pode ser ativado quando o controle de signup estiver comprovado;
+- não antecipar login/logout, OAuth, Production Neon ou deployment Vercel.
 
 ---
 

@@ -1,7 +1,7 @@
 # Neon Platform — Caleida
 
-**Status:** arquitetura canônica de plataforma após US-AUTH-003  
-**Decisões relacionadas:** `ADR-004`, `ADR-005` e `ADR-008`  
+**Status:** arquitetura canônica de plataforma após US-AUTH-004  
+**Decisões relacionadas:** `ADR-004`, `ADR-005`, `ADR-008` e `ADR-009`  
 **Project Design:** `PROJECT_DESIGN.md` + `PROJECT_DESIGN_PLATFORM_AMENDMENT.md`
 
 ## 1. Escopo
@@ -13,6 +13,7 @@ Este documento define como o Caleida usa Neon para Postgres e identidade e como 
 ```text
 Next.js
   ├── Neon Auth / sessão
+  │     └── provider de e-mail compartilhado em non-production
   │
   ├── operações server-side confiáveis
   │     ↓
@@ -50,7 +51,7 @@ Branches temporárias:
 - não autorizam experimentação destrutiva na baseline;
 - são removidas depois da tarefa mediante autorização explícita quando a ferramenta classificar a exclusão como destrutiva.
 
-Após US-AUTH-003 não existe branch Neon descartável pendente.
+Após US-AUTH-004 existe `verify-us-auth-004 / br-plain-pond-aw5f59ia`, criada durante a investigação inicial de SMTP externo. Ela permanece com provider de e-mail `shared`, nunca recebeu SMTP externo e tornou-se housekeeping não bloqueante. Sua exclusão exige autorização explícita.
 
 ### Production
 
@@ -114,6 +115,14 @@ Managed Better Auth é a identidade canônica desde US-AUTH-001.
 - cada branch Auth possui endpoint isolado;
 - endpoint real e cookie secret ficam fora do Git.
 
+Desde US-AUTH-004, o contrato non-production de e-mail Auth é explícito:
+
+- email/password habilitado;
+- `email_provider.type=shared` na baseline;
+- remetente gerenciado pelo Neon;
+- `require_email_verification=false` até US-AUTH-005 provar o cadastro controlado de forma fail-closed;
+- domínio próprio/SMTP/provedor externo ficam adiados até necessidade material.
+
 Desde US-AUTH-002, papéis de produto são independentes do Admin Better Auth:
 
 ```text
@@ -156,7 +165,7 @@ Essas tabelas não são expostas à Data API e nenhuma RLS foi fabricada sem uma
 
 ## 7. Neon Data API
 
-Permanece não provisionada após US-AUTH-003.
+Permanece não provisionada após US-AUTH-004.
 
 Quando for realmente necessária:
 
@@ -205,7 +214,7 @@ Nunca versionar:
 - OAuth client secrets;
 - futuros secrets de e-mail/Storage.
 
-`.env.example` documenta somente nomes e placeholders seguros.
+`.env.example` documenta somente nomes e placeholders seguros. US-AUTH-004 não adicionou secret de e-mail porque o provider compartilhado do Neon Auth não exige credencial adicional do Caleida.
 
 ## 11. Estado integrado da baseline
 
@@ -213,6 +222,8 @@ Nunca versionar:
 
 ```text
 Managed Better Auth
+Email provider Auth: shared Neon
+Require email verification: false
 000001_migration_ledger.sql
 000002_product_authorization.sql
 000003_entry_control.sql
@@ -222,9 +233,10 @@ A sequência representa:
 
 1. ledger de migrations;
 2. autorização de produto e auditoria de papel;
-3. entrada controlada e auditoria de convites/solicitações.
+3. entrada controlada e auditoria de convites/solicitações;
+4. transporte Auth non-production fornecido pelo serviço gerenciado, sem nova migration.
 
-Estado de dados confirmado após US-AUTH-003:
+Estado de dados confirmado após US-AUTH-003 e não alterado por US-AUTH-004:
 
 ```text
 Auth users: 0
@@ -245,6 +257,7 @@ Nenhum fixture foi promovido.
 - `US-AUTH-001`: provou e promoveu Managed Better Auth.
 - `US-AUTH-002`: provou autorização ligada à identidade Neon em branch isolada; promoveu `000001/000002`; branch de verificação posteriormente removida com autorização explícita.
 - `US-AUTH-003`: provou `000003` em PostgreSQL 18, incluindo concorrência real; gate Neon-specific corretamente `SKIPPED`; promoveu somente schema, sem dados.
+- `US-AUTH-004`: confirmou provider de e-mail `shared` do Neon Auth como suficiente para non-production; retirou SMTP externo do escopo e manteve `require_email_verification=false` até o gate de cadastro controlado.
 
 ## 13. Storage, backup e Production
 
@@ -252,4 +265,4 @@ Object Storage continua fora da plataforma canônica nesta fase conforme ADR-006
 
 Antes do beta, estratégia de backup/restore deve definir retenção, RPO/RTO e teste de recuperação. Branching/time travel não substituem backup.
 
-Production Neon permanece inexistente e deverá ser projeto separado. Nenhum deployment Vercel foi executado por IA.
+Production Neon permanece inexistente e deverá ser projeto separado. A estratégia de e-mail deve ser reavaliada antes de abertura pública/Production. Nenhum deployment Vercel foi executado por IA.

@@ -1,8 +1,8 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-003 concluída  
+**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-004 concluída  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** `US-AUTH-004 — Selecionar e integrar e-mail transacional non-production`
+**Próxima ação operacional:** `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
 
 ## Convenções
 
@@ -92,18 +92,24 @@ Entregar contas e acesso seguro para o beta fechado de forma incremental, separa
 - **Evidência:** `docs/US_AUTH_003_VERIFICATION.md`.
 - **Contrato:** `docs/ENTRY_CONTROL.md`.
 
-### US-AUTH-004 — Selecionar e integrar e-mail transacional non-production
+### US-AUTH-004 — Validar e-mail Auth non-production
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
-- **Capacidades:** CAP-01, CAP-02
-- **Resultado esperado:** decisão documentada de provedor e transporte non-production para confirmação, convite e recuperação, com secrets server-only, comportamento recuperável e separação de ambientes.
-- **Regra:** revalidar pricing/limites/privacidade correntes e registrar ADR se a escolha for material.
+- **Estado:** CONCLUÍDA
+- **Issue:** #49
+- **PR:** #50
+- **Capacidade:** CAP-01
+- **Decisão:** `ADR-009 — E-mail compartilhado do Neon Auth em non-production`.
+- **Resultado:** readback confirmou Better Auth com email/password habilitado, `email_provider.type=shared` e `require_email_verification=false` na baseline; o provider compartilhado atende desenvolvimento/beta fechado inicial; SMTP/provedor externo foi adiado até existir requisito material.
+- **Escopo corrigido:** adapter, testes, variáveis Resend, domínio próprio e SMTP customizado preparados inicialmente foram removidos antes do merge; nenhuma migration ou secret de e-mail foi introduzido.
+- **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`.
+- **Contrato:** `docs/EMAIL_TRANSPORT.md`.
+- **Housekeeping:** `verify-us-auth-004 / br-plain-pond-aw5f59ia` não contém SMTP externo; exclusão futura exige autorização explícita e não bloqueia a próxima Story.
 
 ### US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Capacidades:** CAP-01, CAP-02
 - **Resultado esperado:** signup direto sem autorização de entrada negado inclusive fora da UI; confirmação de e-mail e consumo/vínculo seguro do mecanismo de entrada.
 
@@ -134,6 +140,6 @@ Não antecipar Stories seguintes. Cada mudança persistente usa migration versio
 
 # Próxima ação operacional
 
-> `US-AUTH-004 — Selecionar e integrar e-mail transacional non-production`
+> `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
 
-Não antecipar signup/login/Production ou deployment Vercel dentro da Story.
+Não antecipar login/Production ou deployment Vercel dentro da Story.

@@ -1,6 +1,6 @@
 # Arquitetura técnica
 
-**Status:** arquitetura de referência vigente após US-PLAT-005.
+**Status:** arquitetura de referência vigente após US-AUTH-004.
 
 ## 1. Visão geral
 
@@ -18,6 +18,7 @@ Vercel
         ↓
 Neon
   ├── Neon Auth
+  │    └── e-mail compartilhado do Neon em non-production enquanto adequado ao desenvolvimento/beta fechado
   ├── Neon Data API
   ├── Postgres
   └── PostgreSQL Row Level Security
@@ -76,7 +77,8 @@ Projeto Neon dedicado a staging e integração com o serviço gerenciado.
 - branches temporárias para verificação Neon-specific e desenvolvimento integrado quando necessárias;
 - branches descartáveis devem ser resetadas/removidas após uso;
 - nenhuma branch temporária é fonte canônica de schema;
-- baseline `main` não é laboratório destrutivo.
+- baseline `main` não é laboratório destrutivo;
+- o servidor compartilhado de e-mail do Neon Auth é suficiente para desenvolvimento e beta fechado enquanto seus limites forem adequados.
 
 ### Neon Production
 
@@ -233,7 +235,7 @@ Serão decididas em tarefas específicas:
 - ferramenta de testes end-to-end;
 - biblioteca de componentes acessíveis, se utilizada;
 - provedor de Object Storage;
-- provedor/configuração de e-mail transacional;
+- provedor externo/configuração própria de e-mail transacional quando o servidor compartilhado do Neon deixar de ser adequado ao beta/produção;
 - serviço/estratégia de backup de longo prazo;
 - monitoramento e rastreamento de erros;
 - estratégia final de domínio.

@@ -1,9 +1,9 @@
 # Neon Non-Production — Caleida
 
-**Status:** provisionado; Auth, autorização e entrada controlada integrados na baseline  
+**Status:** provisionado; Auth, autorização, entrada controlada e e-mail Auth non-production integrados na baseline  
 **Data de referência:** 2026-09-03  
 **Projeto relacionado:** `docs/NEON_PLATFORM.md`  
-**Decisões:** `ADR-004`, `ADR-005` e `ADR-008`
+**Decisões:** `ADR-004`, `ADR-005`, `ADR-008` e `ADR-009`
 
 ## 1. Recurso remoto canônico
 
@@ -65,13 +65,29 @@ Nenhuma branch Neon descartável foi criada.
 
 A Story utiliza somente SQL PostgreSQL portável e UUIDs opacos, sem consultar `neon_auth`, Data API, roles/helpers gerenciados ou outra semântica específica do serviço. O gate adicional Neon foi corretamente `SKIPPED` conforme `ADR-008`.
 
+### US-AUTH-004
+
+O readback da baseline confirmou:
+
+```text
+Auth provider: better_auth
+Email/password: enabled
+Email provider: shared
+Sender email: auth@mail.myneon.app
+Sender name: Neon Auth
+Require email verification: false
+```
+
+A Story concluiu que o provider compartilhado do Neon Auth já atende desenvolvimento/non-production e o beta fechado inicial. Resend, SMTP customizado e domínio próprio foram retirados do escopo antes do merge; nenhuma configuração externa foi aplicada à baseline.
+
+Durante a investigação inicial foi criada `verify-us-auth-004` (`br-plain-pond-aw5f59ia`). Ela herdou o mesmo provider `shared`, não recebeu SMTP externo e tornou-se housekeeping não bloqueante. Sua eventual exclusão exige autorização explícita.
+
 Estado atual de branches:
 
 ```text
 main / br-restless-cherry-awpcwy6r / ready / default
+verify-us-auth-004 / br-plain-pond-aw5f59ia / ready / parent main
 ```
-
-Não existe branch descartável pendente de limpeza.
 
 ## 5. Credenciais e tooling
 
@@ -90,11 +106,14 @@ Contrato atual:
 
 Neon API key, connection strings, Auth URLs reais, cookie secrets e credenciais owner/admin permanecem fora do Git e do browser.
 
-## 6. Estado integrado após US-AUTH-003
+O provider compartilhado do Neon Auth não exige credencial de e-mail adicional do Caleida nesta fase. Não existem `RESEND_API_KEY`, credenciais SMTP ou remetente próprio no contrato atual.
+
+## 6. Estado integrado após US-AUTH-004
 
 A baseline possui:
 
 - Managed Better Auth no schema gerenciado `neon_auth`;
+- provider de e-mail Auth `shared`;
 - migration ledger `caleida_internal.schema_migrations`;
 - `000001_migration_ledger.sql`;
 - `000002_product_authorization.sql`;
@@ -132,7 +151,7 @@ caleida_access.access_requests: 0
 caleida_audit.entry_events: 0
 ```
 
-Nenhum fixture do CI foi promovido.
+Nenhum fixture do CI foi promovido. US-AUTH-004 não criou migration nem dados funcionais.
 
 Deliberadamente **não** existem ainda:
 
@@ -142,11 +161,13 @@ Deliberadamente **não** existem ainda:
 - Neon Data API habilitada para o produto;
 - Object Storage;
 - projeto Neon de Production;
-- SMTP/e-mail/OAuth;
+- SMTP customizado/domínio próprio/provedor externo de e-mail;
+- confirmação obrigatória de e-mail (`require_email_verification` permanece `false` até US-AUTH-005);
+- OAuth customizado;
 - projeto/deployment Vercel do Caleida.
 
 ## 7. Production
 
 `caleida-production` **não existe por decisão deliberada nesta fase**.
 
-Production será um projeto Neon separado quando uma Story futura exigir ambiente real de produção. Non-production não deve compartilhar secrets, usuários ou dados reais com Production.
+Production será um projeto Neon separado quando uma Story futura exigir ambiente real de produção. Non-production não deve compartilhar secrets, usuários ou dados reais com Production. A estratégia de e-mail deve ser reavaliada antes de abertura pública/Production; o provider compartilhado não é declarado solução definitiva para esse ambiente.
