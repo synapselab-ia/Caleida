@@ -112,6 +112,24 @@ O script não aceita e-mail/senha e não cria conta. A função de banco:
 
 A baseline non-production não recebe um proprietário enquanto não existir uma conta real apropriada. Criar conta apenas para satisfazer esta Story violaria os non-goals.
 
+## Estado non-production após verificação
+
+Depois dos gates PostgreSQL 18 e Neon-specific em `PASS`, a baseline `caleida-nonprod/main` recebeu deliberadamente a história canônica de migrations em ordem:
+
+1. `000001_migration_ledger.sql`;
+2. `000002_product_authorization.sql`.
+
+O ledger remoto contém os mesmos checksums validados pelo runner. A promoção não executou bootstrap e não copiou fixtures da branch de verificação.
+
+Estado confirmado da baseline após a promoção:
+
+- zero usuários em `neon_auth.user`;
+- zero registros em `caleida_auth.user_roles`;
+- zero registros em `caleida_audit.role_changes`;
+- Data API não provisionada.
+
+A branch `verify-us-auth-002` permanece descartável até exclusão explicitamente autorizada; seus dados sintéticos não são estado de produto.
+
 ## Superfície deliberadamente ausente
 
 US-AUTH-002 não cria endpoint HTTP, Server Action, formulário ou painel de administração. Isso impede fabricar uma UI antes de existir cadastro/login e antes de haver uma necessidade concreta de conexão runtime ao banco.
