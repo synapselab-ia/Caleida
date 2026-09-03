@@ -1,11 +1,11 @@
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Status:** EM ANDAMENTO; US-AUTH-001 concluída após integração  
+**Status:** EM ANDAMENTO; US-AUTH-002 concluída após integração  
 **Origem:** `EPIC-02 — Contas e autenticação`  
 **Capacidades:** CAP-01, CAP-02, CAP-04 e CAP-35  
 **Prioridade:** P0/P1  
-**Story concluída:** `US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão`  
-**Próxima Story promovida:** `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`
+**Stories concluídas:** `US-AUTH-001`, `US-AUTH-002`  
+**Próxima Story promovida:** `US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada`
 
 ## 1. Objetivo
 
@@ -24,41 +24,25 @@ O incremento deve terminar com:
 - comportamento Neon-specific provado em branch isolada;
 - nenhum deployment Vercel automático ou executado por IA.
 
-## 2. Estado de partida verificado em 02/09/2026
+## 2. Estado de partida histórico
 
-### GitHub
+O detalhamento de partida de OPS-006 permanece histórico: `caleida-nonprod` em PostgreSQL 18, sem Production, e `database/migrations/` inicialmente contendo somente o ledger técnico.
 
-- `main`: `a42b8bdcd78293e797cdb6e2aff3e3cf02c495a2`;
-- CI integrada da `main`: run `33664145901` — `PASS`;
-- Issues abertas antes de OPS-006: nenhuma;
-- PRs abertas antes de OPS-006: nenhuma;
-- Incrementos 0 e 1: concluídos.
-
-### Neon non-production
+Após US-AUTH-001 e US-AUTH-002, o estado integrado non-production evoluiu para:
 
 ```text
 Projeto: caleida-nonprod
 Project ID: patient-glade-95136440
-Região: aws-us-east-1
 PostgreSQL: 18
-Branch baseline: main
-Branch ID: br-restless-cherry-awpcwy6r
-Branches atuais: 1
+Baseline: main / br-restless-cherry-awpcwy6r
+Managed Better Auth: habilitado
+Migrations baseline: 000001 + 000002
+Usuários Auth baseline: 0
+Papéis de produto baseline: 0
+Eventos role_changes baseline: 0
+Data API: não provisionada
+Production Neon: não provisionada
 ```
-
-Leitura do plano de controle confirmou a baseline `main` em estado `ready`.
-
-Naquele estado ainda não existiam:
-
-- Neon Auth provisionado;
-- Neon Data API provisionada;
-- schema funcional de produto;
-- RLS funcional de produto;
-- usuários remotos do Caleida;
-- projeto Neon Production;
-- projeto/deployment Vercel do Caleida.
-
-No Git, `database/migrations/` continha somente `000001_migration_ledger.sql`.
 
 ## 3. Revalidação técnica corrente
 
@@ -72,55 +56,37 @@ A documentação oficial corrente confirma:
 - o SDK oficial para integração Auth-only é `@neondatabase/auth`;
 - no SDK Next.js atual, a configuração server-side é centralizada por `createNeonAuth()`;
 - o contrato atual usa `NEON_AUTH_BASE_URL` e `NEON_AUTH_COOKIE_SECRET`;
-- o SDK atual mantém cache de sessão assinado por cookie, com TTL padrão documentado de cinco minutos e configuração explícita;
-- Neon Auth não deve ser tratado como Better Auth self-hosted: plugins próprios e handlers server-side customizados não podem ser presumidos como disponíveis.
+- o SDK atual mantém cache de sessão assinado por cookie;
+- Neon Auth não deve ser tratado como Better Auth self-hosted com plugins arbitrários presumidos.
 
-Consequência para o beta fechado: **o gate de convite/aprovação não pode depender de um plugin Better Auth imaginado ou de esconder a tela de cadastro**. A Story de cadastro deve provar que uma chamada direta ao mecanismo de signup sem autorização de entrada também é negada.
+Em US-AUTH-002, a documentação oficial do plugin Admin também confirmou que o `role` do Better Auth governa capacidades administrativas do provedor de autenticação. Por isso os cinco papéis de produto do Caleida permanecem separados no schema `caleida_auth`.
 
-Fontes oficiais revalidadas:
-
-- https://neon.com/docs/auth/migrate/from-auth-v0.1
-- https://neon.com/blog/neon-auth-branchable-identity-in-your-database
-- https://neon.com/blog/teaching-ai-how-to-do-auth
+Consequência para o beta fechado: o gate de convite/aprovação não pode depender de esconder signup na UI nem de um plugin Better Auth imaginado. A futura Story de cadastro deve provar que criação direta sem autorização de entrada também é negada.
 
 ### Neon Data API e RLS
 
-A documentação oficial corrente mantém a Data API como caminho recomendado para consulta client-side com JWT + PostgreSQL RLS. Para tabelas expostas à Data API:
+A Data API continua não provisionada. Quando houver tabela privada/user-scoped exposta, RLS e grants devem ser tratados separadamente e identidade autenticada não implicará ownership por si só.
 
-- RLS é obrigatória;
-- `auth.user_id()` representa a identidade autenticada documentada pelo Neon;
-- autenticação no papel `authenticated` não substitui ownership/visibilidade;
-- grants e RLS são controles distintos;
-- políticas ligadas à identidade Neon exigem gate Neon-specific além do PostgreSQL efêmero.
-
-Fonte oficial revalidada:
-
-- https://neon.com/docs/guides/row-level-security
-
-A Data API não foi ativada em US-AUTH-001. Sua necessidade deve nascer da primeira Story de dados user-scoped que realmente precise desse caminho.
+US-AUTH-002 não habilitou Data API por conveniência: as tabelas de autorização/auditoria ficam fechadas, com grants públicos revogados, até existir uma superfície runtime real e least privilege correspondente.
 
 ### Next.js 16
 
-O projeto usa Next.js `16.3.3`. A documentação corrente usa `proxy.ts` para proteção/roteamento antecipado, mas autorização real deve permanecer na camada que executa a operação e validar a sessão no servidor. Proxy/redirect não substitui autorização server-side ou RLS.
-
-Fonte oficial revalidada:
-
-- https://nextjs.org/learn/dashboard-app/adding-authentication
+O projeto usa Next.js `16.3.3`. Proxy/redirect pode melhorar UX futura, mas autorização real permanece na camada server-side que executa a operação e no banco quando aplicável.
 
 ## 4. Avaliação de arquitetura
 
-OPS-006 e US-AUTH-001 **não exigiram novo ADR**:
+US-AUTH-001 e US-AUTH-002 **não exigiram novo ADR**:
 
-- Neon Auth, Neon Data API e PostgreSQL RLS já são decisões aceitas em `ADR-005`;
+- Neon Auth e a plataforma de dados continuam regidos por `ADR-005`;
 - migrations no Git continuam regidas por `ADR-004`;
 - PostgreSQL 18 efêmero + gate Neon-specific continuam regidos por `ADR-008`;
 - deployment manual continua regido por `ADR-007`.
 
-Decisões futuras que podem exigir ADR antes ou na mesma Story:
+Decisões futuras que podem exigir ADR:
 
-1. **provedor de e-mail transacional:** ainda está deliberadamente em aberto em `docs/ARCHITECTURE.md`; a escolha deve considerar privacidade, custo, limites e operação;
-2. **mudança do provedor/arquitetura de identidade:** se o gate seguro de beta fechado não puder ser implementado com a superfície suportada pelo Neon Auth, não contornar o problema; registrar decisão arquitetural antes de trocar ou adicionar camada de identidade;
-3. **Data API fora do caminho preferencial atual:** qualquer mudança material de padrão de acesso deve ser justificada e registrada.
+1. provedor de e-mail transacional;
+2. mudança material do provedor/arquitetura de identidade caso o beta fechado não possa ser imposto com a superfície suportada;
+3. mudança material do padrão de acesso a dados/Data API.
 
 ## 5. Rastreamento de capacidades
 
@@ -138,9 +104,9 @@ Requisitos transversais obrigatórios: NFR-01, NFR-02, NFR-03, NFR-04, NFR-07, N
 ```text
 US-AUTH-001 — fundação Neon Auth + sessão — CONCLUÍDA (#43 / #44)
   ↓
-US-AUTH-002 — papéis/autorização + bootstrap administrativo seguro — PRÓXIMA
+US-AUTH-002 — papéis/autorização + bootstrap administrativo — CONCLUÍDA (#45 / #46)
   ↓
-US-AUTH-003 — convites/solicitações + auditoria de entrada
+US-AUTH-003 — convites/solicitações + auditoria de entrada — PRÓXIMA
   ↓
 US-AUTH-004 — decisão e integração de e-mail transacional non-production
   ↓
@@ -163,90 +129,77 @@ A ordem evita criar uma tela de cadastro antes de existir uma barreira de entrad
 **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO  
 **Issue:** `#43`  
 **PR:** `#44`  
-**Dependências:** Incrementos 0 e 1 concluídos; `ADR-005`; branch Neon isolada disponível  
 **Capacidade:** CAP-01  
 **Evidência:** `docs/US_AUTH_001_VERIFICATION.md`
 
-## Objetivo
-
-Integrar o Neon Auth atual ao Next.js 16 em ambiente Neon descartável e estabelecer um contrato server-side de sessão antes de criar qualquer fluxo de cadastro/login.
-
 ## Resultado
 
-- `@neondatabase/auth@0.5.0-beta` fixado com lockfile reproduzível;
-- fronteira Auth server-only/lazy/fail-closed materializada;
-- handler GET/POST catch-all compatível com a assinatura corrente do SDK;
-- `NEON_AUTH_BASE_URL` e `NEON_AUTH_COOKIE_SECRET` documentados sem valores;
-- cache de dados de sessão fixado em 300 segundos e impacto de revogação registrado para US-AUTH-007;
-- gate Neon-specific executado em `verify-us-auth-001` antes de qualquer promoção;
-- baseline Neon preservada durante experimentação;
-- Neon Auth Better Auth promovido deliberadamente para `caleida-nonprod/main` somente após os gates técnicos;
-- nenhum usuário, Data API, migration/schema funcional, SMTP/e-mail, OAuth, Production Neon ou deployment criado.
-
-## Non-goals preservados
-
-- formulário de cadastro;
-- formulário de login;
-- criar usuário real ou conta de beta persistente;
-- convite/lista de espera;
-- papéis de produto;
-- Data API;
-- migration/schema funcional de produto;
-- SMTP/e-mail;
-- OAuth;
-- Production Neon;
-- deployment Vercel.
+- `@neondatabase/auth@0.5.0-beta` fixado;
+- fronteira Auth server-only/lazy/fail-closed;
+- handler GET/POST catch-all;
+- cache de sessão explicitamente configurado;
+- gate Neon-specific em branch isolada;
+- Managed Better Auth promovido deliberadamente para a baseline;
+- nenhum usuário, Data API, SMTP/e-mail, OAuth, Production ou deployment criado.
 
 ## Gates
 
 - `npm run verify`: `PASS`;
 - PostgreSQL 18 + `npm run verify:db`: `PASS`;
-- Neon-specific em branch isolada: `PASS`;
-- baseline preservada durante experimento: `PASS`;
-- promoção Auth non-production após gates: `PASS`;
-- browser real: `SKIPPED` porque não há fluxo/UI funcional e não foi fabricada superfície apenas para teste;
-- deployment: `SKIPPED/PROIBIDO` para IA.
+- Neon-specific: `PASS`;
+- CI pós-merge: `PASS`;
+- browser real: `SKIPPED` por ausência de fluxo/UI;
+- deployment: `SKIPPED/PROIBIDO`.
 
-## Pendência operacional
-
-A branch Neon descartável `verify-us-auth-001` (`br-snowy-hall-aw9uv2gn`) permanece disponível. A ferramenta classifica sua exclusão como destrutiva e exige autorização explícita do usuário; portanto ela não foi removida autonomamente.
+A branch `verify-us-auth-001` foi removida mediante autorização explícita antes de US-AUTH-002.
 
 ---
 
 # US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo
 
 **Prioridade:** P0  
-**Estado:** PRONTA / próxima ação  
+**Estado:** CONCLUÍDA APÓS INTEGRAÇÃO  
+**Issue:** `#45`  
+**PR:** `#46`  
 **Dependência:** US-AUTH-001 concluída  
-**Capacidades:** CAP-04, CAP-35
+**Capacidades:** CAP-04, CAP-35  
+**Evidência:** `docs/US_AUTH_002_VERIFICATION.md`
 
-## Objetivo
+## Resultado
 
-Definir papéis `proprietário`, `administrador`, `moderador`, `curador` e `usuário` como autorização de produto vinculada à identidade Neon, com bootstrap administrativo controlado e auditável.
+- papéis de produto: `proprietário`, `administrador`, `moderador`, `curador`, `usuário`;
+- autorização armazenada por UUID Neon Auth sem duplicar credenciais;
+- `caleida_auth.user_roles` como estado atual de papel;
+- `caleida_audit.role_changes` como trilha mínima auditável;
+- política de mutação imposta no banco e espelhada em fronteira server-only;
+- autopromoção negada;
+- usuário comum não executa ação administrativa;
+- administrador não cria pares/owners nem altera proprietário/administrador;
+- bootstrap inicial de proprietário exige identidade Auth existente, confirmação separada e motivo auditável;
+- nenhuma conta real foi criada apenas para satisfazer a Story;
+- nenhuma UI/endpoint/Data API foi inventada antes de existir fluxo funcional.
 
-## Requisitos
+## Gates
 
-- não duplicar credenciais/identidade somente para contornar Neon Auth;
-- não inferir privilégio por parâmetro, UI ou campo editável pelo usuário;
-- mudanças de schema em migration versionada;
-- autorização crítica comprovada no servidor e no banco;
-- usuário comum não consegue promover a si mesmo nem executar ação administrativa direta;
-- bootstrap inicial de proprietário em non-production deve ser explícito, server-only, reversível/auditável e não criar atalho reaproveitável no browser;
-- registrar mudança de papel sem secret/payload desnecessário.
+- PostgreSQL 18 + `npm run verify:db`: `PASS` no CI `33766333312`;
+- 49/49 testes Node + build: `PASS`;
+- Neon-specific em `verify-us-auth-002`: `PASS`;
+- promoção `000001` + `000002` para baseline: `PASS`, com checksums do runner;
+- baseline pós-promoção: zero usuários/papéis/auditoria de papel;
+- browser real: `SKIPPED` por ausência deliberada de superfície;
+- deployment: `SKIPPED/PROIBIDO`.
 
-Gates: PostgreSQL 18 + Neon-specific, porque a regra se relaciona à identidade Neon real.
+## Pendência operacional
 
-### Pré-condição operacional
-
-Antes de criar nova branch Neon para US-AUTH-002, remover `verify-us-auth-001` somente após autorização explícita do usuário. Enquanto a autorização não existir, registrar `MANUAL_ACTION_REQUIRED` e não criar um segundo ambiente descartável por conveniência.
+`verify-us-auth-002` (`br-weathered-shape-awp7ckqa`) contém somente dados sintéticos do gate e permanece pendente de exclusão explícita. Não criar outro branch descartável enquanto essa limpeza não ocorrer.
 
 ---
 
 # US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
 
 **Prioridade:** P0  
-**Estado:** A FAZER  
-**Dependência:** US-AUTH-002  
+**Estado:** PRONTA / próxima ação  
+**Dependência:** US-AUTH-002 concluída  
 **Capacidades:** CAP-02, CAP-35
 
 ## Objetivo
@@ -267,7 +220,11 @@ Deve cobrir:
 
 Não envia e-mail e não cria conta nesta Story.
 
-Gates: migrations/RLS em PostgreSQL 18; Neon-specific se a política usar identidade/roles gerenciados.
+Gates: migrations/RLS em PostgreSQL 18; Neon-specific somente se a política usar identidade/roles gerenciados.
+
+### Pré-condição operacional
+
+Antes de abrir outra branch Neon descartável, remover `verify-us-auth-002` somente após nova autorização explícita do usuário. Trabalho puramente PostgreSQL portável não deve ser artificialmente bloqueado pela limpeza, mas não se cria um segundo ambiente descartável por conveniência.
 
 ---
 
@@ -318,7 +275,7 @@ A implementação deve provar que:
 - concorrência não excede limite de usos;
 - a superfície oficial suportada pelo Neon Auth permite impor o gate antes/de forma segura ao criar a conta.
 
-Como Neon Auth gerenciado não permite presumir plugins/handlers customizados de Better Auth, a Story deve revalidar a API corrente. Se não houver mecanismo seguro compatível com o beta fechado, parar e registrar decisão arquitetural; não liberar signup público como workaround.
+Se a superfície gerenciada não permitir impor o beta fechado de forma segura, parar e registrar decisão arquitetural; não liberar signup público como workaround.
 
 ---
 
@@ -403,26 +360,30 @@ A camada que impõe a regra deve ser testada; botão escondido não é prova de 
 
 ## 8. Contrato de ambientes e secrets
 
-### US-AUTH-001
+### Auth e autorização
 
 Nomes correntes materializados/documentados, sem valores no Git:
 
 ```text
-NEON_AUTH_BASE_URL        ← endpoint Auth branch-scoped
-NEON_AUTH_COOKIE_SECRET   ← secret server-only para assinatura do cache de sessão
+NEON_AUTH_BASE_URL
+NEON_AUTH_COOKIE_SECRET
+CALEIDA_BOOTSTRAP_OWNER_USER_ID
+CALEIDA_BOOTSTRAP_REASON
+CALEIDA_ALLOW_OWNER_BOOTSTRAP
 ```
 
 Regras:
 
-- `NEON_AUTH_COOKIE_SECRET` nunca usa `NEXT_PUBLIC_*`;
+- secrets nunca usam `NEXT_PUBLIC_*`;
 - endpoint/secret de branch descartável não é reutilizado em Production;
+- bootstrap não aceita e-mail/senha nem cria conta;
 - `.env.example` contém somente nomes/comentários/placeholders seguros;
-- qualquer variável adicional deve ser revalidada contra a API corrente antes de materialização;
+- qualquer variável adicional deve ser revalidada antes da materialização;
 - nenhum valor real entra em Issue, PR, commit ou log persistente.
 
 ### E-mail
 
-Os nomes específicos do provedor **não são inventados em OPS-006/US-AUTH-001**. US-AUTH-004 define o contrato somente depois da escolha documentada do provedor.
+Os nomes específicos do provedor não são inventados antes de US-AUTH-004.
 
 ### Production
 
@@ -460,6 +421,6 @@ O Incremento 2 só pode ser encerrado quando:
 
 Executar somente:
 
-> `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`
+> `US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada`
 
-Antes de abrir a próxima frente Neon-specific, resolver `MANUAL_ACTION_REQUIRED`: obter autorização explícita para excluir a branch descartável `verify-us-auth-001`. Não antecipar convites, cadastro, e-mail, Data API, login ou Production dentro de US-AUTH-002.
+Antes de criar outra branch Neon descartável, resolver `MANUAL_ACTION_REQUIRED`: obter nova autorização explícita para excluir `verify-us-auth-002`. Não antecipar e-mail, cadastro, login, Production ou deployment dentro de US-AUTH-003.
