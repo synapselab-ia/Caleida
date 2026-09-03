@@ -14,7 +14,7 @@ Mudanças relevantes do Caleida. Evidências detalhadas de cada entrega ficam no
 - `ADR-006` manteve Object Storage desacoplado e adiado.
 - `ADR-007` tornou deployment Vercel exclusivamente humano/manual; IA e CI não publicam.
 - `ADR-008` separou PostgreSQL 18 descartável como gate primário de SQL portável e branch Neon isolada apenas para comportamento Neon-specific.
-- `ADR-009` selecionou Resend como transporte transacional non-production, com REST server-only para o app e SMTP customizado planejado para Neon Auth.
+- `ADR-009` definiu o provider compartilhado do Neon Auth como transporte de e-mail para desenvolvimento/non-production enquanto adequado; SMTP/provedor externo foi adiado até existir necessidade real.
 
 ### Incremento 0 — Fundação executável
 
@@ -45,7 +45,7 @@ Mudanças relevantes do Caleida. Evidências detalhadas de cada entrega ficam no
 - handler Auth GET/POST catch-all;
 - Managed Better Auth promovido à baseline somente depois dos gates;
 - CI pós-merge `33753190237`: PASS;
-- nenhuma conta, Data API, e-mail, OAuth, Production ou deployment criada.
+- nenhuma conta, Data API, e-mail customizado, OAuth customizado, Production ou deployment criada.
 
 #### US-AUTH-002 — Papéis e autorização (#45/#46)
 
@@ -73,11 +73,8 @@ Adicionado:
 - teste concorrente com duas sessões `psql`;
 - `docs/ENTRY_CONTROL.md` e `docs/US_AUTH_003_VERIFICATION.md`.
 
-Corrigido/verificado:
+Verificado:
 
-- CI inicial `33771618637` revelou apenas variável PL/pgSQL ambígua no teste; migration estava correta;
-- teste corrigido sem relaxar regras;
-- CI técnico `33771989432`: PASS;
 - CI final PR `33773066584`: PASS;
 - merge `3cecfaf6eef357ece3096873d6847e334510db94`;
 - CI pós-merge `33773379852`: PASS;
@@ -86,46 +83,20 @@ Corrigido/verificado:
 - baseline permaneceu com contadores funcionais em zero;
 - Neon-specific `SKIPPED` corretamente por ser SQL PostgreSQL portável.
 
-#### US-AUTH-004 — E-mail transacional non-production (#49/#50)
+#### US-AUTH-004 — E-mail Auth non-production (#49/#50)
 
-Adicionado/preparado:
+Resultado final:
 
-- comparação corrente de Resend, Brevo, Mailgun e Amazon SES;
-- `ADR-009-resend-transactional-email.md` selecionando Resend;
-- `src/lib/email/server.ts` como boundary server-only via `fetch` nativo, sem SDK Resend;
-- `tests/email-transport-contract.test.mjs` com cinco contratos de segurança/integração;
-- `docs/EMAIL_TRANSPORT.md`;
-- `docs/US_AUTH_004_VERIFICATION.md`;
-- variáveis comentadas `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME` em `.env.example`;
-- ambientes/arquitetura reconciliados com o transporte escolhido.
+- readback remoto confirmou Better Auth saudável em `caleida-nonprod/main`;
+- email/password está habilitado;
+- `email_provider.type=shared` com remetente do Neon já fornece transporte non-production;
+- `require_email_verification=false` permanece até US-AUTH-005;
+- Resend, domínio próprio e SMTP customizado foram considerados inicialmente, mas removidos do escopo antes do merge por não existir requisito material nesta fase;
+- `src/lib/email/server.ts`, testes e variáveis Resend preparados durante a investigação foram retirados do resultado final;
+- `ADR-009` passou a registrar Neon shared email como decisão non-production e provedor externo como decisão futura;
+- nenhuma migration, secret ou deployment foi introduzido.
 
-Guardrails:
-
-- API key deve ser `sending_access`, preferencialmente limitada ao domínio;
-- nenhum secret Resend usa `NEXT_PUBLIC_*` ou entra no Git/chat;
-- envio da aplicação exige `Idempotency-Key`;
-- rede, 429 e 5xx são recuperáveis; erro retornado é sanitizado;
-- payload bruto do provedor não é propagado;
-- boundary não acessa banco nem chama funções de convite;
-- convite futuro só poderá mudar `criado → enviado` depois de confirmação do provedor;
-- `require_email_verification` permanece `false` até US-AUTH-005;
-- região São Paulo do Resend é roteamento, não residência de dados; metadados/logs/API permanecem nos EUA segundo fonte oficial corrente.
-
-Verificação técnica:
-
-- CI `33786184072` no primeiro head técnico: PASS;
-- `npm ci`: PASS, 0 vulnerabilidades reportadas;
-- `npm run verify`: PASS;
-- testes Node: 60/60 PASS;
-- build: PASS;
-- PostgreSQL 18 + `npm run verify:db`: PASS;
-- nenhuma migration nova.
-
-Pendência deliberada:
-
-- envio real e SMTP customizado do Neon Auth ainda não receberam PASS porque exigem conta Resend, domínio/remetente e credencial reais mantidos fora do Git/chat;
-- PR #50 permanece aberta e US-AUTH-004 em `MANUAL_ACTION_REQUIRED` até esse gate live ser concluído;
-- nenhuma conta Resend, DNS, secret, SMTP Neon, signup, Production ou deployment foi fabricado pela IA.
+A branch Neon `verify-us-auth-004 / br-plain-pond-aw5f59ia` foi criada durante a investigação inicial, herdou provider `shared` e nunca recebeu SMTP externo. Tornou-se housekeeping não bloqueante; exclusão futura exige autorização explícita.
 
 ### Estado de segurança e operação
 
@@ -133,13 +104,10 @@ Pendência deliberada:
 - Banco persiste mudanças somente por migrations versionadas.
 - PostgreSQL 18 descartável permanece gate primário para SQL portável.
 - Baseline Neon `main` não é laboratório destrutivo.
-- Não existe branch Neon descartável pendente.
 - Neon Data API e Object Storage continuam não provisionados.
 - `caleida-production` continua inexistente.
 - Vercel continua sem deployment executado por IA e CI permanece sem CD.
 
 ### Próxima ação canônica
 
-> `US-AUTH-004 — concluir gate live Resend/Neon Auth non-production sem expor secrets`.
-
-US-AUTH-005 não deve ser promovida enquanto #49/#50 estiverem abertas.
+> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`.
