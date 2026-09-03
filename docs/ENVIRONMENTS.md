@@ -1,6 +1,6 @@
 # Ambientes e variáveis — Caleida
 
-**Status:** contrato operacional canônico de configuração após US-AUTH-001  
+**Status:** contrato operacional canônico de configuração após US-AUTH-002  
 **Decisões relacionadas:** `ADR-005` e `ADR-007`  
 **Plataforma:** `docs/NEON_PLATFORM.md`  
 **Release:** `docs/VERCEL_RELEASE.md`
@@ -28,7 +28,7 @@ Regras obrigatórias:
 - variáveis server-only nunca recebem prefixo `NEXT_PUBLIC_`;
 - qualquer nova variável deve ser classificada neste contrato ou em documentação de domínio aplicável antes de depender dela operacionalmente.
 
-## 2. Estado real após US-AUTH-001
+## 2. Estado real após US-AUTH-002
 
 ### Neon
 
@@ -42,9 +42,9 @@ Baseline: main
 Branch ID: br-restless-cherry-awpcwy6r
 ```
 
-A baseline non-production possui Neon Auth gerenciado com provider Better Auth e schema `neon_auth`. Nenhum usuário do Caleida foi criado nesta Story.
+A baseline non-production possui Managed Better Auth, o migration ledger e a fundação de autorização/auditoria promovida em `US-AUTH-002`. O estado confirmado continua com zero usuários Auth, zero papéis de produto e zero eventos de mudança de papel.
 
-A branch descartável `verify-us-auth-001` (`br-snowy-hall-aw9uv2gn`) foi usada para o gate Neon-specific antes da promoção deliberada da configuração Auth para a baseline.
+A branch descartável `verify-us-auth-001` foi removida após autorização explícita. A branch `verify-us-auth-002` (`br-weathered-shape-awp7ckqa`) permanece temporariamente para o gate concluído e exige nova autorização explícita antes da exclusão.
 
 O projeto Neon Production **não está provisionado**. Portanto não existe connection string, endpoint Auth ou cookie secret Production canônico para registrar, configurar ou simular.
 
@@ -52,7 +52,7 @@ Neon Data API e Object Storage continuam não implementados para o produto.
 
 ### Vercel
 
-Nenhum projeto/deployment Caleida foi criado como consequência desta Story. Quando o projeto Vercel existir por ação humana deliberada, os escopos da plataforma devem ser mapeados assim:
+Nenhum projeto/deployment Caleida foi criado como consequência destas Stories. Quando o projeto Vercel existir por ação humana deliberada, os escopos da plataforma devem ser mapeados assim:
 
 | Caleida | Vercel | Dados permitidos |
 |---|---|---|
@@ -89,15 +89,18 @@ Para exercer Auth localmente, a configuração deve apontar somente para non-pro
 | Variável | Classe | Escopo atual | Regra |
 |---|---|---|---|
 | `DATABASE_URL` | secret server-only | runtime futuro | conexão pooled; ainda não é consumida pelo runtime normal da aplicação |
-| `DATABASE_URL_UNPOOLED` | secret server-only | tooling de banco | conexão direta para migrations/testes; nunca browser |
+| `DATABASE_URL_UNPOOLED` | secret server-only | tooling de banco | conexão direta para migrations/testes/bootstrap; nunca browser |
 | `CALEIDA_DB_TARGET` | controle não secreto | tooling de banco | aceita somente os alvos implementados pelo runner |
 | `CALEIDA_NEON_BRANCH_ID` | identificador não secreto | tooling Neon | vincula o comando ao branch esperado; não concede acesso sozinho |
 | `CALEIDA_ALLOW_BASELINE_MIGRATIONS` | confirmação não secreta | promoção non-production | só existe para ação deliberada de migrations na baseline |
 | `NEON_AUTH_BASE_URL` | configuração server-only | Auth branch-scoped | endpoint Auth do ambiente em uso; não versionar valor real nem reutilizar entre ambientes |
 | `NEON_AUTH_COOKIE_SECRET` | secret server-only | assinatura do cache de sessão | mínimo de 32 caracteres; nunca browser/Git/log persistente |
+| `CALEIDA_BOOTSTRAP_OWNER_USER_ID` | identificador operacional não secreto | bootstrap owner non-production | deve ser UUID de identidade Neon Auth já existente; nunca e-mail/senha |
+| `CALEIDA_BOOTSTRAP_REASON` | metadado operacional | bootstrap owner | motivo auditável entre 1 e 500 caracteres; não incluir secret/payload sensível |
+| `CALEIDA_ALLOW_OWNER_BOOTSTRAP` | confirmação não secreta | bootstrap owner | deve ser exatamente `YES` no processo deliberado que executa o bootstrap |
 | `NEXT_PUBLIC_*` | público | nenhum atualmente | só pode ser criado para dado intencionalmente público |
 
-Connection strings e cookie/session secrets são sempre secrets. Um branch/project ID isolado é identificador não sensível; uma URL Auth operacional é tratada como configuração de ambiente e permanece fora do Git por política do Caleida.
+Connection strings e cookie/session secrets são sempre secrets. Um branch/project ID ou UUID de identidade já conhecida é identificador, não credencial; uma URL Auth operacional é tratada como configuração de ambiente e permanece fora do Git por política do Caleida.
 
 ## 5. Desenvolvimento local
 
@@ -182,9 +185,32 @@ CALEIDA_NEON_BRANCH_ID=br-restless-cherry-awpcwy6r
 CALEIDA_ALLOW_BASELINE_MIGRATIONS=YES
 ```
 
+Em `US-AUTH-002`, `000001` e `000002` foram promovidas à baseline somente depois dos gates PostgreSQL 18 e Neon-specific em PASS.
+
 Recursos gerenciados do Neon, como Neon Auth, seguem promoção deliberada própria depois do gate Neon-specific; não são tratados como migrations de produto.
 
 Esse fluxo é non-production. Não deve ser reinterpretado como mecanismo de promoção Production.
+
+### Bootstrap inicial de proprietário
+
+Quando existir uma identidade real apropriada e o bootstrap inicial for necessário:
+
+```text
+DATABASE_URL_UNPOOLED=<direct-neon-connection>
+CALEIDA_DB_TARGET=neon-isolated|baseline
+CALEIDA_NEON_BRANCH_ID=<branch-id-coerente-com-o-alvo>
+CALEIDA_BOOTSTRAP_OWNER_USER_ID=<existing-neon-auth-user-uuid>
+CALEIDA_BOOTSTRAP_REASON=<auditable-reason>
+CALEIDA_ALLOW_OWNER_BOOTSTRAP=YES
+```
+
+Regras:
+
+- a identidade deve existir previamente no Neon Auth;
+- o script não cria conta e não aceita e-mail/senha;
+- a operação é server-only e auditável;
+- `CALEIDA_ALLOW_BASELINE_MIGRATIONS` não substitui `CALEIDA_ALLOW_OWNER_BOOTSTRAP`; são confirmações de operações diferentes;
+- nenhum bootstrap foi executado na baseline durante US-AUTH-002 porque não existe usuário real.
 
 ## 7. Production
 
@@ -259,5 +285,7 @@ Em `US-AUTH-001`, em 02/09/2026, foram revalidados:
 - requisito corrente de cookie secret com pelo menos 32 caracteres;
 - cache de dados de sessão com TTL configurável;
 - isolamento Auth branch-scoped do Neon.
+
+Em `US-AUTH-002`, em 03/09/2026, a documentação oficial corrente do Managed Better Auth confirmou que o papel Admin do provedor governa APIs de gestão Auth e não deve ser confundido com os cinco papéis de produto do Caleida.
 
 Revalidar novamente a documentação corrente na Story que efetivamente configurar Vercel, Neon Production, Data API, OAuth, e-mail ou política de revogação de sessão.
