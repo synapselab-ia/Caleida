@@ -169,26 +169,35 @@ BEGIN
 END;
 $$;
 
+CREATE ROLE caleida_test_unprivileged NOLOGIN;
+
 DO $$
 BEGIN
-  IF has_table_privilege('PUBLIC', 'caleida_auth.user_roles', 'SELECT')
-     OR has_table_privilege('PUBLIC', 'caleida_auth.user_roles', 'INSERT')
-     OR has_table_privilege('PUBLIC', 'caleida_auth.user_roles', 'UPDATE')
-     OR has_table_privilege('PUBLIC', 'caleida_auth.user_roles', 'DELETE') THEN
-    RAISE EXCEPTION 'PUBLIC possui privilégio direto sobre user_roles';
+  IF has_schema_privilege('caleida_test_unprivileged', 'caleida_auth', 'USAGE')
+     OR has_schema_privilege('caleida_test_unprivileged', 'caleida_audit', 'USAGE') THEN
+    RAISE EXCEPTION 'papel não privilegiado possui USAGE em schema protegido';
   END IF;
 
-  IF has_table_privilege('PUBLIC', 'caleida_audit.role_changes', 'SELECT')
-     OR has_table_privilege('PUBLIC', 'caleida_audit.role_changes', 'INSERT') THEN
-    RAISE EXCEPTION 'PUBLIC possui privilégio direto sobre role_changes';
+  IF has_table_privilege('caleida_test_unprivileged', 'caleida_auth.user_roles', 'SELECT')
+     OR has_table_privilege('caleida_test_unprivileged', 'caleida_auth.user_roles', 'INSERT')
+     OR has_table_privilege('caleida_test_unprivileged', 'caleida_auth.user_roles', 'UPDATE')
+     OR has_table_privilege('caleida_test_unprivileged', 'caleida_auth.user_roles', 'DELETE') THEN
+    RAISE EXCEPTION 'papel não privilegiado possui acesso direto sobre user_roles';
   END IF;
 
-  IF has_function_privilege('PUBLIC', 'caleida_auth.change_user_role(uuid,uuid,text,text)', 'EXECUTE')
-     OR has_function_privilege('PUBLIC', 'caleida_auth.bootstrap_owner(uuid,text)', 'EXECUTE') THEN
-    RAISE EXCEPTION 'PUBLIC consegue executar funções privilegiadas';
+  IF has_table_privilege('caleida_test_unprivileged', 'caleida_audit.role_changes', 'SELECT')
+     OR has_table_privilege('caleida_test_unprivileged', 'caleida_audit.role_changes', 'INSERT') THEN
+    RAISE EXCEPTION 'papel não privilegiado possui acesso direto sobre role_changes';
+  END IF;
+
+  IF has_function_privilege('caleida_test_unprivileged', 'caleida_auth.change_user_role(uuid,uuid,text,text)', 'EXECUTE')
+     OR has_function_privilege('caleida_test_unprivileged', 'caleida_auth.bootstrap_owner(uuid,text)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'papel não privilegiado consegue executar funções privilegiadas';
   END IF;
 END;
 $$;
+
+DROP ROLE caleida_test_unprivileged;
 
 TRUNCATE TABLE caleida_audit.role_changes RESTART IDENTITY;
 TRUNCATE TABLE caleida_auth.user_roles;
