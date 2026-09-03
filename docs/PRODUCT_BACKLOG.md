@@ -1,8 +1,8 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-001 concluída  
+**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-002 concluída  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`
+**Próxima ação operacional:** `US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada`
 
 ## Convenções
 
@@ -155,24 +155,28 @@ Entregar contas e acesso seguro para o beta fechado de forma incremental, separa
 - **Issue:** `#43`
 - **PR:** `#44`
 - **Capacidade:** CAP-01
-- **Resultado:** `@neondatabase/auth@0.5.0-beta` fixado; fronteira server-only/lazy/fail-closed; handler GET/POST catch-all; variáveis Auth documentadas sem valores; gate Neon-specific em branch isolada; Neon Auth Better Auth promovido à baseline `caleida-nonprod/main` somente após gates; nenhum usuário/Data API/schema de produto/e-mail/OAuth/Production/deployment criado.
+- **Resultado:** `@neondatabase/auth@0.5.0-beta` fixado; fronteira server-only/lazy/fail-closed; handler GET/POST catch-all; gate Neon-specific em branch isolada; Neon Auth Better Auth promovido à baseline `caleida-nonprod/main` somente após gates; nenhum usuário/Data API/schema de produto/e-mail/OAuth/Production/deployment criado.
 - **Evidência:** `docs/US_AUTH_001_VERIFICATION.md`.
-- **Operação:** branch Neon descartável `verify-us-auth-001` permanece pendente de exclusão explícita por ser ação destrutiva no conector.
+- **Operação:** `verify-us-auth-001` foi removida após autorização explícita antes de US-AUTH-002.
 
 ### US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
+- **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO
+- **Issue:** `#45`
+- **PR:** `#46`
 - **Capacidades:** CAP-04, CAP-35
-- **Resultado esperado:** papéis de produto e autorização crítica verificados no servidor e no banco, com bootstrap administrativo controlado e auditável.
-- **Pré-condição:** remover a branch Neon descartável de US-AUTH-001 após autorização explícita antes de criar o próximo ambiente isolado.
+- **Resultado:** papéis `proprietário`, `administrador`, `moderador`, `curador` e `usuário` separados do Admin Better Auth; autorização crítica server-side + banco; auditoria mínima; bootstrap owner explícito/idempotente por UUID Auth já existente; migrations `000001/000002` promovidas à baseline após PostgreSQL 18 e Neon-specific em PASS; baseline permaneceu sem usuários/papéis sintéticos.
+- **Evidência:** `docs/US_AUTH_002_VERIFICATION.md`.
+- **Operação:** `verify-us-auth-002` (`br-weathered-shape-awp7ckqa`) permanece pendente de exclusão explícita; não abrir outro branch descartável enquanto ela existir.
 
 ### US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Capacidades:** CAP-02, CAP-35
 - **Resultado esperado:** estados, validade, limite de uso, destinatário opcional, aprovação e concorrência modelados antes do signup, sem envio de e-mail.
+- **Pré-condição operacional:** limpar `verify-us-auth-002` mediante autorização explícita antes de criar novo ambiente Neon descartável.
 
 ### US-AUTH-004 — Selecionar e integrar e-mail transacional non-production
 
@@ -215,6 +219,6 @@ Não antecipar Stories seguintes. Cada mudança de schema/RLS usa migration vers
 
 # Próxima ação operacional
 
-> `US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo`
+> `US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada`
 
-Antes de iniciar US-AUTH-002, resolver a pendência operacional de exclusão da branch Neon descartável de US-AUTH-001 mediante autorização explícita.
+Antes de criar nova branch Neon para essa Story, resolver a limpeza de `verify-us-auth-002` mediante autorização explícita. Não antecipar e-mail, cadastro, login/logout, Production ou deployment.
