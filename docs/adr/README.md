@@ -45,6 +45,7 @@ São permitidas correções editoriais que não mudem semântica e atualização
 | [ADR-006](ADR-006-object-storage-deferred.md) | Accepted | Object Storage desacoplado e decisão adiada | `DEC-008` |
 | [ADR-007](ADR-007-manual-vercel-deployment.md) | Accepted | Deployment Vercel exclusivamente humano/manual | `DEC-009` |
 | [ADR-008](ADR-008-ephemeral-postgres-verification.md) | Accepted | PostgreSQL efêmero como gate primário de migrations/RLS portáveis | decisão de `US-PLAT-005` |
+| [ADR-009](ADR-009-resend-transactional-email.md) | Accepted | Resend como transporte transacional non-production | `US-AUTH-004` |
 
 ## O que não virou ADR
 
