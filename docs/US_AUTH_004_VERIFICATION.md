@@ -8,7 +8,7 @@
 
 ## 1. Escopo verificado
 
-A Story seleciona o provedor de e-mail e materializa a boundary server-only necessária para envios transacionais da aplicação, sem antecipar signup, login ou política de confirmação obrigatória.
+A Story seleciona o provedor e materializa a boundary server-only para e-mail transacional sem antecipar signup, login ou confirmação obrigatória.
 
 Arquivos principais:
 
@@ -28,47 +28,55 @@ Fontes oficiais correntes foram verificadas em 03/09/2026.
 Confirmado:
 
 - Free: 3.000 e-mails/mês e 100/dia;
-- REST API e SMTP relay;
-- API key com `sending_access` e possibilidade de restrição por domínio;
-- `POST /emails` suporta `Idempotency-Key` de até 256 caracteres;
-- idempotência retida por 24 horas;
-- domínios usam SPF/DKIM e subdomínio é recomendado para isolamento de reputação;
-- regiões de envio incluem São Paulo;
-- seleção de região não altera residência dos dados de conta: metadados/logs/API permanecem nos EUA;
-- DPA corrente foi revisado como parte da decisão.
+- REST API + SMTP relay;
+- API key `sending_access`, com possibilidade de restrição por domínio;
+- `POST /emails` com `Idempotency-Key` de até 256 caracteres;
+- idempotência por 24 horas;
+- SPF/DKIM e recomendação de subdomínio;
+- região de envio São Paulo disponível;
+- seleção de região não muda residência dos dados: metadados/logs/API permanecem nos EUA;
+- DPA corrente revisado.
 
-### Alternativas
-
-- Brevo: 300 envios/dia no plano gratuito;
-- Mailgun: 100/dia no plano gratuito, REST + SMTP;
-- Amazon SES: custo unitário muito baixo, mas maior superfície operacional AWS para esta fase.
-
-A decisão final está registrada em `ADR-009`.
+Alternativas comparadas: Brevo, Mailgun e Amazon SES. Decisão final: `ADR-009`.
 
 ### Neon Auth
 
-Confirmado na API corrente:
+Confirmado:
 
-- email provider é configurável por branch;
-- Better Auth aceita atualização SMTP com `host`, `port`, `username`, `password`, `sender_email`, `sender_name`;
-- o provider é responsável por e-mails de verificação/recuperação;
-- a baseline Caleida continua usando `email_provider.type=shared` enquanto o gate externo não for executado;
-- `require_email_verification` continua `false` e não deve ser alterado antes de US-AUTH-005.
+- email provider configurável por branch;
+- SMTP usa `host`, `port`, `username`, `password`, `sender_email`, `sender_name`;
+- provider atende verificação/recuperação do Auth;
+- `require_email_verification` é configuração separada e permanece `false` até US-AUTH-005.
 
-## 3. Estado Neon antes da Story
+## 3. Estado Neon e isolamento
 
-Verificado diretamente:
+Antes de US-AUTH-004:
 
 ```text
-Projeto: caleida-nonprod
 Baseline: main / br-restless-cherry-awpcwy6r / ready
 Branches descartáveis: nenhuma
-Auth provider: Better Auth
-Email provider Auth: shared Neon
+Auth: Better Auth
+Email provider: shared Neon
 Require email verification: false
 ```
 
-Migrations:
+Para o gate SMTP Neon-specific foi criada, sem ação destrutiva:
+
+```text
+verify-us-auth-004
+br-plain-pond-aw5f59ia
+parent: br-restless-cherry-awpcwy6r
+state: ready
+Auth provider: Better Auth
+Email provider herdado: shared Neon
+Require email verification: false
+```
+
+A baseline `main` não foi alterada pela criação. Auth URL/JWKS e outros valores operacionais não são persistidos em documentação.
+
+A branch é descartável. Sua exclusão futura exige autorização explícita do usuário porque `delete_branch` é classificada como destrutiva.
+
+Migrations herdadas da baseline:
 
 ```text
 000001_migration_ledger.sql
@@ -81,26 +89,26 @@ Migrations:
 503700640a81cf41dfe56a0abe70fc581b9c64d8e9ad6585cbcb55d4751b7c5f
 ```
 
-Contadores: zero usuários Auth, papéis, role_changes, convites, usos, solicitações e entry_events.
+Contadores baseline confirmados antes da branch: zero usuários Auth, papéis, role_changes, convites, usos, solicitações e entry_events.
 
-US-AUTH-004 não cria migration nem modifica dados Neon.
+US-AUTH-004 não cria migration nem dados funcionais.
 
 ## 4. Implementação técnica
 
 `src/lib/email/server.ts`:
 
 - `server-only`;
-- usa `fetch` nativo e não adiciona SDK Resend ao `package.json`;
-- lê `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME` somente na invocação real;
+- `fetch` nativo, sem SDK Resend direto;
+- lê `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME` somente na operação real;
 - valida remetente/destinatários/subject/conteúdo;
-- exige idempotency key de 1–256 caracteres;
-- envia para `POST https://api.resend.com/emails`;
-- usa header `Authorization` apenas server-side;
+- idempotency key obrigatória, 1–256 caracteres;
+- `POST https://api.resend.com/emails`;
+- Authorization somente server-side;
 - retorna somente provider + message ID;
-- rede, HTTP 429 e 5xx são classificados como recuperáveis;
-- outros 4xx são rejeições não recuperáveis por retry cego;
-- payload bruto de erro do provedor não é propagado;
-- módulo não importa banco, `caleida_access`, `consume_invitation` ou `transition_invitation`.
+- rede/429/5xx recuperáveis;
+- outros 4xx não recebem retry cego;
+- payload bruto de erro não é propagado;
+- nenhum acesso a `caleida_access`, banco ou funções de convite.
 
 ## 5. CI técnico
 
@@ -112,64 +120,76 @@ Head: 9de864fd17a515207e123cfb3cb88344a83f08fe
 Resultado: PASS
 ```
 
-Gates observados:
-
-- `npm ci`: `PASS`, zero vulnerabilidades reportadas;
-- `npm run verify`: `PASS`;
-- lint: `PASS`;
-- typecheck: `PASS`;
+- `npm ci`: PASS, zero vulnerabilidades reportadas;
+- `npm run verify`: PASS;
+- lint/typecheck: PASS;
 - testes Node: `60/60 PASS`;
-- build Next.js: `PASS`;
-- PostgreSQL 18: `PASS`;
-- `npm run verify:db`: `PASS`;
-- migrations `000001`–`000003`: `PASS`;
-- testes de autorização/entrada/concorrência existentes: `PASS`.
+- build: PASS;
+- PostgreSQL 18: PASS;
+- `npm run verify:db`: PASS;
+- migrations/testes de autorização/entrada/concorrência: PASS.
 
-Os avisos transitivos já conhecidos de Better Auth/Auth UI permanecem sem vulnerabilidades reportadas por `npm ci` e não foram introduzidos pela integração de e-mail.
+Avisos transitivos conhecidos de Better Auth/Auth UI permanecem sem vulnerabilidades reportadas e não foram introduzidos pelo e-mail.
+
+Como documentos e estado Neon avançaram depois desse head técnico, um CI final do head corrente ainda é obrigatório antes de merge.
 
 ## 6. Gates classificados
 
 | Gate | Estado | Evidência |
 |---|---|---|
-| fontes oficiais / provider comparison | PASS | ADR-009 + links oficiais |
+| fontes/provider comparison | PASS | ADR-009 + fontes oficiais |
 | decisão arquitetural | PASS | ADR-009 Accepted |
-| boundary server-only | PASS | código + 5 testes de contrato |
-| secrets fora do browser/Git | PASS | `.env.example` comentado + testes |
-| idempotência | PASS | header obrigatório + contrato 1–256 chars |
+| boundary server-only | PASS | código + 5 testes |
+| secrets fora do browser/Git | PASS | `.env.example` + testes |
+| idempotência | PASS | header + contrato 1–256 |
 | falhas recuperáveis/sanitizadas | PASS | boundary + testes |
-| invariantes de convite | PASS por arquitetura/contrato | módulo sem acesso ao banco |
-| CI aplicação | PASS | run 33786184072 |
-| PostgreSQL 18 / verify:db | PASS | run 33786184072; sem migration nova |
-| Neon-specific SMTP customizado | MANUAL_ACTION_REQUIRED | credencial/domínio externos ausentes |
-| envio Resend live | MANUAL_ACTION_REQUIRED | conta/secret/remetente externos ausentes |
-| browser real | SKIPPED | Story não cria superfície funcional |
-| Production Neon | SKIPPED/NON-GOAL | não provisionada |
+| invariante de convite | PASS por arquitetura | módulo sem banco |
+| CI técnico | PASS | 33786184072 |
+| PostgreSQL 18 / verify:db | PASS | 33786184072 |
+| branch Neon isolada criada | PASS | `verify-us-auth-004` ready, Auth herdado |
+| SMTP Resend isolado | MANUAL_ACTION_REQUIRED | credencial/domínio externos ausentes |
+| envio live | MANUAL_ACTION_REQUIRED | conta/secret/remetente externos ausentes |
+| promoção SMTP baseline | PENDING | somente após PASS isolado |
+| CI final do head | PENDING | depois da reconciliação/gate aplicável |
+| browser real | SKIPPED | sem superfície funcional |
+| Production Neon | SKIPPED/NON-GOAL | inexistente |
 | deployment Vercel | SKIPPED/PROIBIDO | ADR-007 |
 
 ## 7. Ação manual necessária
 
-A Story não deve ser marcada como concluída nem a PR #50 mergeada apenas com simulação.
+Não marcar a Story como concluída nem mergear #50 por simulação.
 
-Fora do Git/chat, o usuário deve:
+Fora do Git/chat:
 
 1. criar/usar conta Resend non-production;
-2. verificar domínio/subdomínio apropriado com SPF/DKIM;
-3. criar chave `sending_access`, preferencialmente restrita ao domínio;
-4. guardar a chave em secret store/local seguro;
-5. configurar SMTP customizado Resend no Neon Auth non-production diretamente no Console/superfície segura;
-6. manter `require_email_verification=false`;
-7. comunicar apenas que a configuração está pronta, sem colar chave ou senha.
+2. verificar domínio/subdomínio com SPF/DKIM;
+3. criar chave `sending_access`, preferencialmente limitada ao domínio;
+4. guardar a chave em local seguro;
+5. no Neon Console, selecionar **`verify-us-auth-004`**;
+6. configurar SMTP Resend somente nessa branch (`smtp.resend.com`, usuário `resend`, secret e remetente verificado);
+7. manter `require_email_verification=false`;
+8. executar teste de envio controlado;
+9. comunicar apenas que a configuração/teste passaram, sem colar chave, senha, connection string ou Auth URL.
 
-Depois, revalidar a configuração pelo conector com secrets redigidos e executar o teste live permitido. Se PASS, atualizar esta evidência, concluir #49/#50 e promover US-AUTH-005.
+Depois:
+
+- revalidar branch via conector com secrets redigidos;
+- confirmar baseline ainda em provider compartilhado;
+- registrar PASS isolado;
+- promover deliberadamente SMTP para baseline por superfície segura;
+- revalidar baseline;
+- obter autorização explícita antes de apagar `verify-us-auth-004`;
+- executar CI final/review/merge #50 e CI pós-merge;
+- somente então promover US-AUTH-005.
 
 ## 8. Não realizado deliberadamente
 
 - nenhum secret real gerado/versionado;
 - nenhuma conta Resend criada pela IA;
-- nenhum domínio/DNS alterado;
+- nenhum DNS alterado;
 - nenhum e-mail real enviado;
-- nenhum SMTP Neon alterado sem credencial segura;
-- nenhuma branch Neon descartável aberta sem necessidade;
+- nenhum SMTP Neon modificado sem secret seguro;
+- baseline Auth não foi usada como laboratório;
 - nenhum signup/login/OAuth;
 - nenhuma confirmação obrigatória habilitada;
 - nenhum deployment Vercel.
