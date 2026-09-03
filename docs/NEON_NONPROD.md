@@ -1,6 +1,6 @@
 # Neon Non-Production — Caleida
 
-**Status:** provisionado; Auth, autorização e entrada controlada integrados; SMTP customizado pendente  
+**Status:** provisionado; Auth, autorização e entrada controlada integrados; gate SMTP isolado preparado  
 **Data de referência:** 2026-09-03  
 **Projeto relacionado:** `docs/NEON_PLATFORM.md`  
 **Decisões:** `ADR-004`, `ADR-005`, `ADR-008`, `ADR-009`
@@ -17,7 +17,7 @@ Branch ID: br-restless-cherry-awpcwy6r
 Database default: neondb
 ```
 
-Os IDs acima não são credenciais. Senhas, connection strings, Auth URLs, SMTP passwords e API keys nunca são registradas aqui.
+IDs não são credenciais. Senhas, connection strings, Auth URLs, SMTP passwords e API keys nunca são registradas aqui.
 
 ## 2. Baseline `main`
 
@@ -42,7 +42,7 @@ dev/<task-id>
 Regras:
 
 - usar somente quando houver necessidade Neon-specific;
-- remover depois do gate quando autorizado se a ação for destrutiva;
+- remover depois do gate mediante autorização explícita quando `delete_branch` for a ação necessária;
 - não manter como ambiente permanente;
 - nunca usar Production como laboratório.
 
@@ -50,9 +50,10 @@ Estado atual:
 
 ```text
 main / br-restless-cherry-awpcwy6r / ready / default
+verify-us-auth-004 / br-plain-pond-aw5f59ia / ready / parent main
 ```
 
-Não existe branch descartável pendente.
+`verify-us-auth-004` é descartável e existe exclusivamente para o gate SMTP Neon-specific de US-AUTH-004.
 
 ## 4. Histórico de gates
 
@@ -70,11 +71,22 @@ Nenhuma branch Neon foi criada: a Story dependia somente de PostgreSQL portável
 
 ### US-AUTH-004
 
-Nenhuma branch Neon foi aberta até o momento.
+`verify-us-auth-004` foi criada em 03/09/2026 a partir de `main` porque SMTP do Neon Auth é comportamento específico do serviço.
 
-A configuração real de SMTP do Neon Auth depende de uma credencial Resend e remetente externos. Criar um branch apenas para existir um gate, antes desses secrets estarem disponíveis em superfície segura, não acrescentaria evidência.
+Confirmações imediatamente após a criação:
 
-Quando a configuração externa estiver pronta, reavaliar se o gate SMTP deve ocorrer em branch Auth isolada antes de qualquer alteração da baseline. Se for criada branch descartável, sua remoção voltará a exigir autorização explícita quando a ferramenta a classificar como destrutiva.
+```text
+Branch state: ready
+Auth provider: better_auth
+Email provider: shared Neon
+Require email verification: false
+```
+
+A configuração Auth foi herdada de forma isolada; a baseline não foi modificada. Nenhuma credencial Resend foi inserida pela IA.
+
+Próximo gate: o usuário configura SMTP Resend somente nessa branch, usando superfície segura do Neon/Resend, e executa um teste de envio controlado. Depois a IA revalida a configuração com secrets redigidos antes de qualquer promoção para `main`.
+
+A exclusão futura de `verify-us-auth-004` exige autorização explícita porque `delete_branch` é destrutivo.
 
 ## 5. Credenciais e tooling
 
@@ -89,7 +101,7 @@ Contrato atual:
 - `RESEND_API_KEY`, `CALEIDA_EMAIL_FROM`, `CALEIDA_EMAIL_FROM_NAME` — transporte de e-mail non-production;
 - `CALEIDA_BOOTSTRAP_OWNER_*` — bootstrap owner futuro.
 
-Todos os valores sensíveis permanecem fora do Git/chat/browser.
+Valores sensíveis permanecem fora do Git/chat/browser.
 
 ## 6. Estado integrado da baseline
 
@@ -131,7 +143,7 @@ caleida_audit.entry_events: 0
 
 ## 7. E-mail Auth atual
 
-Inspeção em 03/09/2026:
+Baseline e branch de verificação continuam, antes da ação manual, com:
 
 ```text
 Auth provider: Better Auth
@@ -139,9 +151,11 @@ Email provider: shared Neon
 Require email verification: false
 ```
 
-`ADR-009` escolheu Resend para non-production, mas a baseline ainda **não** foi alterada para SMTP customizado. O gate real exige credencial/domínio configurados fora do Git/chat.
+`ADR-009` escolheu Resend para non-production. O primeiro alvo de SMTP customizado é **somente** `verify-us-auth-004`, não `main`.
 
-Quando aplicado, o provider SMTP deve usar os campos suportados pelo Neon Auth (`host`, `port`, `username`, `password`, `sender_email`, `sender_name`) e permanecer com `require_email_verification=false` até US-AUTH-005.
+O provider SMTP deve usar os campos suportados pelo Neon Auth (`host`, `port`, `username`, `password`, `sender_email`, `sender_name`) e manter `require_email_verification=false` até US-AUTH-005.
+
+Depois de prova isolada em PASS, a promoção à baseline deve ser deliberada e revalidada. Nenhum secret deve passar pelo chat para permitir essa operação.
 
 ## 8. Deliberadamente ausente
 
@@ -151,9 +165,10 @@ Quando aplicado, o provider SMTP deve usar os campos suportados pelo Neon Auth (
 - Object Storage;
 - Production Neon;
 - SMTP Resend configurado na baseline;
+- confirmação obrigatória de e-mail;
 - OAuth customizado;
 - deployment Vercel executado por IA.
 
 ## 9. Production
 
-`caleida-production` não existe nesta fase. Production deve usar projeto, users, secrets, domínio/remetente e credencial de e-mail próprios, com revalidação de ADR-009 antes da operação real.
+`caleida-production` não existe nesta fase. Production deve usar projeto, usuários, secrets, domínio/remetente e credencial de e-mail próprios, com revalidação de ADR-009 antes da operação real.
