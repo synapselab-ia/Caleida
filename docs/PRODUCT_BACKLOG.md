@@ -2,7 +2,7 @@
 
 **Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-004 concluída  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`
+**Próxima ação operacional:** `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
 
 ## Convenções
 
@@ -17,110 +17,129 @@ Estados: `A FAZER`, `PRONTA`, `EM ANDAMENTO`, `EM REVISÃO`, `CONCLUÍDA`, `BLOQ
 **Estado:** CONCLUÍDO  
 **Evidência:** `docs/INCREMENT_0_VALIDATION.md`
 
-- US-PLAT-001 a US-PLAT-010: **CONCLUÍDAS**.
-- Resultado: aplicação executável, documentação recuperável, Neon non-production, migrations/testes, CI sem CD, ambientes separados e Vercel preparado somente para release manual.
+## EPIC-00 — Fundação técnica
+
+- `US-PLAT-001` — aplicação Next.js executável — **CONCLUÍDA**;
+- `US-PLAT-002` — estrutura documental — **CONCLUÍDA**;
+- `US-PLAT-003` — ambiente local reproduzível — **CONCLUÍDA**;
+- `US-PLAT-004` — fundação Neon non-production — **CONCLUÍDA**;
+- `US-PLAT-005` — migrations/testes/RLS e ADR-008 — **CONCLUÍDA**;
+- `US-PLAT-006` — validações `verify`/`verify:db` — **CONCLUÍDA**;
+- `US-PLAT-007` — CI permanente sem CD — **CONCLUÍDA**;
+- `US-PLAT-008` — hosting Vercel preparado para release manual — **CONCLUÍDA**;
+- `US-PLAT-009` — ambientes/variáveis separados — **CONCLUÍDA**;
+- `US-PLAT-010` — ciclo Issue → branch → CI → PR → review → merge — **CONCLUÍDA**.
+
+Deployment real não é gate técnico. Vercel permanece exclusivamente humana/manual.
+
+---
 
 # Incremento 1 — Fundação visual
 
 **Estado:** CONCLUÍDO  
+**Plano:** `docs/INCREMENT_1_PLAN.md`  
 **Evidência:** `docs/INCREMENT_1_VALIDATION.md`
 
-- `US-DS-001` — tokens/temas — **CONCLUÍDA** (#33/#34);
-- `US-DS-002` — tipografia/marca — **CONCLUÍDA** (#35/#36);
-- `US-DS-003` — primitivos acessíveis — **CONCLUÍDA** (#37/#38);
-- `US-DS-004` — fundação responsiva — **CONCLUÍDA** (#39/#40).
+## EPIC-01 — Identidade e design system
+
+- `US-DS-001` — tokens/temas — **CONCLUÍDA** (#33 / #34);
+- `US-DS-002` — tipografia/marca — **CONCLUÍDA** (#35 / #36);
+- `US-DS-003` — primitivos acessíveis — **CONCLUÍDA** (#37 / #38);
+- `US-DS-004` — fundação responsiva aplicada — **CONCLUÍDA** (#39 / #40).
 
 ---
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
 **Plano:** `docs/INCREMENT_2_PLAN.md`  
-**Refino:** OPS-006 / #41 / #42
+**Refino:** OPS-006 / Issue #41 / PR #42
 
 ## Objetivo
 
-Entregar contas e acesso seguro para o beta fechado separando Auth, autorização, entrada controlada, e-mail, cadastro, login/sessão e auditoria em unidades verificáveis.
+Entregar contas e acesso seguro para o beta fechado de forma incremental, separando Auth gerenciado, autorização/papéis, entrada controlada, e-mail, cadastro, login/sessão e auditoria.
 
-### US-AUTH-001 — Fundação Neon Auth e sessão
+### US-AUTH-001 — Materializar fundação Neon Auth isolada e contrato de sessão
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Issue/PR:** #43/#44
+- **Issue:** #43
+- **PR:** #44
 - **Capacidade:** CAP-01
-- **Resultado:** Managed Better Auth + boundary server-only/fail-closed.
+- **Resultado:** SDK Neon Auth pinado, boundary server-only/lazy/fail-closed e Managed Better Auth promovido à baseline depois dos gates; nenhum usuário/Data API/Production/deployment criado.
 - **Evidência:** `docs/US_AUTH_001_VERIFICATION.md`.
 
-### US-AUTH-002 — Papéis, autorização e bootstrap
+### US-AUTH-002 — Materializar papéis, autorização e bootstrap administrativo
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Issue/PR:** #45/#46
+- **Issue:** #45
+- **PR:** #46
 - **Capacidades:** CAP-04, CAP-35
-- **Resultado:** cinco papéis Caleida, autorização crítica no servidor/banco, auditoria e bootstrap owner controlado.
+- **Resultado:** cinco papéis Caleida separados do Admin Better Auth; autorização crítica server-side + banco; auditoria mínima; bootstrap owner controlado; migrations `000001/000002` promovidas à baseline.
 - **Evidência:** `docs/US_AUTH_002_VERIFICATION.md`.
+- **Operação:** `verify-us-auth-002` foi removida em 03/09/2026 após autorização explícita do usuário.
 
-### US-AUTH-003 — Convites, solicitações e auditoria de entrada
+### US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA
-- **Issue/PR:** #47/#48
+- **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO
+- **Issue:** #47
+- **PR:** #48
 - **Capacidades:** CAP-02, CAP-35
-- **Resultado:** migration `000003`; digest-only de convite, capacidade/validade/destinatário, solicitações, auditoria e concorrência serializada.
-- **CI pós-merge:** `33773379852` — PASS.
+- **Resultado:** migration `000003_entry_control.sql`; convites únicos/reutilizáveis com validade, destinatário e limite; digest-only do token; solicitações com decisão/arquivamento; auditoria compacta; consumo concorrente serializado; migration promovida à baseline sem dados sintéticos.
+- **Verificação:** CI técnico `33771989432` em PASS, incluindo PostgreSQL 18 e duas sessões concorrentes disputando convite de uso único.
+- **Neon-specific:** `SKIPPED` corretamente, pois a Story usa somente PostgreSQL portável e não consulta `neon_auth`/Data API.
 - **Evidência:** `docs/US_AUTH_003_VERIFICATION.md`.
 - **Contrato:** `docs/ENTRY_CONTROL.md`.
 
-### US-AUTH-004 — E-mail Auth non-production
+### US-AUTH-004 — Validar e-mail Auth non-production
 
 - **Prioridade:** P0
 - **Estado:** CONCLUÍDA
-- **Issue/PR:** #49/#50
+- **Issue:** #49
+- **PR:** #50
 - **Capacidade:** CAP-01
-- **Decisão:** `ADR-009 — e-mail compartilhado do Neon Auth em non-production`
-- **Contrato:** `docs/EMAIL_TRANSPORT.md`
-- **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`
+- **Decisão:** `ADR-009 — E-mail compartilhado do Neon Auth em non-production`.
+- **Resultado:** readback confirmou Better Auth com email/password habilitado, `email_provider.type=shared` e `require_email_verification=false` na baseline; o provider compartilhado atende desenvolvimento/beta fechado inicial; SMTP/provedor externo foi adiado até existir requisito material.
+- **Escopo corrigido:** adapter, testes, variáveis Resend, domínio próprio e SMTP customizado preparados inicialmente foram removidos antes do merge; nenhuma migration ou secret de e-mail foi introduzido.
+- **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`.
+- **Contrato:** `docs/EMAIL_TRANSPORT.md`.
+- **Housekeeping:** `verify-us-auth-004 / br-plain-pond-aw5f59ia` não contém SMTP externo; exclusão futura exige autorização explícita e não bloqueia a próxima Story.
 
-**Resultado:**
-
-- readback confirmou `email_provider.type=shared` na baseline Neon;
-- email/password está habilitado;
-- `require_email_verification=false` permanece até o gate seguro de US-AUTH-005;
-- Resend/SMTP/domínio próprio foram retirados do escopo por não existir requisito material nesta fase;
-- nenhum adapter, secret, variável externa ou migration de e-mail foi introduzido;
-- provedor externo ficou adiado para quando domínio, volume, branding, entregabilidade ou Production realmente exigirem.
-
-A branch Neon `verify-us-auth-004` criada durante a investigação não contém SMTP externo e tornou-se housekeeping não bloqueante; sua exclusão futura exige autorização explícita.
-
-### US-AUTH-005 — Cadastro controlado por convite ou aprovação
+### US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação
 
 - **Prioridade:** P0
 - **Estado:** PRONTA
 - **Capacidades:** CAP-01, CAP-02
-- **Dependências:** US-AUTH-002/003/004 concluídas.
-- **Resultado esperado:** signup sem autorização negado fora da UI; confirmação de e-mail integrada sem substituir o gate de entrada; vínculo/consumo seguro da entrada.
+- **Resultado esperado:** signup direto sem autorização de entrada negado inclusive fora da UI; confirmação de e-mail e consumo/vínculo seguro do mecanismo de entrada.
 
-### US-AUTH-006 — Login, logout e proteção de sessão
+### US-AUTH-006 — Implementar login, logout e proteção de sessão
 
 - **Prioridade:** P0
 - **Estado:** A FAZER
 - **Capacidade:** CAP-01
+- **Resultado esperado:** login/logout e superfícies privadas protegidas por validação server-side, com estados acessíveis e sem flash de conteúdo privado.
 
-### US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões
+### US-AUTH-007 — Implementar recuperação de senha e gestão/revogação de sessões
 
 - **Prioridade:** P0
 - **Estado:** A FAZER
 - **Capacidades:** CAP-01, CAP-35
+- **Resultado esperado:** recuperação/alteração de senha e sessões consultáveis/revogáveis com semântica de cache explicitamente testada.
 
 ### US-AUTH-008 — Consolidar auditoria e validar Incremento 2
 
 - **Prioridade:** P1
 - **Estado:** A FAZER
 - **Capacidades:** CAP-04, CAP-35
+- **Resultado esperado:** matriz adversarial integrada, auditoria sem secrets e evidência de encerramento do incremento.
 
 ## Regra de execução
 
-Não antecipar Stories seguintes. Mudança persistente usa migration + PostgreSQL 18; dependência real de Neon usa gate isolado conforme ADR-008. Secrets nunca entram no Git/chat e deployment Vercel nunca é executado pela IA.
+Não antecipar Stories seguintes. Cada mudança persistente usa migration versionada e PostgreSQL 18; qualquer dependência real de Neon Auth/Data API exige também gate Neon-specific conforme `ADR-008`.
 
 # Próxima ação operacional
 
-> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`.
+> `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
+
+Não antecipar login/Production ou deployment Vercel dentro da Story.
