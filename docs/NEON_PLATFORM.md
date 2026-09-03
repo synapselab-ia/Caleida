@@ -1,76 +1,64 @@
 # Neon Platform — Caleida
 
-**Status:** arquitetura canônica de plataforma após US-AUTH-002  
-**Decisões relacionadas:** `ADR-005` e `ADR-008`  
+**Status:** arquitetura canônica de plataforma após US-AUTH-003  
+**Decisões relacionadas:** `ADR-004`, `ADR-005` e `ADR-008`  
 **Project Design:** `PROJECT_DESIGN.md` + `PROJECT_DESIGN_PLATFORM_AMENDMENT.md`
 
 ## 1. Escopo
 
-Este documento define como o Caleida utilizará Neon para banco, identidade, API de dados, RLS e ambientes. Recursos remotos existentes são registrados em `NEON_NONPROD.md`; schema persistente de produto pertence às migrations versionadas no Git. Schemas gerenciados pelo serviço, como `neon_auth`, pertencem à integração Neon Auth e não substituem migrations de produto.
+Este documento define como o Caleida usa Neon para Postgres e identidade e como separa SQL PostgreSQL portável de comportamento específico do serviço. O inventário remoto fica em `docs/NEON_NONPROD.md`; schema persistente de produto pertence às migrations versionadas no Git.
 
-## 2. Topologia planejada
+## 2. Topologia
 
 ```text
-GitHub
-  ↓
 Next.js
-  ├── browser / user session
-  │     ↓
-  │  Neon Auth
-  │     ↓ JWT
-  │  Neon Data API
-  │     ↓
-  │  PostgreSQL RLS
-  │     ↓
-  │  Neon Postgres
+  ├── Neon Auth / sessão
   │
-  └── server trusted operations
+  ├── operações server-side confiáveis
+  │     ↓
+  │   Postgres direto com least privilege
+  │
+  └── futuro browser/user data path
         ↓
-      direct Postgres connection
-      (server-only, least privilege)
+      Neon Data API + JWT
+        ↓
+      PostgreSQL RLS
 
 Storage de objetos: provider separado, ainda não escolhido
 ```
+
+A Data API permanece futura e não é habilitada apenas por conveniência.
 
 ## 3. Projetos e branches
 
 ### Non-production
 
-O projeto dedicado existe desde `US-PLAT-004`:
-
 ```text
 caleida-nonprod
-  └── main                  ← baseline canônica non-production/staging
-      ├── verify/<task-id>  ← temporária, quando necessária
-      └── dev/<task-id>     ← temporária, quando necessária
+  └── main                  ← baseline integrada
+      ├── verify/<task-id>  ← temporária quando necessária
+      └── dev/<task-id>     ← temporária quando necessária
 ```
 
 O branch Neon `main` não é a branch Git `main`.
 
-A baseline `main` foi adotada como estado integrado de non-production porque é o branch default criado pelo Neon. Um branch adicional chamado `staging` não é necessário apenas para duplicar a mesma função.
+Branches temporárias:
 
-Branches temporárias devem ser curtas, resetáveis e removidas ao fim da tarefa. Alterações Neon-specific e verificações destrutivas que realmente dependam do serviço não devem ser experimentadas diretamente na baseline.
+- existem somente quando um gate Neon-specific realmente exige isolamento;
+- são derivadas da baseline apropriada;
+- não se tornam ambientes permanentes;
+- não autorizam experimentação destrutiva na baseline;
+- são removidas depois da tarefa mediante autorização explícita quando a ferramenta classificar a exclusão como destrutiva.
 
-O estado remoto e os IDs não sensíveis são registrados em `docs/NEON_NONPROD.md`.
+Após US-AUTH-003 não existe branch Neon descartável pendente.
 
 ### Production
 
-Projeto Neon separado, ainda não provisionado nesta fase:
-
-```text
-caleida-production
-  └── production
-```
-
-Production não serve como ambiente de teste destrutivo.
-
-A separação por projeto é intencional para reduzir blast radius e impedir mistura acidental de secrets, usuários e dados reais com homologação.
+`caleida-production` ainda não foi provisionado. Production será projeto separado e nunca serve como laboratório.
 
 ## 4. Migrations e verificação
 
-Schema de produto é propriedade do Git e segue `ADR-004`. O ambiente de verificação segue `ADR-008`.
-
-Layout canônico:
+Schema de produto segue `ADR-004`; verificação segue `ADR-008`.
 
 ```text
 database/
@@ -79,240 +67,189 @@ database/
   tests/
 ```
 
-Cada alteração persistente de produto deve poder ser reconstruída a partir da sequência de migrations.
+### PostgreSQL 18 descartável — gate primário
 
-### Gate primário — PostgreSQL 18 descartável
-
-Para SQL, constraints e RLS que dependam apenas de comportamento PostgreSQL portável:
+Obrigatório para SQL/constraints/RLS portáveis:
 
 ```text
-migration no Git
+migration versionada
   ↓
-PostgreSQL 18 descartável
+PostgreSQL 18 limpo
   ↓
-aplicar migrations desde banco limpo
+aplicar migrations
   ↓
-testes de banco/RLS aplicáveis
-  ↓
-reconstrução/segunda aplicação quando necessário
+testes SQL/concorrência aplicáveis
   ↓
 review
 ```
 
-Esse gate não exige credencial Neon e não depende do plano de controle de branching do provedor.
+### Gate Neon-specific — somente quando aplicável
 
-### Gate adicional — Neon
+Exige branch Neon isolada quando a mudança depender de:
 
-Branch Neon descartável continua necessária quando a mudança depender de comportamento específico do Neon, como:
+- Neon Auth/schema/helper/role gerenciado;
+- Data API;
+- `neon_superuser` ou permissões específicas;
+- extensão específica do serviço;
+- branching/compute/pooling/conexão Neon;
+- outra diferença documentada contra PostgreSQL standalone.
 
-- papéis/permissões gerenciados pelo Neon;
-- `neon_superuser`;
-- extensões cujo suporte seja específico do serviço;
-- Neon Auth, Data API, schemas/helpers gerenciados;
-- comportamento de branching, compute, pooling ou conexão específico do Neon;
-- outras diferenças documentadas entre Neon e PostgreSQL standalone.
+A baseline nunca substitui esse ambiente de verificação.
 
-Fluxo adicional quando aplicável:
+### US-AUTH-003 como exemplo de `SKIPPED` correto
 
-```text
-gates PostgreSQL portáveis em PASS
-  ↓
-branch Neon verify/<task-id>
-  ↓
-verificação Neon-specific
-  ↓
-review
-  ↓
-promoção deliberada para baseline non-production
-```
+`000003_entry_control.sql` usa somente PostgreSQL portável e UUIDs opacos. Não consulta `neon_auth`, não usa helper/role gerenciado e não habilita Data API. Portanto:
 
-Se branching Neon estiver indisponível, somente a mudança que **necessita** desse gate adicional fica `BLOCKED`. A baseline `main` não é usada como laboratório para contornar indisponibilidade do serviço.
-
-A versão major do PostgreSQL descartável deve acompanhar a versão major do projeto Neon. Em `US-AUTH-002`, ambos permanecem PostgreSQL 18.
-
-Não introduzir ORM apenas para administrar migrations.
+- PostgreSQL 18: obrigatório e `PASS`;
+- concorrência real com duas sessões PostgreSQL: `PASS`;
+- Neon-specific: `SKIPPED`;
+- nenhuma branch Neon foi criada apenas para duplicar o gate portável.
 
 ## 5. Neon Auth e autorização de produto
 
-Neon Auth é a solução inicial de identidade e está habilitado na baseline non-production desde `US-AUTH-001`.
-
-Características relevantes para o Caleida:
-
-- baseado em Better Auth e operado como serviço gerenciado;
-- dados de identidade e sessão no schema gerenciado `neon_auth`;
-- Auth acompanha branches do banco;
-- cada branch possui endpoint de Auth isolado;
-- integração futura com Data API por JWT;
-- SDK e configuração devem ser lidos da documentação oficial corrente durante implementação.
-
-A fundação versionada usa o SDK oficial `@neondatabase/auth` e uma fronteira server-only no Next.js. O endpoint Auth e o cookie secret reais permanecem fora do Git.
-
-A partir de `US-AUTH-002`, autorização de produto é deliberadamente separada do papel Admin do Better Auth:
+Managed Better Auth é a identidade canônica desde US-AUTH-001.
 
 - identidade canônica: UUID de `neon_auth.user.id`;
-- papéis de produto: `proprietário`, `administrador`, `moderador`, `curador`, `usuário`;
-- persistência: `caleida_auth.user_roles`;
-- auditoria de mudança de papel: `caleida_audit.role_changes`;
-- nenhuma senha, e-mail, token ou cookie é duplicado no schema de autorização;
-- a autorização crítica existe no servidor e no banco, não apenas na interface.
+- dados/sessão gerenciados permanecem em `neon_auth`;
+- cada branch Auth possui endpoint isolado;
+- endpoint real e cookie secret ficam fora do Git.
 
-`neon_auth.user.role` permanece sob semântica do plugin Admin do Better Auth e não é automaticamente mapeado para o papel `administrador` do Caleida.
+Desde US-AUTH-002, papéis de produto são independentes do Admin Better Auth:
 
-Não existe foreign key estrutural para o schema gerenciado; operações privilegiadas validam a identidade gerenciada quando esse diretório está presente. Isso preserva o gate PostgreSQL portável sem transformar detalhes internos do provedor em schema canônico do produto.
+```text
+proprietário
+administrador
+moderador
+curador
+usuário
+```
 
-## 6. Neon Data API
+Persistência:
 
-A Data API é o caminho preferencial para operações normais sob contexto do usuário quando acesso direto ao banco a partir da aplicação não for necessário.
+- `caleida_auth.user_roles`;
+- `caleida_audit.role_changes`.
 
-Ela continua **não habilitada** após `US-AUTH-002`, porque a Story não expõe CRUD user-scoped nem endpoint de produto que justifique essa superfície.
+Nenhuma senha/token/cookie é duplicada. O papel Admin do Better Auth não é automaticamente convertido em `administrador` Caleida.
 
-Guardrails quando for adotada:
+## 6. Entrada controlada
 
-- RLS obrigatória em tabelas privadas expostas;
-- JWT deve representar a sessão real do usuário;
-- `authenticated` é apenas papel de autenticação, não ownership;
-- políticas devem comparar identidade com ownership/visibilidade real;
-- o helper de identidade deve seguir a API oficial vigente;
-- `anonymous` recebe somente acesso explicitamente público;
-- grants e RLS são controles separados e ambos devem ser considerados.
+US-AUTH-003 adiciona a fundação persistente do beta fechado:
 
-Políticas dependentes de identidade/roles específicos de Neon Auth/Data API exigem o gate Neon adicional definido no `ADR-008`.
+- `caleida_access.invitations`;
+- `caleida_access.invitation_uses`;
+- `caleida_access.access_requests`;
+- `caleida_audit.entry_events`.
 
-## 7. Conexão direta ao Postgres
+Características:
 
-Permitida apenas em contextos server-side confiáveis, como:
+- token de convite persistido somente como digest;
+- convite único ou reutilizável com capacidade explícita;
+- validade e destinatário opcional;
+- consumo serializado no PostgreSQL com row lock;
+- solicitação de acesso com decisão/arquivamento auditáveis;
+- futuro vínculo à conta modelado sem criar identidade antecipadamente;
+- acesso público revogado por padrão.
+
+Contrato detalhado: `docs/ENTRY_CONTROL.md`.
+
+Essas tabelas não são expostas à Data API e nenhuma RLS foi fabricada sem uma superfície runtime real.
+
+## 7. Neon Data API
+
+Permanece não provisionada após US-AUTH-003.
+
+Quando for realmente necessária:
+
+- tabelas privadas expostas exigem RLS;
+- JWT deve representar sessão real;
+- `authenticated` não significa ownership;
+- grants e RLS são controles diferentes;
+- helpers de identidade devem seguir documentação oficial corrente;
+- políticas acopladas a identidade Neon exigem gate Neon-specific.
+
+## 8. Conexão direta ao Postgres
+
+Permitida somente server-side em contextos confiáveis, como:
 
 - migrations;
 - manutenção;
-- jobs administrativos explícitos;
-- operações que não devam passar pela Data API e tenham autorização própria comprovada.
+- bootstrap administrativo explícito;
+- operações privilegiadas com autorização própria.
 
 Regras:
 
 - connection string é secret;
-- nunca usar credencial privilegiada no browser;
-- não usar owner/BYPASSRLS para CRUD comum;
-- testes de autorização devem usar papéis equivalentes aos usuários reais.
+- credencial privilegiada nunca vai para browser;
+- owner/BYPASSRLS não substitui autorização do usuário;
+- runtime futuro recebe somente least privilege necessário.
 
-`DATABASE_URL_UNPOOLED` é o contrato do tooling para uma conexão PostgreSQL direta, seja no banco efêmero de testes ou no Neon quando aplicável. `DATABASE_URL` permanece reservado ao runtime server-side pooled futuro.
+`DATABASE_URL_UNPOOLED` é o contrato do tooling. `DATABASE_URL` permanece reservado ao runtime pooled futuro.
 
-O bootstrap inicial de proprietário introduzido em `US-AUTH-002` é uma operação server-only explícita. Ele aceita somente UUID de uma identidade Neon Auth já existente, exige motivo auditável e confirmação separada e não cria conta.
+## 9. RLS
 
-## 8. RLS
+RLS faz parte da arquitetura quando dados privados forem expostos sob contexto de usuário.
 
-RLS faz parte do contrato do produto.
+Testes futuros devem cobrir owner/non-owner, ID válido de terceiro, ownership forjado, anônimo, transferência indevida e papel administrativo não inferido por dados editáveis.
 
-Testes mínimos futuros para tabelas user-scoped:
+US-AUTH-002 e US-AUTH-003 mantiveram suas tabelas privadas com grants públicos revogados e sem Data API; portanto não criaram políticas RLS artificiais.
 
-- owner consegue operação permitida;
-- non-owner com ID válido falha;
-- payload com ownership forjado falha;
-- tentativa de transferência de ownership falha;
-- anônimo falha em dados privados;
-- políticas públicas concedem somente o que o Project Design permite;
-- papel administrativo não é inferido por dados editáveis pelo usuário.
-
-RLS puramente PostgreSQL pode ser provada no gate efêmero. RLS acoplada a Neon Auth/Data API também exige gate Neon-specific.
-
-As tabelas de autorização/auditoria de `US-AUTH-002` não foram expostas à Data API e possuem grants públicos revogados; não foi fabricada RLS sem uma superfície de runtime que a exigisse.
-
-## 9. Storage
-
-Object Storage não faz parte da plataforma canônica nesta fase conforme `ADR-006`.
-
-A decisão futura deve verificar novamente maturidade, regiões, pricing, lifecycle, backup, privacidade, integração com Auth/RLS e compatibilidade S3 do provedor considerado.
-
-Até essa decisão, o domínio de arquivos deve permanecer desacoplado do banco e do provedor.
-
-## 10. Backups e recuperação
-
-Branching e time travel não substituem a estratégia de backup do produto.
-
-Antes do beta, uma Story própria deve definir:
-
-- retenção exigida;
-- dump lógico e/ou mecanismo gerenciado;
-- recuperação de banco;
-- recuperação do futuro Storage;
-- teste periódico de restore;
-- RPO/RTO compatíveis com a fase.
-
-## 11. Secrets e ambientes
+## 10. Secrets e ambientes
 
 Nunca versionar:
 
 - `DATABASE_URL`;
 - `DATABASE_URL_UNPOOLED`;
 - Neon API keys;
-- Auth URLs reais quando classificadas como configuração de ambiente;
+- Auth URLs reais;
 - `NEON_AUTH_COOKIE_SECRET`;
 - OAuth client secrets;
-- credenciais de Storage futuro.
+- futuros secrets de e-mail/Storage.
 
-Arquivos `.env.example` documentam somente nomes/finalidade e placeholders seguros.
+`.env.example` documenta somente nomes e placeholders seguros.
 
-## 12. Estado histórico de OPS-002
+## 11. Estado integrado da baseline
 
-OPS-002 foi somente decisão e reconciliação documental.
+`caleida-nonprod/main` possui atualmente:
 
-Naquela tarefa:
+```text
+Managed Better Auth
+000001_migration_ledger.sql
+000002_product_authorization.sql
+000003_entry_control.sql
+```
 
-- nenhum projeto Neon do Caleida foi criado;
-- nenhum Auth/Data API foi provisionado;
-- nenhuma migration foi criada;
-- nenhum schema foi aplicado;
-- nenhum secret foi gerado;
-- nenhum deployment ocorreu.
+A sequência representa:
 
-## 13. Estado após US-PLAT-004
+1. ledger de migrations;
+2. autorização de produto e auditoria de papel;
+3. entrada controlada e auditoria de convites/solicitações.
 
-A infraestrutura mínima non-production passou a existir:
+Estado de dados confirmado após US-AUTH-003:
 
-- projeto `caleida-nonprod` provisionado;
-- PostgreSQL 18 em `aws-us-east-1`;
-- branch default `main` adotada como baseline non-production/staging;
-- nenhum schema de produto aplicado;
-- naquele momento nenhum Neon Auth/Data API/Storage estava provisionado;
-- Production continuava não provisionada;
-- detalhes operacionais em `docs/NEON_NONPROD.md`.
+```text
+Auth users: 0
+Product roles: 0
+Role changes: 0
+Invitations: 0
+Invitation uses: 0
+Access requests: 0
+Entry events: 0
+```
 
-## 14. Estado após US-PLAT-005
+Nenhum fixture foi promovido.
 
-A fundação versionada de migrations/testes usa SQL + Node + `psql` e separa:
+## 12. Histórico de evolução
 
-- gate primário reproduzível em PostgreSQL 18 descartável;
-- gate adicional Neon quando houver dependência real do serviço.
+- `US-PLAT-004`: criou `caleida-nonprod` / PostgreSQL 18 / baseline `main`.
+- `US-PLAT-005`: criou o sistema de migrations/testes e formalizou ADR-008.
+- `US-AUTH-001`: provou e promoveu Managed Better Auth.
+- `US-AUTH-002`: provou autorização ligada à identidade Neon em branch isolada; promoveu `000001/000002`; branch de verificação posteriormente removida com autorização explícita.
+- `US-AUTH-003`: provou `000003` em PostgreSQL 18, incluindo concorrência real; gate Neon-specific corretamente `SKIPPED`; promoveu somente schema, sem dados.
 
-Essa separação evita transformar indisponibilidade do conector de branching em bloqueio para SQL PostgreSQL portável, sem reduzir os gates de compatibilidade quando Neon-specific.
+## 13. Storage, backup e Production
 
-## 15. Estado após US-AUTH-001
+Object Storage continua fora da plataforma canônica nesta fase conforme ADR-006.
 
-A identidade gerenciada passou a existir em non-production com promoção deliberada depois de verificação isolada:
+Antes do beta, estratégia de backup/restore deve definir retenção, RPO/RTO e teste de recuperação. Branching/time travel não substituem backup.
 
-- branch descartável `verify-us-auth-001` comprovou branching, compute e Neon Auth Better Auth sem alterar a baseline durante experimentação;
-- a baseline `main` recebeu Neon Auth somente após `npm run verify`, PostgreSQL 18/`verify:db` e gate Neon-specific em PASS;
-- o schema `neon_auth` é gerenciado pelo Neon e não é uma migration de produto;
-- nenhum usuário do Caleida foi criado;
-- Data API continuou não habilitada para o produto;
-- Production Neon continuou inexistente;
-- nenhuma publicação Vercel ocorreu.
-
-A integração da aplicação e a semântica de sessão estão documentadas em `docs/AUTH_FOUNDATION.md`.
-
-## 16. Estado após US-AUTH-002
-
-A fundação de autorização de produto foi materializada e promovida somente depois dos gates aplicáveis:
-
-- `verify-us-auth-001` foi removida após autorização explícita;
-- `verify-us-auth-002` foi criada a partir da baseline e herdou Better Auth branch-scoped;
-- `000002_product_authorization.sql` foi provada no Neon com identidades sintéticas apenas na branch descartável;
-- autopromoção e elevação administrativa indevida foram negadas;
-- bootstrap inicial e idempotência foram provados sem criar usuário real na baseline;
-- CI corrigido `33766333312` passou aplicação + PostgreSQL 18 + `verify:db`;
-- a baseline recebeu `000001_migration_ledger.sql` e `000002_product_authorization.sql` em ordem, com os mesmos checksums validados pelo runner;
-- a baseline continua com zero usuários Auth, zero papéis de produto e zero eventos de mudança de papel;
-- Data API continua não provisionada;
-- Production Neon continua inexistente;
-- nenhum deployment Vercel ocorreu.
-
-A semântica detalhada está em `docs/AUTHORIZATION.md` e a evidência em `docs/US_AUTH_002_VERIFICATION.md`.
+Production Neon permanece inexistente e deverá ser projeto separado. Nenhum deployment Vercel foi executado por IA.
