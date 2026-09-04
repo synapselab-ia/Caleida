@@ -8,7 +8,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
 const migration = read("database/migrations/000003_entry_control.sql");
 const sqlTest = read("database/tests/000004_entry_control.sql");
-const concurrencyTest = read("database/tests/000005_invitation_concurrency.mjs");
+const concurrencyTest = read("database/tests/000006_invitation_concurrency.mjs");
 const databaseRunner = read("database/scripts/test.mjs");
 
 test("entry control models canonical invitation and request states", () => {
