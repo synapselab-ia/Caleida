@@ -35,13 +35,13 @@ function validateEmail(value: string) {
     value.length >= 3 &&
     value.length <= 320 &&
     !/\s/.test(value) &&
-    value.indexOf('@') > 0 &&
-    value.split('@')[1]?.includes('.')
+    value.indexOf("@") > 0 &&
+    value.split("@")[1]?.includes(".")
   );
 }
 
 function tokenDigest(token: string) {
-  return createHash('sha256').update(token, 'utf8').digest('hex');
+  return createHash("sha256").update(token, "utf8").digest("hex");
 }
 
 function readRateLimitSecret(environment: NodeJS.ProcessEnv = process.env) {
@@ -54,18 +54,12 @@ function readRateLimitSecret(environment: NodeJS.ProcessEnv = process.env) {
   return secret;
 }
 
-function rateLimitDigest(
-  email: string,
-  inviteDigest: string,
-  requesterAddress: string,
-) {
-  return createHmac('sha256', readRateLimitSecret())
-    .update(email, 'utf8')
-    .update('\0')
-    .update(inviteDigest, 'ascii')
-    .update('\0')
-    .update(requesterAddress, 'utf8')
-    .digest('hex');
+function rateLimitDigest(inviteDigest: string, requesterAddress: string) {
+  return createHmac("sha256", readRateLimitSecret())
+    .update(inviteDigest, "ascii")
+    .update("\0")
+    .update(requesterAddress, "utf8")
+    .digest("hex");
 }
 
 type RateLimitRow = {
@@ -92,7 +86,7 @@ type FinalizationRow = {
 };
 
 function postgresBoolean(value: string | null) {
-  return value === 't' || value === 'true';
+  return value === "t" || value === "true";
 }
 
 export async function claimInvitationForSignup(input: {
@@ -101,10 +95,10 @@ export async function claimInvitationForSignup(input: {
   requesterAddress: string;
 }) {
   if (
-    typeof input.token !== 'string' ||
+    typeof input.token !== "string" ||
     input.token.length < 16 ||
     input.token.length > 512 ||
-    typeof input.email !== 'string'
+    typeof input.email !== "string"
   ) {
     throw new SignupInputError();
   }
@@ -114,7 +108,6 @@ export async function claimInvitationForSignup(input: {
 
   const inviteDigest = tokenDigest(input.token);
   const limiterDigest = rateLimitDigest(
-    email,
     inviteDigest,
     input.requesterAddress.slice(0, 256),
   );
@@ -126,7 +119,9 @@ export async function claimInvitationForSignup(input: {
   );
 
   if (!rateLimit || !postgresBoolean(rateLimit.allowed)) {
-    const retryAfter = Number(rateLimit?.retry_after_seconds ?? CLAIM_WINDOW_SECONDS);
+    const retryAfter = Number(
+      rateLimit?.retry_after_seconds ?? CLAIM_WINDOW_SECONDS,
+    );
     throw new SignupRateLimitedError(
       Number.isFinite(retryAfter) && retryAfter > 0
         ? Math.ceil(retryAfter)
@@ -163,7 +158,7 @@ export async function authorizeNeonSignup(input: {
 
   return {
     allowed: Boolean(authorization && postgresBoolean(authorization.allowed)),
-    reasonCode: authorization?.reason_code ?? 'entry_not_authorized',
+    reasonCode: authorization?.reason_code ?? "entry_not_authorized",
   };
 }
 
@@ -180,6 +175,6 @@ export async function finalizeNeonSignup(input: {
 
   return {
     linked: Boolean(finalization && postgresBoolean(finalization.linked)),
-    reasonCode: finalization?.reason_code ?? 'permit_not_found',
+    reasonCode: finalization?.reason_code ?? "permit_not_found",
   };
 }

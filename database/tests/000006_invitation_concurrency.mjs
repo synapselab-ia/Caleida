@@ -80,7 +80,11 @@ function consumeFromIndependentSession() {
     child.on("error", reject);
     child.on("close", (code) => {
       if (code !== 0) {
-        reject(new Error(`sessão concorrente psql falhou sem expor credenciais: ${stderr.trim() || `exit ${code}`}`));
+        reject(
+          new Error(
+            `sessão concorrente psql falhou sem expor credenciais: ${stderr.trim() || `exit ${code}`}`,
+          ),
+        );
         return;
       }
 
