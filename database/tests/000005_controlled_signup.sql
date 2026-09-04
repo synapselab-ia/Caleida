@@ -346,10 +346,12 @@ $$;
 
 DROP ROLE caleida_test_signup_unprivileged;
 
-TRUNCATE TABLE caleida_audit.auth_webhook_events;
-TRUNCATE TABLE caleida_access.signup_rate_limits;
-TRUNCATE TABLE caleida_access.signup_permits RESTART IDENTITY;
-TRUNCATE TABLE caleida_audit.entry_events RESTART IDENTITY;
-TRUNCATE TABLE caleida_access.invitation_uses RESTART IDENTITY;
-TRUNCATE TABLE caleida_access.invitations RESTART IDENTITY CASCADE;
-TRUNCATE TABLE caleida_access.access_requests RESTART IDENTITY;
+TRUNCATE TABLE
+  caleida_audit.auth_webhook_events,
+  caleida_access.signup_permits,
+  caleida_access.signup_rate_limits,
+  caleida_audit.entry_events,
+  caleida_access.invitation_uses,
+  caleida_access.invitations,
+  caleida_access.access_requests
+RESTART IDENTITY;
