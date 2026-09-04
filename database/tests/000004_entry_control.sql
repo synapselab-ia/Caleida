@@ -368,4 +368,4 @@ DROP ROLE caleida_test_entry_unprivileged;
 TRUNCATE TABLE caleida_audit.entry_events RESTART IDENTITY;
 TRUNCATE TABLE caleida_access.invitation_uses RESTART IDENTITY;
 TRUNCATE TABLE caleida_access.invitations RESTART IDENTITY CASCADE;
-TRUNCATE TABLE caleida_access.access_requests RESTART IDENTITY;
+TRUNCATE TABLE caleida_access.access_requests RESTART IDENTITY CASCADE;
