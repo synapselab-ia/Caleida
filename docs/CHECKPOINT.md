@@ -10,16 +10,16 @@
 **ACTIVE_ISSUE:** `#51`  
 **ACTIVE_BRANCH:** `feat/us-auth-005-controlled-signup`  
 **ACTIVE_PR:** `#52 (draft)`  
-**NEXT_ACTION:** `Criar manualmente um Preview HTTPS da branch feat/us-auth-005-controlled-signup apontado para verify-us-auth-005, configurar os webhooks user.before_create e user.created no Neon Auth dessa branch e executar o gate live de docs/US_AUTH_005_VERIFICATION.md; depois retomar a PR #52.`  
-**BLOCKERS:** `gate Neon Auth live ainda não comprovado; sem HTTPS público Caleida disponível`  
+**NEXT_ACTION:** `Na branch Neon isolada verify-us-auth-005, ativar a confirmação obrigatória de e-mail pela superfície oficial do Neon Auth e executar um signup autorizado com caixa de e-mail acessível para comprovar o fluxo de confirmação; depois promover 000004–000007 para a baseline somente se o gate passar e retomar a PR #52.`  
+**BLOCKERS:** `require_email_verification continua false; a superfície Neon conectada nesta execução não expõe a alteração dessa configuração`  
 **ON_HOLD:** none  
-**MANUAL_ACTION_REQUIRED:** `deployment Preview Vercel e configuração branch-scoped dos webhooks Auth são ações humanas; não enviar secrets ao chat`
+**MANUAL_ACTION_REQUIRED:** `alterar require_email_verification na branch verify-us-auth-005 pela superfície oficial do Neon Auth e concluir a confirmação usando uma caixa de e-mail acessível; não enviar secrets ao chat`
 
 ## Comando de continuação
 
 > Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
 
-Recupere GitHub e Neon antes de agir. Não refaça Stories concluídas, não invente secrets e não execute deployment Vercel.
+Recupere GitHub, Neon e Vercel antes de agir. Não refaça Stories concluídas, não invente secrets e não execute deployment Vercel.
 
 ## Incrementos concluídos
 
@@ -37,7 +37,7 @@ US-AUTH-003 convites/solicitações + auditoria — CONCLUÍDA (#47 / #48)
   ↓
 US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49 / #50)
   ↓
-US-AUTH-005 cadastro controlado + confirmação — MANUAL_ACTION_REQUIRED (#51 / #52 draft)
+US-AUTH-005 cadastro controlado — GATE LIVE PASS / confirmação de e-mail PENDENTE (#51 / #52 draft)
   ↓
 US-AUTH-006 login/logout + proteção de sessão — NÃO INICIAR
   ↓
@@ -52,14 +52,16 @@ Plano detalhado: `docs/INCREMENT_2_PLAN.md`. Evidência corrente: `docs/US_AUTH_
 
 ### Git / CI
 
-```text
-Issue: #51 / OPEN
-PR: #52 / OPEN / DRAFT
-Head técnico com gate portátil PASS: 7083d6d28041539e96c26fa4e88c56d019939a26
-CI: 33878842417 / run #159 / SUCCESS
-```
+O head funcional `5ada76e8eb68679c181a6d5c3c7c8d5db1794786` passou o gate portátil em CI `#180 / 34373402005`.
 
-O gate portátil aprovou `npm run verify`, build, PostgreSQL 18 e `npm run verify:db`, incluindo os testes concorrentes versionados.
+Provas live temporárias executadas pela CI e removidas da árvore depois da coleta de evidência:
+
+```text
+#181 / 34387804292 — signup direto sem autorização: SUCCESS
+#182 / 34388232866 — solicitação aprovada: SUCCESS
+#183 / 34388501646 — assinatura/timestamp inválidos: SUCCESS
+#184 / 34388910697 — matriz live de convites: SUCCESS
+```
 
 ### Migrations da Story
 
@@ -69,93 +71,96 @@ O gate portátil aprovou `npm run verify`, build, PostgreSQL 18 e `npm run verif
 
 000005_controlled_signup_consume_fix.sql
 c7211562a5aec011b5af8707f63c9db4171a379c1ee0897567c03f79059ab4f1
-```
 
-`000005` preserva o histórico append-only corrigindo, por substituição posterior da função, uma ambiguidade PL/pgSQL encontrada após `000004` já ter sido exercitada.
+000006_before_create_without_user_id.sql
+5537735b38710032affbe600f5ce4f666da8532e6fc554953c526914357ed68b
+
+000007_claim_signature_compatibility.sql
+823d39d763c32736fa0df1f0d626647f8dd3009d56fe1262fa74cc91d67b02c6
+```
 
 ### Branch Neon isolada
 
 ```text
 verify-us-auth-005 / br-small-river-aww0rtxo / ready
+ledger: 000001–000007
 ```
 
-As migrations `000004` e `000005` foram aplicadas exclusivamente nessa branch e o readback confirmou ledger `000001`–`000005`, tabelas/funções novas presentes e zero fixtures:
+A branch contém fixtures e identidades exclusivamente de verificação live. Elas não foram promovidas à baseline.
 
-```text
-Auth users: 0
-Invitations: 0
-Invitation uses: 0
-Access requests: 0
-Signup permits: 0
-Signup rate limits: 0
-Auth webhook events: 0
-```
-
-Better Auth branch-scoped permanece:
+Better Auth isolado:
 
 ```text
 email/password: enabled
 allow_sign_up: true
 require_email_verification: false
+email verification method: otp
 email provider: shared Neon
+webhook: enabled
 ```
+
+Webhook branch-scoped comprovado:
+
+```text
+user.before_create
+user.created
+→ <Preview estável>/api/webhooks/neon-auth
+```
+
+### Preview Vercel
+
+O Preview foi criado manualmente pelo usuário em conformidade com ADR-007 e está reutilizável:
+
+```text
+Project: caleida
+Deployment: dpl_8WN2sKEEL6ex3vKt11vmYX9ZGvoN
+State: READY
+Git commit: 5ada76e8eb68679c181a6d5c3c7c8d5db1794786
+Branch alias: caleida-git-feat-us-auth-005-55f705-synapselabia-8285s-projects.vercel.app
+```
+
+O alias estável também está cadastrado como trusted origin da branch Neon isolada.
+
+### Gate live de entrada — PASS
+
+Foi comprovado contra o serviço real:
+
+- signup direto sem convite/aprovação → negado antes da criação do usuário;
+- solicitação aprovada → `before_create allowed` e `user.created linked`;
+- convite inexistente/expirado/revogado/esgotado → negado;
+- e-mail divergente de convite restrito → negado;
+- convite válido → permitido, consumido uma única vez e vinculado;
+- assinatura inválida → HTTP 401;
+- timestamp expirado → HTTP 401;
+- logs observados permanecem sanitizados.
+
+A concorrência/capacidade continua coberta pelos testes versionados PostgreSQL/CI.
 
 ### Baseline preservada
 
-A baseline Neon continua em:
+Readback posterior ao gate live confirmou:
 
 ```text
 main / br-restless-cherry-awpcwy6r
 ledger: 000001 + 000002 + 000003
 ```
 
-Nenhuma migration US-AUTH-005 foi promovida à baseline e nenhum estado Auth da baseline foi alterado.
+Nenhuma migration da US-AUTH-005 foi promovida ainda.
 
-## Gate live pendente
+## Único bloqueio restante
 
-A Story exige provar que signup direto ao Neon Auth é negado fora da UI. Isso depende do webhook bloqueante `user.before_create` apontar para um endpoint HTTPS público real e do `user.created` finalizar o vínculo.
+O Project Design exige confirmação de e-mail. O plano da Story proibia ativá-la antes da prova fail-closed; esse pré-requisito agora está satisfeito.
 
-No estado verificado:
+A superfície Neon conectada disponível neste chat consegue ler a configuração, mas não expõe a alteração de `require_email_verification`. Não editar `neon_auth.project_config` diretamente por SQL como workaround não documentado.
 
-- não existe projeto/deployment Vercel do Caleida disponível para reutilização;
-- ADR-007 proíbe deployment Vercel pela IA;
-- o conector Neon disponível não expõe configuração de webhooks Auth;
-- portanto o gate live não pode ser fabricado ou substituído por localhost.
-
-A PR #52 deve permanecer draft e a Issue #51 aberta até esse gate passar. Não promover migrations para a baseline, não ativar `require_email_verification` e não iniciar US-AUTH-006 antes disso.
-
-## US-AUTH-004 — resultado consolidado
-
-A baseline já possui transporte de e-mail suficiente para desenvolvimento/non-production via Neon Auth:
-
-```text
-Projeto: caleida-nonprod
-Baseline: main / br-restless-cherry-awpcwy6r / ready
-Managed Better Auth: habilitado
-Email/password: habilitado
-Email provider: shared Neon
-Require email verification: false
-Data API: não provisionada
-```
-
-`ADR-009` mantém o provider compartilhado do Neon como canônico para esta fase.
-
-### Housekeeping remanescente
-
-```text
-verify-us-auth-004 / br-plain-pond-aw5f59ia / ready
-```
-
-Essa branch não contém SMTP externo. Sua eventual exclusão exige autorização explícita e não deve ser confundida com a branch ativa `verify-us-auth-005`.
+A PR #52 permanece draft e a Issue #51 aberta até a confirmação de e-mail ser comprovada, as migrations serem promovidas à baseline e o readback final passar.
 
 ## Invariantes vigentes
 
-- signup deve ser fail-closed fora da UI;
 - convite/aprovação é o gate de entrada;
-- confirmação de e-mail não substitui autorização;
-- `require_email_verification` só pode ser ativado após a prova live do cadastro controlado;
-- concorrência não pode exceder capacidade do convite;
+- confirmação de e-mail complementa, não substitui, autorização;
 - secrets permanecem server-only;
 - baseline Neon não é laboratório;
 - sem Production Neon;
-- sem deployment Vercel pela IA.
+- sem deployment Vercel pela IA;
+- não iniciar US-AUTH-006 antes de concluir US-AUTH-005.
