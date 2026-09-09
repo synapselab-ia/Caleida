@@ -17,6 +17,7 @@ jobs:
         shell: bash
         env:
           NEON_AUTH_BASE_URL: https://ep-muddy-star-awwjm0jt.neonauth.c-12.us-east-1.aws.neon.tech/neondb/auth
+          PREVIEW_ORIGIN: https://caleida-1mb99m1ht-synapselabia-8285s-projects.vercel.app
           AUTHORIZED_EMAIL: caleida-live-authorized-20260909@example.com
         run: |
           set -euo pipefail
@@ -31,7 +32,8 @@ jobs:
               --write-out '%{http_code}' \
               --request POST \
               --header 'content-type: application/json' \
-              --data "{\"name\":\"Caleida Live Probe\",\"email\":\"${email}\",\"password\":\"${password}\"}" \
+              --header "origin: ${PREVIEW_ORIGIN}" \
+              --data "{\"name\":\"Caleida Live Probe\",\"email\":\"${email}\",\"password\":\"${password}\",\"callbackURL\":\"${PREVIEW_ORIGIN}\"}" \
               "${NEON_AUTH_BASE_URL}/sign-up/email" || true
           }
 
