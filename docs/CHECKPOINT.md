@@ -1,6 +1,6 @@
 # Checkpoint — Caleida
 
-**PROJECT_STATUS:** MANUAL_ACTION_REQUIRED  
+**PROJECT_STATUS:** READY_FOR_REVIEW  
 **CURRENT_PHASE:** Incremento 2 — Acesso controlado / EPIC-02 em andamento  
 **PROTOCOL_VERSION:** 2  
 **LAST_COMPLETED_TASK:** `US-AUTH-004 — Validar e-mail Auth non-production`  
@@ -9,11 +9,11 @@
 **ACTIVE_TASK:** `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`  
 **ACTIVE_ISSUE:** `#51`  
 **ACTIVE_BRANCH:** `feat/us-auth-005-controlled-signup`  
-**ACTIVE_PR:** `#52 (draft)`  
-**NEXT_ACTION:** `Promover deliberadamente as migrations 000004–000007 para a baseline Neon main / br-restless-cherry-awpcwy6r, reproduzir requireEmailVerification=true + sendVerificationEmailOnSignUp=true na baseline, executar readback de ledger/schema/Auth e então retomar a finalização da PR #52.`  
-**BLOCKERS:** `promoção da baseline é mudança persistente e exige autorização explícita antes da execução`  
+**ACTIVE_PR:** `#52`  
+**NEXT_ACTION:** `Executar a revisão final da PR #52, confirmar CI verde no head final e integrar a US-AUTH-005. Após a integração, atualizar o checkpoint integrado e promover US-AUTH-006 — login/logout + proteção de sessão — como única próxima ação.`  
+**BLOCKERS:** none  
 **ON_HOLD:** none  
-**MANUAL_ACTION_REQUIRED:** `autorizar a promoção 000004–000007 e a configuração Auth correspondente na baseline non-production; não envolve Vercel/PowerShell`
+**MANUAL_ACTION_REQUIRED:** none
 
 ## Comando de continuação
 
@@ -37,9 +37,9 @@ US-AUTH-003 convites/solicitações + auditoria — CONCLUÍDA (#47 / #48)
   ↓
 US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49 / #50)
   ↓
-US-AUTH-005 cadastro controlado — GATES LIVE PASS / PROMOÇÃO BASELINE PENDENTE (#51 / #52 draft)
+US-AUTH-005 cadastro controlado + confirmação de e-mail — GATES PASS / PRONTA PARA INTEGRAÇÃO (#51 / #52)
   ↓
-US-AUTH-006 login/logout + proteção de sessão — NÃO INICIAR
+US-AUTH-006 login/logout + proteção de sessão — NÃO INICIAR ANTES DO MERGE DA #52
   ↓
 US-AUTH-007 recuperação de senha + gestão/revogação de sessões
   ↓
@@ -48,13 +48,13 @@ US-AUTH-008 auditoria integrada + validação do incremento
 
 Plano detalhado: `docs/INCREMENT_2_PLAN.md`. Evidência consolidada: `docs/US_AUTH_005_VERIFICATION.md`.
 
-## US-AUTH-005 — estado técnico atual
+## US-AUTH-005 — estado técnico final antes da integração
 
 ### Implementação
 
-A Story contém o fluxo fail-closed de cadastro por convite ou solicitação aprovada, webhook `user.before_create`/`user.created`, permits curtos, rate limiting e auditoria.
+A Story contém o fluxo fail-closed de cadastro por convite ou solicitação aprovada, webhook `user.before_create`/`user.created`, permits curtos, rate limiting, auditoria e confirmação obrigatória de e-mail.
 
-Migrations aprovadas na branch isolada:
+Migrations versionadas:
 
 ```text
 000004_controlled_signup.sql
@@ -70,21 +70,16 @@ c7211562a5aec011b5af8707f63c9db4171a379c1ee0897567c03f79059ab4f1
 823d39d763c32736fa0df1f0d626647f8dd3009d56fe1262fa74cc91d67b02c6
 ```
 
-### Branch Neon isolada
+### Gates live — PASS
 
-```text
-verify-us-auth-005 / br-small-river-aww0rtxo / ready
-ledger: 000001–000007
-```
-
-O gate live comprovou:
+Em `verify-us-auth-005 / br-small-river-aww0rtxo` foram comprovados:
 
 - signup direto sem autorização → negado;
-- aprovação válida → permitido e vinculado;
+- solicitação aprovada → permitido e vinculado;
 - convites inválido/expirado/revogado/esgotado → negados;
 - e-mail divergente → negado;
 - convite válido → consumido uma vez e vinculado;
-- assinatura/timestamp inválidos → 401;
+- assinatura/timestamp inválidos → HTTP 401;
 - confirmação obrigatória de e-mail → ativa;
 - usuário não verificado → sign-in negado;
 - OTP real recebido e consumido → PASS;
@@ -99,39 +94,48 @@ CI live relevante:
 #184 — PASS
 #190 — PASS
 #194 / 34395716742 — PASS ponta a ponta do OTP + gate PostgreSQL
+#198 / 34396625071 — PASS após fechamento dos gates
 ```
 
 As provas temporárias foram removidas da árvore após coleta de evidência.
 
-### Auth isolado
+### Baseline Neon — PROMOVIDA / PASS
+
+```text
+main / br-restless-cherry-awpcwy6r
+ledger: 000001–000007
+schema vs verify-us-auth-005: diff vazio
+```
+
+Readback pós-promoção confirmou zero fixtures:
+
+```text
+auth_users: 0
+product_roles: 0
+invitations: 0
+invitation_uses: 0
+access_requests: 0
+signup_permits: 0
+auth_webhook_events: 0
+```
+
+Auth final da baseline:
 
 ```text
 email/password: enabled
 allow_sign_up: true
-requireEmailVerification: true
-sendVerificationEmailOnSignUp: true
-emailVerificationMethod: otp
+verify_email_on_sign_up: true
+require_email_verification: true
+email_verification_method: otp
+auto_sign_in_after_verification: true
 email provider: shared Neon
 ```
 
 ### Runtime
 
-O Preview Vercel real mostrou que a plataforma seleciona patches do Node 24 e só garante `24.x`. `package.json` foi alinhado a `24.x`; `.nvmrc` e CI continuam em `24.20.0` para reprodutibilidade. O CI da correção deve permanecer verde antes da promoção.
+O Preview Vercel real mostrou que a plataforma seleciona patches dentro do Node 24. `package.json` declara `24.x`; `.nvmrc` e CI continuam em `24.20.0` para reprodutibilidade.
 
-### Baseline preservada
-
-Readback mais recente:
-
-```text
-main / br-restless-cherry-awpcwy6r
-ledger: 000001 + 000002 + 000003
-```
-
-Nenhuma migration US-AUTH-005 nem a nova exigência de verificação de e-mail foram promovidas à baseline.
-
-## Único gate restante
-
-A próxima ação é uma mudança persistente na baseline non-production. Aplicar `000004`–`000007` e reproduzir a configuração Auth comprovada exige autorização explícita antes da execução. Depois disso, executar readback final e fechar a Story/PR se todos os gates permanecerem verdes.
+O SHA funcional do Preview é `5ada76e8eb68679c181a6d5c3c7c8d5db1794786`. Entre esse SHA e o head posterior, somente documentação e `package.json` mudaram; nenhum código funcional de Auth/webhook foi alterado depois das provas live.
 
 ## Invariantes vigentes
 
@@ -141,4 +145,6 @@ A próxima ação é uma mudança persistente na baseline non-production. Aplica
 - baseline Neon não é laboratório;
 - sem Production Neon;
 - sem deployment Vercel pela IA;
-- não iniciar US-AUTH-006 antes de concluir US-AUTH-005.
+- Data API permanece fora do escopo;
+- não iniciar US-AUTH-006 antes de integrar a PR #52;
+- exclusão das branches Neon de verificação requer autorização destrutiva específica e não faz parte desta ação.
