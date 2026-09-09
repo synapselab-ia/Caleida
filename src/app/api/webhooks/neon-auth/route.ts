@@ -39,11 +39,14 @@ export async function POST(request: Request) {
     event = await verifyNeonAuthWebhook(rawBody, request.headers);
   } catch (error) {
     if (error instanceof NeonWebhookVerificationError) {
+      console.warn("Neon Auth webhook rejected", { reason: error.reason });
       return json({ error: "invalid_webhook" }, 401);
     }
     if (error instanceof NeonWebhookKeyUnavailableError) {
+      console.warn("Neon Auth webhook key unavailable");
       return json({ error: "webhook_verification_unavailable" }, 503);
     }
+    console.error("Neon Auth webhook verification failed unexpectedly");
     return json({ error: "webhook_verification_failed" }, 500);
   }
 
