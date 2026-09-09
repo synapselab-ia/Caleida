@@ -117,12 +117,19 @@ function validateProtectedHeader(encodedHeader: string, expectedKid: string) {
   }
 }
 
-export type VerifiedNeonAuthEvent = {
-  eventId: string;
-  eventType: "user.before_create" | "user.created";
-  authUserId: string;
-  email: string;
-};
+export type VerifiedNeonAuthEvent =
+  | {
+      eventId: string;
+      eventType: "user.before_create";
+      authUserId: null;
+      email: string;
+    }
+  | {
+      eventId: string;
+      eventType: "user.created";
+      authUserId: string;
+      email: string;
+    };
 
 export async function verifyNeonAuthWebhook(
   rawBody: string,
@@ -221,16 +228,33 @@ export async function verifyNeonAuthWebhook(
   if (record.event_type !== eventTypeHeader) {
     throw new NeonWebhookVerificationError("payload_event_type");
   }
-  if (typeof userRecord.id !== "string" || !UUID_PATTERN.test(userRecord.id)) {
-    throw new NeonWebhookVerificationError("payload_user_id");
-  }
   if (typeof userRecord.email !== "string" || userRecord.email.length > 320) {
     throw new NeonWebhookVerificationError("payload_email");
   }
 
+  if (eventTypeHeader === "user.before_create") {
+    if (
+      userRecord.id !== undefined &&
+      (typeof userRecord.id !== "string" || !UUID_PATTERN.test(userRecord.id))
+    ) {
+      throw new NeonWebhookVerificationError("payload_user_id");
+    }
+
+    return {
+      eventId: eventIdHeader,
+      eventType: "user.before_create",
+      authUserId: null,
+      email: userRecord.email,
+    };
+  }
+
+  if (typeof userRecord.id !== "string" || !UUID_PATTERN.test(userRecord.id)) {
+    throw new NeonWebhookVerificationError("payload_user_id");
+  }
+
   return {
     eventId: eventIdHeader,
-    eventType: eventTypeHeader as VerifiedNeonAuthEvent["eventType"],
+    eventType: "user.created",
     authUserId: userRecord.id,
     email: userRecord.email,
   };
