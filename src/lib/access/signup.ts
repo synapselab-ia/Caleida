@@ -147,13 +147,12 @@ export async function claimInvitationForSignup(input: {
 
 export async function authorizeNeonSignup(input: {
   eventId: string;
-  authUserId: string;
   email: string;
 }) {
   const [authorization] = await queryRows<AuthorizationRow>(
     `SELECT allowed::text, signup_permit_id::text, reason_code::text
-       FROM caleida_access.claim_signup_authorization($1::uuid, $2::uuid, $3)`,
-    [input.eventId, input.authUserId, normalizeEmail(input.email)],
+       FROM caleida_access.claim_signup_authorization($1::uuid, $2)`,
+    [input.eventId, normalizeEmail(input.email)],
   );
 
   return {
