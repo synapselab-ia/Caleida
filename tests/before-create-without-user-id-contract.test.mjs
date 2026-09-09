@@ -16,7 +16,15 @@ test("before-create reserves by event and email without requiring an auth user i
     migration,
     /claim_signup_authorization\(\s*p_event_id uuid,\s*p_recipient_email text\s*\)/s,
   );
-  assert.match(migration, /state = 'reivindicado'[\s\S]*claimed_at IS NOT NULL/);
+  assert.match(migration, /ADD COLUMN before_create_event_id uuid/);
+  assert.match(
+    migration,
+    /SET before_create_event_id = p_event_id[\s\S]*AND sp\.state = 'reservado'/,
+  );
+  assert.match(
+    migration,
+    /SET state = 'reivindicado',[\s\S]*claimed_auth_user_id = p_auth_user_id,[\s\S]*claimed_at = CURRENT_TIMESTAMP/,
+  );
   assert.match(migration, /'user\.before_create', NULL, normalized_recipient/);
   assert.match(
     signup,
