@@ -124,27 +124,71 @@ Decisão e verificação:
 - Resend, domínio próprio e SMTP customizado preparados inicialmente foram retirados do resultado final antes do merge;
 - `src/lib/email/server.ts`, testes de contrato Resend e variáveis `RESEND_*`/remetente foram removidos do diff final;
 - nenhuma migration, secret ou deployment foi introduzido;
-- `require_email_verification` permanece `false` até US-AUTH-005 impor o cadastro controlado de forma fail-closed.
+- `require_email_verification` permaneceu `false` até US-AUTH-005 comprovar o gate de cadastro fail-closed.
 
 Housekeeping Neon:
 
 - `verify-us-auth-004 / br-plain-pond-aw5f59ia` foi criada durante a investigação inicial de SMTP;
 - readback confirmou provider `shared` e ausência de configuração externa;
-- a branch tornou-se desnecessária, mas sua exclusão exige autorização explícita por ser ação destrutiva e não bloqueia US-AUTH-005.
+- a branch tornou-se desnecessária, mas sua exclusão exige autorização explícita e não bloqueia as Stories seguintes.
+
+#### US-AUTH-005 — Cadastro controlado + confirmação de e-mail (#51/#52)
+
+Adicionado:
+
+- `database/migrations/000004_controlled_signup.sql` com `signup_permits`, rate limit persistente e auditoria de webhooks;
+- `000005_controlled_signup_consume_fix.sql`, `000006_before_create_without_user_id.sql` e `000007_claim_signature_compatibility.sql` como correções append-only descobertas durante a verificação real;
+- claim server-only de convite com corpo limitado, HMAC para rate limiting e respostas públicas genéricas;
+- verificação de webhook Neon Auth por Ed25519 detached JWS, `kid`/JWKS, timestamp e event ID;
+- `user.before_create` como gate bloqueante sem exigir user id prematuro;
+- `user.created` como finalização do vínculo entre autorização e identidade;
+- reserva de capacidade de convite antes da criação da conta, sem persistir token em texto puro;
+- testes PostgreSQL de concorrência para capacidade e reserva;
+- `docs/US_AUTH_005_VERIFICATION.md` como evidência consolidada.
+
+Gates live:
+
+- signup direto sem convite/aprovação foi negado pelo webhook real;
+- solicitação aprovada foi aceita e vinculada;
+- convites inexistente, expirado, revogado, esgotado e com e-mail divergente foram negados;
+- convite válido foi aceito, consumido uma vez e vinculado;
+- assinatura inválida e timestamp expirado foram rejeitados com HTTP 401;
+- usuário não verificado foi bloqueado no sign-in;
+- OTP real foi entregue via provider compartilhado Neon, consumido e confirmado;
+- readback final do teste mostrou `emailVerified=true` e sign-in posterior permitido;
+- CI live #194 / `34395716742`: PASS ponta a ponta do OTP + PostgreSQL;
+- CI #198 / `34396625071`: PASS após fechamento dos gates.
+
+Promoção non-production:
+
+- migrations `000004`–`000007` promovidas deliberadamente para `caleida-nonprod/main` com checksums canônicos;
+- ledger da baseline confirmado em `000001`–`000007`;
+- comparação de schema entre `verify-us-auth-005` e `main`: diff vazio;
+- corpos das funções críticas conferidos entre branch isolada e baseline;
+- baseline permaneceu sem fixtures: zero usuários Auth, papéis, convites, usos, solicitações, permits e eventos de webhook;
+- baseline Auth passou a exigir confirmação de e-mail (`require_email_verification=true`, OTP no signup) mantendo o provider compartilhado Neon;
+- nenhuma mudança foi feita em Production Neon.
+
+Operação Vercel/runtime:
+
+- Preview HTTPS da branch foi criado manualmente pelo usuário conforme ADR-007 e usado exclusivamente como superfície de prova;
+- a IA não executou deploy, promotion, redeploy, rollback ou hook Vercel;
+- o Preview mostrou que Vercel seleciona patches dentro do major Node 24; `package.json` foi alinhado a `24.x`, enquanto `.nvmrc`/CI permanecem fixos em `24.20.0`.
 
 ### Estado de segurança e operação
 
 - Secrets permanecem proibidos no Git.
-- `DATABASE_URL`, `DATABASE_URL_UNPOOLED` e `NEON_AUTH_COOKIE_SECRET` são server-only.
+- `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `NEON_AUTH_COOKIE_SECRET` e `CALEIDA_RATE_LIMIT_SECRET` são server-only.
 - Nenhum secret usa `NEXT_PUBLIC_*`.
 - Banco persiste mudanças somente por migrations versionadas.
 - PostgreSQL 18 descartável permanece o gate primário para SQL portável.
-- Baseline Neon `main` não é laboratório destrutivo.
-- Existe apenas a branch temporária `verify-us-auth-004`, sem estado exclusivo do produto e pendente de eventual limpeza autorizada.
+- Baseline Neon `main` contém migrations `000001`–`000007` e não contém fixtures de validação.
+- Managed Better Auth da baseline exige confirmação de e-mail e continua usando o provider compartilhado Neon.
+- `verify-us-auth-004` e `verify-us-auth-005` permanecem existentes; exclusão exige autorização destrutiva específica e não bloqueia integração.
 - Neon Data API e Object Storage continuam não provisionados para o produto.
 - `caleida-production` continua inexistente.
-- Vercel continua sem deployment executado por IA e CI permanece sem CD.
+- Vercel continua com deployment exclusivamente humano/manual e CI permanece sem CD.
 
 ### Próxima ação canônica
 
-> `US-AUTH-005 — implementar cadastro controlado por convite ou aprovação`
+> Finalizar a revisão/integração da PR #52 da US-AUTH-005 e, após o merge, promover `US-AUTH-006 — implementar login, logout e proteção de sessão` como única próxima Story.
