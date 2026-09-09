@@ -54,7 +54,6 @@ export async function POST(request: Request) {
     if (event.eventType === "user.before_create") {
       const authorization = await authorizeNeonSignup({
         eventId: event.eventId,
-        authUserId: event.authUserId,
         email: event.email,
       });
 
