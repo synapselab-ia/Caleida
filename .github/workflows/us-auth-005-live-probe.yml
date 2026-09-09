@@ -1,0 +1,58 @@
+name: US-AUTH-005 live probe
+
+on:
+  push:
+    branches:
+      - probe/us-auth-005-live
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe unauthorized and authorized signup
+        shell: bash
+        env:
+          NEON_AUTH_BASE_URL: https://ep-muddy-star-awwjm0jt.neonauth.c-12.us-east-1.aws.neon.tech/neondb/auth
+          AUTHORIZED_EMAIL: caleida-live-authorized-20260909@example.com
+        run: |
+          set -euo pipefail
+
+          signup() {
+            local email="$1"
+            local body_file="$2"
+            local password
+            password="Tmp!$(openssl rand -hex 18)Aa1"
+            curl --fail-with-body --silent --show-error \
+              --output "$body_file" \
+              --write-out '%{http_code}' \
+              --request POST \
+              --header 'content-type: application/json' \
+              --data "{\"name\":\"Caleida Live Probe\",\"email\":\"${email}\",\"password\":\"${password}\"}" \
+              "${NEON_AUTH_BASE_URL}/sign-up/email" || true
+          }
+
+          UNAUTHORIZED_EMAIL="caleida-live-unauthorized-${GITHUB_RUN_ID}@example.com"
+
+          unauthorized_status="$(signup "$UNAUTHORIZED_EMAIL" /tmp/unauthorized.json)"
+          echo "unauthorized_status=${unauthorized_status}"
+          cat /tmp/unauthorized.json || true
+          echo
+
+          if [[ "$unauthorized_status" =~ ^2 ]]; then
+            echo 'Unauthorized signup unexpectedly succeeded.' >&2
+            exit 1
+          fi
+
+          authorized_status="$(signup "$AUTHORIZED_EMAIL" /tmp/authorized.json)"
+          echo "authorized_status=${authorized_status}"
+          cat /tmp/authorized.json || true
+          echo
+
+          if [[ ! "$authorized_status" =~ ^2 ]]; then
+            echo 'Authorized signup did not succeed.' >&2
+            exit 1
+          fi
