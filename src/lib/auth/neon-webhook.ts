@@ -27,9 +27,12 @@ type CacheEntry = {
 let jwksCache: CacheEntry | null = null;
 
 export class NeonWebhookVerificationError extends Error {
-  constructor() {
+  readonly reason: string;
+
+  constructor(reason = "verification_failed") {
     super("Webhook Neon Auth inválido.");
     this.name = "NeonWebhookVerificationError";
+    this.reason = reason;
   }
 }
 
@@ -42,7 +45,7 @@ export class NeonWebhookKeyUnavailableError extends Error {
 
 function requiredHeader(headers: Headers, name: string) {
   const value = headers.get(name)?.trim();
-  if (!value) throw new NeonWebhookVerificationError();
+  if (!value) throw new NeonWebhookVerificationError(`missing_${name}`);
   return value;
 }
 
@@ -101,16 +104,16 @@ function validateProtectedHeader(encodedHeader: string, expectedKid: string) {
   try {
     header = JSON.parse(Buffer.from(encodedHeader, "base64url").toString("utf8"));
   } catch {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("protected_header_json");
   }
 
   if (!header || typeof header !== "object") {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("protected_header_shape");
   }
 
   const record = header as Record<string, unknown>;
   if (record.alg !== "EdDSA" || record.kid !== expectedKid || record.b64 === false) {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("protected_header_claims");
   }
 }
 
@@ -126,7 +129,7 @@ export async function verifyNeonAuthWebhook(
   headers: Headers,
 ): Promise<VerifiedNeonAuthEvent> {
   if (Buffer.byteLength(rawBody, "utf8") > MAX_WEBHOOK_BODY_BYTES) {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("body_too_large");
   }
 
   const signature = requiredHeader(headers, "x-neon-signature");
@@ -136,9 +139,11 @@ export async function verifyNeonAuthWebhook(
   const eventIdHeader = requiredHeader(headers, "x-neon-event-id");
 
   if (!ALLOWED_EVENT_TYPES.has(eventTypeHeader)) {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("event_type");
   }
-  if (!UUID_PATTERN.test(eventIdHeader)) throw new NeonWebhookVerificationError();
+  if (!UUID_PATTERN.test(eventIdHeader)) {
+    throw new NeonWebhookVerificationError("event_id");
+  }
 
   const timestamp = Number(timestampText);
   const age = Date.now() - timestamp;
@@ -147,12 +152,12 @@ export async function verifyNeonAuthWebhook(
     age > MAX_WEBHOOK_AGE_MS ||
     age < -MAX_FUTURE_SKEW_MS
   ) {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("timestamp");
   }
 
   const parts = signature.split(".");
   if (parts.length !== 3 || parts[1] !== "" || !parts[0] || !parts[2]) {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("signature_format");
   }
   validateProtectedHeader(parts[0], kid);
 
@@ -162,13 +167,15 @@ export async function verifyNeonAuthWebhook(
     keys = await loadJwks(true);
     jwk = keys.find((candidate) => candidate.kid === kid);
   }
+  if (!jwk) {
+    throw new NeonWebhookVerificationError("jwk_not_found");
+  }
   if (
-    !jwk ||
     jwk.kty !== "OKP" ||
     jwk.crv !== "Ed25519" ||
     (jwk.alg !== undefined && jwk.alg !== "EdDSA")
   ) {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("jwk_shape");
   }
 
   const payloadB64 = Buffer.from(rawBody, "utf8").toString("base64url");
@@ -187,36 +194,38 @@ export async function verifyNeonAuthWebhook(
       Buffer.from(parts[2], "base64url"),
     );
   } catch {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("signature_crypto");
   }
-  if (!valid) throw new NeonWebhookVerificationError();
+  if (!valid) throw new NeonWebhookVerificationError("signature_invalid");
 
   let payload: unknown;
   try {
     payload = JSON.parse(rawBody);
   } catch {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("payload_json");
   }
 
   if (!payload || typeof payload !== "object") {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("payload_shape");
   }
   const record = payload as Record<string, unknown>;
   const user = record.user;
   if (!user || typeof user !== "object") {
-    throw new NeonWebhookVerificationError();
+    throw new NeonWebhookVerificationError("payload_user");
   }
   const userRecord = user as Record<string, unknown>;
 
-  if (
-    record.event_id !== eventIdHeader ||
-    record.event_type !== eventTypeHeader ||
-    typeof userRecord.id !== "string" ||
-    !UUID_PATTERN.test(userRecord.id) ||
-    typeof userRecord.email !== "string" ||
-    userRecord.email.length > 320
-  ) {
-    throw new NeonWebhookVerificationError();
+  if (record.event_id !== eventIdHeader) {
+    throw new NeonWebhookVerificationError("payload_event_id");
+  }
+  if (record.event_type !== eventTypeHeader) {
+    throw new NeonWebhookVerificationError("payload_event_type");
+  }
+  if (typeof userRecord.id !== "string" || !UUID_PATTERN.test(userRecord.id)) {
+    throw new NeonWebhookVerificationError("payload_user_id");
+  }
+  if (typeof userRecord.email !== "string" || userRecord.email.length > 320) {
+    throw new NeonWebhookVerificationError("payload_email");
   }
 
   return {
