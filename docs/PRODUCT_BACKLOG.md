@@ -1,8 +1,8 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-004 concluída  
+**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-005 concluída  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
+**Próxima ação operacional:** `US-AUTH-006 — Implementar login, logout e proteção de sessão`
 
 ## Convenções
 
@@ -30,7 +30,7 @@ Estados: `A FAZER`, `PRONTA`, `EM ANDAMENTO`, `EM REVISÃO`, `CONCLUÍDA`, `BLOQ
 - `US-PLAT-009` — ambientes/variáveis separados — **CONCLUÍDA**;
 - `US-PLAT-010` — ciclo Issue → branch → CI → PR → review → merge — **CONCLUÍDA**.
 
-Deployment real não é gate técnico. Vercel permanece exclusivamente humana/manual.
+Deployment real não é gate técnico. Vercel permanece exclusivamente humano/manual.
 
 ---
 
@@ -82,7 +82,7 @@ Entregar contas e acesso seguro para o beta fechado de forma incremental, separa
 ### US-AUTH-003 — Modelar convites, solicitações de acesso e auditoria de entrada
 
 - **Prioridade:** P0
-- **Estado:** CONCLUÍDA APÓS INTEGRAÇÃO
+- **Estado:** CONCLUÍDA
 - **Issue:** #47
 - **PR:** #48
 - **Capacidades:** CAP-02, CAP-35
@@ -100,25 +100,33 @@ Entregar contas e acesso seguro para o beta fechado de forma incremental, separa
 - **PR:** #50
 - **Capacidade:** CAP-01
 - **Decisão:** `ADR-009 — E-mail compartilhado do Neon Auth em non-production`.
-- **Resultado:** readback confirmou Better Auth com email/password habilitado, `email_provider.type=shared` e `require_email_verification=false` na baseline; o provider compartilhado atende desenvolvimento/beta fechado inicial; SMTP/provedor externo foi adiado até existir requisito material.
+- **Resultado:** readback confirmou Better Auth com email/password habilitado e `email_provider.type=shared`; o provider compartilhado atende desenvolvimento/beta fechado inicial; SMTP/provedor externo foi adiado até existir requisito material.
 - **Escopo corrigido:** adapter, testes, variáveis Resend, domínio próprio e SMTP customizado preparados inicialmente foram removidos antes do merge; nenhuma migration ou secret de e-mail foi introduzido.
 - **Evidência:** `docs/US_AUTH_004_VERIFICATION.md`.
 - **Contrato:** `docs/EMAIL_TRANSPORT.md`.
-- **Housekeeping:** `verify-us-auth-004 / br-plain-pond-aw5f59ia` não contém SMTP externo; exclusão futura exige autorização explícita e não bloqueia a próxima Story.
+- **Housekeeping:** `verify-us-auth-004 / br-plain-pond-aw5f59ia` não contém SMTP externo; exclusão futura exige autorização explícita.
 
 ### US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação
 
 - **Prioridade:** P0
-- **Estado:** PRONTA
+- **Estado:** CONCLUÍDA
+- **Issue:** #51
+- **PR:** #52
+- **Merge:** `9abc3235623c3f7d37531eb94a60997960f526e1`
 - **Capacidades:** CAP-01, CAP-02
-- **Resultado esperado:** signup direto sem autorização de entrada negado inclusive fora da UI; confirmação de e-mail e consumo/vínculo seguro do mecanismo de entrada.
+- **Resultado:** signup direto sem autorização é negado inclusive fora da UI; convite/aprovação é consumido/vinculado de forma controlada; webhooks Neon são verificados; confirmação obrigatória de e-mail por OTP foi comprovada; migrations `000004`–`000007` e a configuração Auth foram promovidas à baseline non-production sem fixtures.
+- **Verificação:** CI final da branch `#201 / 34398683426` em PASS, PostgreSQL 18 em PASS, matriz live e OTP ponta a ponta em PASS, schema baseline versus `verify-us-auth-005` sem diff.
+- **Evidência:** `docs/US_AUTH_005_VERIFICATION.md`.
+- **Housekeeping:** `verify-us-auth-005 / br-small-river-aww0rtxo` permanece somente porque exclusão exige autorização destrutiva específica.
 
 ### US-AUTH-006 — Implementar login, logout e proteção de sessão
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Capacidade:** CAP-01
-- **Resultado esperado:** login/logout e superfícies privadas protegidas por validação server-side, com estados acessíveis e sem flash de conteúdo privado.
+- **Dependência:** US-AUTH-005 concluída
+- **Resultado esperado:** login/logout e superfícies privadas protegidas por validação server-side, com estados acessíveis, sem enumeração indevida e sem flash de conteúdo privado.
+- **Gates esperados:** `npm run verify`; browser real quando houver superfície; Neon-specific obrigatório quando o comportamento depender do Managed Better Auth; nenhuma Production/deployment pela IA.
 
 ### US-AUTH-007 — Implementar recuperação de senha e gestão/revogação de sessões
 
@@ -140,6 +148,6 @@ Não antecipar Stories seguintes. Cada mudança persistente usa migration versio
 
 # Próxima ação operacional
 
-> `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`
+> `US-AUTH-006 — Implementar login, logout e proteção de sessão`
 
-Não antecipar login/Production ou deployment Vercel dentro da Story.
+Criar Issue e branch limitadas à Story antes de implementar. Não antecipar recuperação de senha, gestão avançada de sessões, Production ou deployment Vercel.
