@@ -6,6 +6,7 @@ DECLARE
   reason_result text;
   permit_state text;
   permit_auth_user_id uuid;
+  permit_before_create_event_id uuid;
   linked_result boolean;
 BEGIN
   INSERT INTO caleida_access.invitations (
@@ -53,13 +54,15 @@ BEGIN
     RAISE EXCEPTION 'before_create sem user.id não autorizou permit válido';
   END IF;
 
-  SELECT state, claimed_auth_user_id
-  INTO permit_state, permit_auth_user_id
+  SELECT state, claimed_auth_user_id, before_create_event_id
+  INTO permit_state, permit_auth_user_id, permit_before_create_event_id
   FROM caleida_access.signup_permits
   WHERE id = permit_id;
 
-  IF permit_state <> 'reivindicado' OR permit_auth_user_id IS NOT NULL THEN
-    RAISE EXCEPTION 'before_create vinculou identidade antes de user.created';
+  IF permit_state <> 'reservado'
+     OR permit_auth_user_id IS NOT NULL
+     OR permit_before_create_event_id <> '00000000-0000-4000-8000-000000000611'::uuid THEN
+    RAISE EXCEPTION 'before_create não preservou reserva por evento antes de user.created';
   END IF;
 
   SELECT allowed, reason_code
@@ -89,7 +92,7 @@ BEGIN
   IF linked_result IS NOT TRUE
      OR permit_state <> 'vinculado'
      OR permit_auth_user_id <> '00000000-0000-4000-8000-000000000621'::uuid THEN
-    RAISE EXCEPTION 'user.created não anexou a identidade ao permit pré-reivindicado';
+    RAISE EXCEPTION 'user.created não anexou a identidade ao permit reservado';
   END IF;
 END;
 $$;
