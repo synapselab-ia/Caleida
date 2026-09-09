@@ -10,10 +10,10 @@
 **ACTIVE_ISSUE:** `#51`  
 **ACTIVE_BRANCH:** `feat/us-auth-005-controlled-signup`  
 **ACTIVE_PR:** `#52 (draft)`  
-**NEXT_ACTION:** `Concluir a prova ponta a ponta da confirmação de e-mail usando uma caixa de e-mail acessível; a branch verify-us-auth-005 já exige verificação, envia OTP no signup e bloqueia sign-in de usuário não verificado. Somente após confirmar o OTP e o emailVerified=true promover 000004–000007 para a baseline e retomar a PR #52.`  
-**BLOCKERS:** `entrega/consumo do OTP ainda não foi comprovada ponta a ponta com uma caixa acessível`  
+**NEXT_ACTION:** `Promover deliberadamente as migrations 000004–000007 para a baseline Neon main / br-restless-cherry-awpcwy6r, reproduzir requireEmailVerification=true + sendVerificationEmailOnSignUp=true na baseline, executar readback de ledger/schema/Auth e então retomar a finalização da PR #52.`  
+**BLOCKERS:** `promoção da baseline é mudança persistente e exige autorização explícita antes da execução`  
 **ON_HOLD:** none  
-**MANUAL_ACTION_REQUIRED:** `somente a prova de recebimento/consumo do OTP permanece pendente; não enviar secrets ao chat`
+**MANUAL_ACTION_REQUIRED:** `autorizar a promoção 000004–000007 e a configuração Auth correspondente na baseline non-production; não envolve Vercel/PowerShell`
 
 ## Comando de continuação
 
@@ -37,7 +37,7 @@ US-AUTH-003 convites/solicitações + auditoria — CONCLUÍDA (#47 / #48)
   ↓
 US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49 / #50)
   ↓
-US-AUTH-005 cadastro controlado — GATE LIVE PASS / OTP ponta a ponta PENDENTE (#51 / #52 draft)
+US-AUTH-005 cadastro controlado — GATES LIVE PASS / PROMOÇÃO BASELINE PENDENTE (#51 / #52 draft)
   ↓
 US-AUTH-006 login/logout + proteção de sessão — NÃO INICIAR
   ↓
@@ -46,25 +46,15 @@ US-AUTH-007 recuperação de senha + gestão/revogação de sessões
 US-AUTH-008 auditoria integrada + validação do incremento
 ```
 
-Plano detalhado: `docs/INCREMENT_2_PLAN.md`. Evidência corrente: `docs/US_AUTH_005_VERIFICATION.md`.
+Plano detalhado: `docs/INCREMENT_2_PLAN.md`. Evidência consolidada: `docs/US_AUTH_005_VERIFICATION.md`.
 
 ## US-AUTH-005 — estado técnico atual
 
-### Git / CI
+### Implementação
 
-O head funcional `5ada76e8eb68679c181a6d5c3c7c8d5db1794786` passou o gate portátil em CI `#180 / 34373402005`.
+A Story contém o fluxo fail-closed de cadastro por convite ou solicitação aprovada, webhook `user.before_create`/`user.created`, permits curtos, rate limiting e auditoria.
 
-Provas live temporárias executadas pela CI e removidas da árvore depois da coleta de evidência:
-
-```text
-#181 / 34387804292 — signup direto sem autorização: SUCCESS
-#182 / 34388232866 — solicitação aprovada: SUCCESS
-#183 / 34388501646 — assinatura/timestamp inválidos: SUCCESS
-#184 / 34388910697 — matriz live de convites: SUCCESS
-#190 / 34393412880 — signup autorizado com verificação obrigatória + sign-in pré-verificação negado: SUCCESS
-```
-
-### Migrations da Story
+Migrations aprovadas na branch isolada:
 
 ```text
 000004_controlled_signup.sql
@@ -87,89 +77,61 @@ verify-us-auth-005 / br-small-river-aww0rtxo / ready
 ledger: 000001–000007
 ```
 
-A branch contém fixtures e identidades exclusivamente de verificação live. Elas não foram promovidas à baseline.
+O gate live comprovou:
 
-Better Auth isolado após ativação da confirmação obrigatória:
+- signup direto sem autorização → negado;
+- aprovação válida → permitido e vinculado;
+- convites inválido/expirado/revogado/esgotado → negados;
+- e-mail divergente → negado;
+- convite válido → consumido uma vez e vinculado;
+- assinatura/timestamp inválidos → 401;
+- confirmação obrigatória de e-mail → ativa;
+- usuário não verificado → sign-in negado;
+- OTP real recebido e consumido → PASS;
+- usuário confirmado → `emailVerified=true` e sign-in permitido.
+
+CI live relevante:
+
+```text
+#181 — PASS
+#182 — PASS
+#183 — PASS
+#184 — PASS
+#190 — PASS
+#194 / 34395716742 — PASS ponta a ponta do OTP + gate PostgreSQL
+```
+
+As provas temporárias foram removidas da árvore após coleta de evidência.
+
+### Auth isolado
 
 ```text
 email/password: enabled
 allow_sign_up: true
-require_email_verification: true
-send_verification_email_on_sign_up: true
-email verification method: otp
+requireEmailVerification: true
+sendVerificationEmailOnSignUp: true
+emailVerificationMethod: otp
 email provider: shared Neon
-webhook: enabled
 ```
 
-Webhook branch-scoped comprovado:
+### Runtime
 
-```text
-user.before_create
-user.created
-→ <Preview estável>/api/webhooks/neon-auth
-```
-
-### Preview Vercel
-
-O Preview foi criado manualmente pelo usuário em conformidade com ADR-007 e está reutilizável:
-
-```text
-Project: caleida
-Deployment: dpl_8WN2sKEEL6ex3vKt11vmYX9ZGvoN
-State: READY
-Git commit: 5ada76e8eb68679c181a6d5c3c7c8d5db1794786
-Branch alias: caleida-git-feat-us-auth-005-55f705-synapselabia-8285s-projects.vercel.app
-```
-
-O alias estável também está cadastrado como trusted origin da branch Neon isolada.
-
-### Gate live de entrada — PASS
-
-Foi comprovado contra o serviço real:
-
-- signup direto sem convite/aprovação → negado antes da criação do usuário;
-- solicitação aprovada → `before_create allowed` e `user.created linked`;
-- convite inexistente/expirado/revogado/esgotado → negado;
-- e-mail divergente de convite restrito → negado;
-- convite válido → permitido, consumido uma única vez e vinculado;
-- assinatura inválida → HTTP 401;
-- timestamp expirado → HTTP 401;
-- logs observados permanecem sanitizados.
-
-A concorrência/capacidade continua coberta pelos testes versionados PostgreSQL/CI.
-
-### Gate de confirmação de e-mail — PARCIAL PASS
-
-Após o gate fail-closed de entrada passar, a confirmação obrigatória foi ativada somente na branch isolada `verify-us-auth-005`.
-
-Readback confirmou:
-
-```text
-requireEmailVerification=true
-sendVerificationEmailOnSignUp=true
-emailVerificationMethod=otp
-```
-
-Uma prova live autorizada em CI criou o usuário com `emailVerified=false` e confirmou que `POST /sign-in/email` não permite autenticação antes da verificação. A prova temporária foi removida da árvore após a coleta da evidência.
-
-Ainda falta comprovar ponta a ponta que o OTP é recebido por uma caixa acessível, aceito pelo endpoint de verificação e altera `emailVerified` para `true`. Não promover a baseline antes desse readback.
+O Preview Vercel real mostrou que a plataforma seleciona patches do Node 24 e só garante `24.x`. `package.json` foi alinhado a `24.x`; `.nvmrc` e CI continuam em `24.20.0` para reprodutibilidade. O CI da correção deve permanecer verde antes da promoção.
 
 ### Baseline preservada
 
-Readback posterior ao gate live confirmou:
+Readback mais recente:
 
 ```text
 main / br-restless-cherry-awpcwy6r
 ledger: 000001 + 000002 + 000003
 ```
 
-Nenhuma migration da US-AUTH-005 foi promovida ainda.
+Nenhuma migration US-AUTH-005 nem a nova exigência de verificação de e-mail foram promovidas à baseline.
 
-## Único bloqueio restante
+## Único gate restante
 
-A entrega e o consumo do OTP ainda precisam ser comprovados com uma caixa de e-mail acessível. O bloqueio não é mais configuração do Neon Auth: a configuração obrigatória já está ativa e o sign-in pré-verificação já foi negado em prova real.
-
-A PR #52 permanece draft e a Issue #51 aberta até o OTP ser confirmado, as migrations serem promovidas à baseline e o readback final passar.
+A próxima ação é uma mudança persistente na baseline non-production. Aplicar `000004`–`000007` e reproduzir a configuração Auth comprovada exige autorização explícita antes da execução. Depois disso, executar readback final e fechar a Story/PR se todos os gates permanecerem verdes.
 
 ## Invariantes vigentes
 
