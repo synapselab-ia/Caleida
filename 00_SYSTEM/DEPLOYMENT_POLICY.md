@@ -87,7 +87,7 @@ Quando o projeto realmente precisar ser publicado, antes da ação humana:
 2. a ref/commit candidata deve estar identificada;
 3. configuração e variáveis exigidas devem estar documentadas sem secrets;
 4. a separação de ambiente deve estar confirmada;
-5. `docs/CHECKPOINT.md` deve registrar `MANUAL_ACTION_REQUIRED` se a continuidade depender daquela publicação;
+5. `docs/CHECKPOINT.md` deve registrar `MANUAL_ACTION_REQUIRED` **somente se a continuidade realmente depender daquela publicação**;
 6. a IA deve fornecer o runbook e riscos relevantes;
 7. o usuário executa manualmente a publicação.
 
@@ -97,12 +97,18 @@ A ação humana de deployment não deve ser escondida dentro de uma tarefa autom
 
 Preview é opcional e manual.
 
-Ele pode ser usado quando o usuário quiser revisar externamente uma release candidata, mas:
+Ele pode ser usado quando o usuário quiser revisar externamente uma release candidata ou quando uma capacidade depender materialmente de um runtime público, mas:
 
 - não existe um Preview por PR por padrão;
-- Preview não é gate obrigatório de merge;
+- Preview **não é gate obrigatório de merge de Story**;
+- Preview **não deve ser solicitado apenas para satisfazer browser testing de uma Story intermediária**;
+- ausência de Preview não transforma automaticamente uma Story em `BLOCKED` ou `MANUAL_ACTION_REQUIRED`;
 - Preview não substitui testes/build;
 - Preview deve usar configuração non-production.
+
+A validação live deve ser consolidada no fechamento do incremento/release quando os mesmos fluxos puderem ser exercitados em conjunto. No Incremento 2, `US-AUTH-008` é o ponto padrão para a matriz live integrada de autenticação, sessão, autorização e UX.
+
+Exceção: uma Story pode exigir Preview antes disso apenas quando seu critério de aceitação depender inerentemente de infraestrutura pública/externa que não possa ser validada de forma equivalente em CI, ambiente isolado ou teste de integração. Exemplos: callback OAuth externo, webhook de terceiro, entrega real de e-mail quando essa entrega for o objeto da Story, comportamento de domínio/HTTPS/cookie especificamente dependente do runtime público. A necessidade deve ser documentada como requisito material, não inferida apenas porque existe UI.
 
 ## 8. Production
 
@@ -126,13 +132,19 @@ Se uma publicação manual falhar:
 5. identifique a causa e prepare correção limitada;
 6. só então o usuário decide se executa nova tentativa manual.
 
-## 10. Relação com o Project Design
+## 10. Relação com verificação
+
+`00_SYSTEM/VERIFICATION_PROTOCOL.md` define browser e integração proporcionalmente ao risco. Browser real é um meio de evidência, não sinônimo de deployment.
+
+Se não houver runtime já disponível para uma Story intermediária, a ausência de deployment manual deve ser registrada como `SKIPPED/deferred` quando os critérios restantes puderem ser provados por CI, testes de contrato, integração server-side e ambiente Neon isolado. O gate live acumulado retorna no encerramento do incremento/release.
+
+## 11. Relação com o Project Design
 
 `docs/PROJECT_DESIGN_DEPLOYMENT_AMENDMENT.md` formaliza esta política no nível de produto/arquitetura e supersede referências históricas a Preview/Production automáticos.
 
 `docs/adr/ADR-007-manual-vercel-deployment.md` registra a decisão arquitetural canônica. `DEC-009` permanece apenas como identificador histórico no registro legado.
 
-## 11. Fontes oficiais verificadas em OPS-003
+## 12. Fontes oficiais verificadas em OPS-003
 
 Em 31/08/2026 foram consultadas fontes oficiais da Vercel, incluindo:
 

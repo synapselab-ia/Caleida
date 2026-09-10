@@ -80,20 +80,23 @@ test("all cultural categories keep visible text in addition to color", async () 
   assert.match(page, /aria-hidden="true"/);
 });
 
-test("technical base does not fabricate interactions or future flows", async () => {
+test("base page exposes only the real login interaction added by US-AUTH-006", async () => {
   const { page } = await readSources();
 
+  assert.match(page, /import Link from "next\/link"/);
+  assert.match(page, /href="\/login"/);
+  assert.equal(page.match(/href=/g)?.length ?? 0, 1);
   assert.doesNotMatch(page, /<button\b/);
   assert.doesNotMatch(page, /<form\b/);
   assert.doesNotMatch(page, /<input\b/);
   assert.doesNotMatch(page, /<a\b/);
-  assert.doesNotMatch(page, /href=/);
+  assert.doesNotMatch(page, /onClick=/);
   assert.doesNotMatch(page, /components\/ui\/Button/);
   assert.doesNotMatch(page, /components\/ui\/FormField/);
   assert.doesNotMatch(page, /components\/ui\/Feedback/);
 
-  assert.match(page, /Nenhuma ação é simulada nesta página/);
-  assert.match(page, /sem fluxo funcional nesta etapa/);
+  assert.match(page, /O acesso ao beta é restrito a contas previamente autorizadas/);
+  assert.match(page, /Entrada controlada · sessão validada no servidor/);
 });
 
 test("official logo has a real responsive layout box", async () => {
