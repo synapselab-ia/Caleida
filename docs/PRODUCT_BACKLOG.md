@@ -1,8 +1,8 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-006 em execução  
+**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em andamento com US-AUTH-006 concluída  
 **Último incremento detalhado:** `docs/INCREMENT_2_PLAN.md`  
-**Próxima ação operacional:** concluir `US-AUTH-006 — Implementar login, logout e proteção de sessão`
+**Próxima ação operacional:** `US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões`
 
 ## Convenções
 
@@ -100,25 +100,26 @@ Entregar contas e acesso seguro para o beta fechado de forma incremental, separa
 - **Capacidades:** CAP-01, CAP-02
 - **Evidência:** `docs/US_AUTH_005_VERIFICATION.md`
 
-### US-AUTH-006 — Implementar login, logout e proteção de sessão
+### US-AUTH-006 — Login, logout e proteção de sessão
 
 - **Prioridade:** P0
-- **Estado:** EM ANDAMENTO
-- **Issue:** #53
-- **PR:** #54
+- **Estado:** CONCLUÍDA
+- **Issue/PR:** #53 / #54
+- **Merge:** `b585234a159a73dfec89e1d4cb866201dcfdef34`
 - **Capacidade:** CAP-01
-- **Dependência:** US-AUTH-005 concluída
-- **Implementado:** login/logout via boundary server-side; `/login`; `/app` protegido por layout server-side; credenciais inválidas com mensagem genérica; estados pending/error acessíveis; testes de contrato de sessão/proteção.
-- **Gates:** `npm run verify`; PostgreSQL 18 pelo CI; isolamento/configuração Neon-specific quando aplicável; revisão server-side de acesso direto e ausência de flash privado.
-- **Browser live:** `SKIPPED/deferred` nesta Story se não houver runtime já disponível; validação integrada concentrada em US-AUTH-008.
-- **Preview Vercel:** não é gate de Story e não deve ser solicitado apenas para browser testing intermediário.
+- **Resultado:** login/logout server-side; `/login`; `/app` protegido por layout server-side; mensagem genérica para credenciais inválidas; estados pending/error acessíveis; testes de contrato de sessão/proteção.
+- **Gates:** CI final `#214 / 34500281605` PASS; PostgreSQL 18 + `verify:db` PASS; Neon-specific estrutural/configuração PASS; browser live `SKIPPED/deferred` para US-AUTH-008.
+- **Preview Vercel:** não foi gate e nenhum deployment adicional foi exigido.
+- **Evidência:** `docs/US_AUTH_006_VERIFICATION.md`
 
 ### US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões
 
 - **Prioridade:** P0
-- **Estado:** A FAZER
+- **Estado:** PRONTA
 - **Capacidades:** CAP-01, CAP-35
-- **Resultado esperado:** recuperação/alteração de senha e sessões consultáveis/revogáveis com semântica de cache explicitamente testada.
+- **Dependências:** US-AUTH-004 e US-AUTH-006 concluídas
+- **Resultado esperado:** recuperação/alteração de senha e sessões consultáveis/revogáveis com semântica de cache explicitamente testada, sem enumeração ou vazamento de tokens/secrets.
+- **Browser/live:** segue a política consolidada; não exigir Preview intermediário salvo dependência pública material impossível de validar de forma equivalente.
 
 ### US-AUTH-008 — Consolidar auditoria e validar Incremento 2
 
@@ -136,6 +137,6 @@ Browser real e deployment são coisas distintas. Ausência de Preview manual nã
 
 # Próxima ação operacional
 
-> Concluir `US-AUTH-006` na Issue #53 / PR #54 com os gates técnicos materiais, sem exigir novo Preview Vercel; consolidar browser live em `US-AUTH-008`.
+> Criar Issue e branch limitadas a `US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões` e executar somente essa Story sem exigir novo Preview Vercel intermediário.
 
-Não antecipar recuperação de senha, gestão avançada de sessões, Production ou deployment Vercel.
+Não antecipar US-AUTH-008, Production ou deployment Vercel.
