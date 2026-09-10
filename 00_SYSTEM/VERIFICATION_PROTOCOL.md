@@ -124,7 +124,7 @@ A verificação deve testar a camada que realmente impõe a regra, não apenas v
 
 ## 5. Interface e acessibilidade
 
-Para slices visuais, verificar em browser real quando a infraestrutura de teste estiver disponível:
+Para slices visuais, verificar em browser real **quando houver runtime já disponível ou quando a Story depender materialmente desse runtime**:
 
 - carregamento;
 - estados vazio, erro e loading;
@@ -134,6 +134,12 @@ Para slices visuais, verificar em browser real quando a infraestrutura de teste 
 - navegação por teclado e foco básico;
 - sem erros críticos de console;
 - conteúdo privado não aparece durante loading ou erro de autorização.
+
+Browser real não implica Preview obrigatório por Story. Se a superfície puder ser validada por build, testes de contrato/componente, testes server-side e revisão estrutural, a ausência de um deployment manual intermediário deve ser registrada como `SKIPPED/deferred`, e não como `BLOCKED`.
+
+A validação live acumulada deve ser executada no fechamento do incremento/release. Para o Incremento 2, `US-AUTH-008` concentra a matriz integrada de login, logout, sessão, autorização, acesso direto e ausência de flash de conteúdo privado.
+
+Antecipar browser live para uma Story intermediária é obrigatório somente quando o critério de aceitação depender inerentemente de infraestrutura pública/externa que não possa ser validada de forma equivalente sem deployment, como callback OAuth externo, webhook de terceiro, entrega real de e-mail quando ela própria é o objeto da Story ou comportamento específico de domínio/HTTPS/cookie público.
 
 Automatize E2E somente quando houver framework estabelecido e benefício real.
 
@@ -152,7 +158,9 @@ Quando uma tarefa tocar APIs ou serviços externos:
 
 Build local/CI é um gate técnico. Deploy não é um comando de teste.
 
-Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`. Não publique Preview ou Production apenas para descobrir se a aplicação compila.
+Siga `00_SYSTEM/DEPLOYMENT_POLICY.md`. Não publique Preview ou Production apenas para descobrir se a aplicação compila ou para satisfazer mecanicamente um gate de browser intermediário.
+
+A ausência de Preview manual não bloqueia uma Story comum quando seus critérios podem ser cobertos adequadamente pelos gates portáteis e específicos disponíveis. Nesse caso, registrar o live/browser como `SKIPPED/deferred` e carregá-lo para a validação integrada do incremento/release.
 
 O workflow permanente de CI não deve ganhar responsabilidades de release sem uma decisão arquitetural posterior explícita.
 
@@ -175,7 +183,7 @@ Quando comandos Git locais não estiverem disponíveis, use inspeção equivalen
 
 - `PASS` — executado e aprovado;
 - `FAIL` — executado e falhou;
-- `SKIPPED` — não aplicável ou impossível no estado atual, com motivo;
-- `BLOCKED` — necessário, mas impedido por condição que deve ser resolvida antes da conclusão.
+- `SKIPPED` — não aplicável, deliberadamente consolidado em gate posterior ou impossível sem comprometer a política vigente, com motivo;
+- `BLOCKED` — necessário e material para concluir a Story, mas impedido por condição que deve ser resolvida antes da conclusão.
 
-Nunca converta ausência de execução em `PASS`.
+Nunca converta ausência de execução em `PASS`. Também não converta automaticamente ausência de deployment manual em `BLOCKED`.
