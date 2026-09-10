@@ -1,11 +1,11 @@
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Status:** EM ANDAMENTO; US-AUTH-005 concluída, US-AUTH-006 em revisão  
+**Status:** EM ANDAMENTO; US-AUTH-006 concluída, US-AUTH-007 promovida  
 **Origem:** `EPIC-02 — Contas e autenticação`  
 **Capacidades:** CAP-01, CAP-02, CAP-04 e CAP-35  
 **Prioridade:** P0/P1  
-**Stories concluídas:** `US-AUTH-001` a `US-AUTH-005`  
-**Story ativa:** `US-AUTH-006 — Implementar login, logout e proteção de sessão`
+**Stories concluídas:** `US-AUTH-001` a `US-AUTH-006`  
+**Próxima Story:** `US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões`
 
 ## 1. Objetivo
 
@@ -92,9 +92,9 @@ US-AUTH-004 — e-mail Auth non-production — CONCLUÍDA (#49 / #50)
   ↓
 US-AUTH-005 — cadastro controlado + confirmação de e-mail — CONCLUÍDA (#51 / #52)
   ↓
-US-AUTH-006 — login/logout + proteção de sessão — EM REVISÃO (#53 / #54)
+US-AUTH-006 — login/logout + proteção de sessão — CONCLUÍDA (#53 / #54)
   ↓
-US-AUTH-007 — recuperação + gestão/revogação de sessões
+US-AUTH-007 — recuperação + gestão/revogação de sessões — PRÓXIMA
   ↓
 US-AUTH-008 — auditoria integrada + validação live do incremento
 ```
@@ -144,21 +144,16 @@ Resultado: provider compartilhado Neon confirmado; SMTP/provedor externo adiado;
 
 Resultado: signup fail-closed por convite/aprovação; webhooks verificados; confirmação obrigatória de e-mail por OTP; migrations `000004`–`000007` promovidas; matriz live específica dessa Story comprovada porque a entrega/OTP real era material ao seu critério de aceitação.
 
-# US-AUTH-006 — Implementar login, logout e proteção de sessão
+# US-AUTH-006 — Login, logout e proteção de sessão
 
 **Prioridade:** P0  
-**Estado:** EM REVISÃO  
-**Issue:** `#53`  
-**PR:** `#54`  
-**Dependência:** US-AUTH-005  
+**Estado:** CONCLUÍDA  
+**Issue/PR:** `#53 / #54`  
+**Merge:** `b585234a159a73dfec89e1d4cb866201dcfdef34`  
 **Capacidade:** CAP-01  
 **Evidência:** `docs/US_AUTH_006_VERIFICATION.md`
 
-## Objetivo
-
-Materializar login/logout e proteção de superfícies privadas sobre o Managed Better Auth já integrado, sem duplicar credenciais nem confiar em estado apenas do cliente.
-
-## Resultado implementado
+## Resultado
 
 - server actions de login/logout via boundary Auth;
 - credenciais inválidas com mensagem genérica;
@@ -172,23 +167,30 @@ Materializar login/logout e proteção de superfícies privadas sobre o Managed 
 
 ## Gates
 
-- `npm run verify`: PASS no head funcional validado;
-- PostgreSQL 18 + `verify:db`: PASS pelo CI permanente;
+- CI final da PR `#214 / 34500281605`: PASS;
+- `npm run verify`: PASS;
+- PostgreSQL 18 + `verify:db`: PASS;
 - mudança de schema/migration: não aplicável;
 - Neon-specific: configuração/isolamento da branch `verify-us-auth-006` confirmados, schema diff vazio e zero usuários/sessões/accounts;
 - browser/live: `SKIPPED/deferred` para US-AUTH-008 conforme política revisada;
 - Preview Vercel adicional: não requerido.
 
-A Story deve ser integrada depois que o CI do head documental final estiver saudável e a PR não possuir blocker de review.
-
 # US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões
 
 **Prioridade:** P0  
-**Estado:** A FAZER  
+**Estado:** PRONTA / NEXT_ACTION  
 **Dependências:** US-AUTH-004 e 006  
 **Capacidades:** CAP-01, CAP-35
 
 Cobrir recuperação/alteração de senha, consulta/encerramento de sessões, revogação e semântica de cache. Eventos sensíveis não podem registrar senha/token/secret.
+
+Regras adicionais:
+
+- falha de recuperação não deve enumerar conta indevidamente;
+- tokens/códigos de recuperação não devem aparecer em logs/docs;
+- comportamento de revogação e cache deve ser comprovado explicitamente;
+- browser/live intermediário segue a política consolidada e não exige Preview por padrão;
+- não antecipar US-AUTH-008.
 
 # US-AUTH-008 — Consolidar auditoria e validar Incremento 2
 
@@ -253,4 +255,4 @@ Production Neon continua inexistente e não é substituída pela baseline non-pr
 
 ## 10. Próxima ação
 
-> Concluir a revisão e integração da `US-AUTH-006` pela PR #54 sem solicitar novo Preview Vercel; depois promover `US-AUTH-007`.
+> Criar Issue e branch limitadas a `US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões`, recuperar os contratos atuais do Managed Better Auth/cache de sessão e executar somente essa Story sem exigir Preview Vercel intermediário.
