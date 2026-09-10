@@ -3,15 +3,15 @@
 **PROJECT_STATUS:** READY  
 **CURRENT_PHASE:** Incremento 2 — Acesso controlado / EPIC-02 em andamento  
 **PROTOCOL_VERSION:** 2  
-**LAST_COMPLETED_TASK:** `US-AUTH-005 — Implementar cadastro controlado por convite ou aprovação`  
-**LAST_COMPLETED_ISSUE:** `#51`  
-**LAST_COMPLETED_PR:** `#52`  
-**LAST_COMPLETED_MERGE:** `9abc3235623c3f7d37531eb94a60997960f526e1`  
-**ACTIVE_TASK:** `US-AUTH-006 — Implementar login, logout e proteção de sessão`  
-**ACTIVE_ISSUE:** `#53`  
-**ACTIVE_BRANCH:** `feat/us-auth-006-session-protection`  
-**ACTIVE_PR:** `#54`  
-**NEXT_ACTION:** `Concluir a US-AUTH-006 com a evidência técnica já obtida, revalidar CI após a reconciliação documental, revisar/integrar a PR #54 e avançar o cursor sem exigir novo Preview Vercel.`  
+**LAST_COMPLETED_TASK:** `US-AUTH-006 — Implementar login, logout e proteção de sessão`  
+**LAST_COMPLETED_ISSUE:** `#53`  
+**LAST_COMPLETED_PR:** `#54`  
+**LAST_COMPLETED_MERGE:** `b585234a159a73dfec89e1d4cb866201dcfdef34`  
+**ACTIVE_TASK:** none  
+**ACTIVE_ISSUE:** none  
+**ACTIVE_BRANCH:** none  
+**ACTIVE_PR:** none  
+**NEXT_ACTION:** `Promover US-AUTH-007 — implementar recuperação de senha e gestão/revogação de sessões: criar Issue e branch limitadas à Story, recuperar os contratos Auth/sessão integrados e executar seus gates sem exigir Preview Vercel intermediário.`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -52,16 +52,29 @@ US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49 / #50)
   ↓
 US-AUTH-005 cadastro controlado + confirmação de e-mail — CONCLUÍDA (#51 / #52)
   ↓
-US-AUTH-006 login/logout + proteção de sessão — EM ANDAMENTO (#53 / #54)
+US-AUTH-006 login/logout + proteção de sessão — CONCLUÍDA (#53 / #54)
   ↓
-US-AUTH-007 recuperação de senha + gestão/revogação de sessões
+US-AUTH-007 recuperação de senha + gestão/revogação de sessões — PRÓXIMA
   ↓
 US-AUTH-008 auditoria integrada + validação live do incremento
 ```
 
 Plano detalhado: `docs/INCREMENT_2_PLAN.md`.
 
-## US-AUTH-006 — estado recuperado
+## US-AUTH-006 — encerramento integrado
+
+### GitHub / CI
+
+```text
+Issue #53: CLOSED / completed
+PR #54: MERGED
+Merge: b585234a159a73dfec89e1d4cb866201dcfdef34
+Head pré-merge: 2002a8430f2f5d136e817a396969b6c3fc88ef77
+CI final da PR: #214 / 34500281605 — SUCCESS
+Job: 102949095456 — SUCCESS
+```
+
+No CI final passaram instalação, `npm run verify`, build, PostgreSQL 18 e `npm run verify:db`.
 
 ### Implementação
 
@@ -74,20 +87,6 @@ Plano detalhado: `docs/INCREMENT_2_PLAN.md`.
 - formulário possui estados pending/error acessíveis;
 - logout não declara sucesso quando o provider falha;
 - nenhum `localStorage`, `sessionStorage` ou cookie client-side é autoridade de sessão.
-
-### GitHub / CI
-
-```text
-Issue #53: OPEN
-PR #54: OPEN / draft durante reconciliação
-Commit funcional inicial: 525c8fe9fe80bcc6b19c9ac36f532d3dd31cc4c8
-Correção de contrato visual: df3923a68b30c7e2dfacd1d1ab6e6d5dc3dcd8dc
-CI inicial #206 / 34475743349: FAIL por testes visuais históricos incompatíveis com o novo login real
-CI corrigido #207 / 34476422464: SUCCESS
-Job #102868179449: install + npm run verify + PostgreSQL 18 + npm run verify:db — PASS
-```
-
-O primeiro CI não revelou falha do fluxo Auth: os dois testes antigos ainda proibiam qualquer `href`/interação na home. O contrato foi atualizado sem relaxar os guardrails de UI.
 
 ### Neon isolated gate
 
@@ -103,13 +102,13 @@ Accounts Auth: 0
 Schema diff vs baseline: vazio
 ```
 
-A Story não introduz migration nem mudança de schema. Configuração/isolamento do Managed Better Auth na branch de verificação foram confirmados. A baseline não foi usada como laboratório destrutivo.
+A Story não introduziu migration nem mudança de schema. Configuração/isolamento do Managed Better Auth foram confirmados sem usar a baseline como laboratório destrutivo.
 
 ### Browser/live
 
-`SKIPPED/deferred` nesta Story pela política revisada. Não existe requisito material de infraestrutura pública exclusivo da US-AUTH-006 que justifique pedir outro deployment manual. Login/logout/sessão serão exercitados de forma integrada na `US-AUTH-008`, juntamente com recuperação, autorização e auditoria.
+`SKIPPED/deferred` para `US-AUTH-008` conforme política revisada. Nenhum Preview Vercel adicional foi necessário para concluir US-AUTH-006.
 
-Isso não é `PASS` fictício: é deferimento canônico explícito do gate live para a Story de validação integrada.
+Evidência: `docs/US_AUTH_006_VERIFICATION.md`.
 
 ## Housekeeping não bloqueante
 
@@ -133,4 +132,4 @@ Não removê-las automaticamente.
 - sem deployment Vercel pela IA;
 - Preview não é gate obrigatório de Story;
 - Data API permanece fora do escopo atual;
-- não antecipar US-AUTH-007/008 durante US-AUTH-006.
+- não antecipar US-AUTH-008 durante US-AUTH-007.
