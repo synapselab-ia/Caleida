@@ -7,11 +7,11 @@
 **LAST_COMPLETED_ISSUE:** `#51`  
 **LAST_COMPLETED_PR:** `#52`  
 **LAST_COMPLETED_MERGE:** `9abc3235623c3f7d37531eb94a60997960f526e1`  
-**ACTIVE_TASK:** none  
-**ACTIVE_ISSUE:** none  
-**ACTIVE_BRANCH:** none  
-**ACTIVE_PR:** none  
-**NEXT_ACTION:** `Promover US-AUTH-006 — implementar login, logout e proteção de sessão: criar Issue e branch limitadas a essa Story, recuperar o contrato Auth/sessão integrado e executar somente seu escopo e gates canônicos.`  
+**ACTIVE_TASK:** `US-AUTH-006 — Implementar login, logout e proteção de sessão`  
+**ACTIVE_ISSUE:** `#53`  
+**ACTIVE_BRANCH:** `feat/us-auth-006-session-protection`  
+**ACTIVE_PR:** `#54`  
+**NEXT_ACTION:** `Concluir a US-AUTH-006 com a evidência técnica já obtida, revalidar CI após a reconciliação documental, revisar/integrar a PR #54 e avançar o cursor sem exigir novo Preview Vercel.`  
 **BLOCKERS:** none  
 **ON_HOLD:** none  
 **MANUAL_ACTION_REQUIRED:** none
@@ -20,7 +20,19 @@
 
 > Continue o projeto `synapselab-ia/Caleida` pelo protocolo canônico e execute a `NEXT_ACTION`.
 
-Recupere GitHub, Neon e Vercel antes de agir. Não refaça Stories concluídas, não invente secrets e não execute deployment Vercel.
+Recupere GitHub, Neon e Vercel quando materialmente aplicável. Não refaça Stories concluídas, não invente secrets e não execute deployment Vercel.
+
+## Regra operacional corrigida em 10/09/2026
+
+Preview Vercel não é gate obrigatório de Story. Browser real não deve transformar uma Story intermediária em `MANUAL_ACTION_REQUIRED` apenas porque existe UI.
+
+Quando não houver runtime já disponível e os critérios puderem ser cobertos por CI, testes de contrato/integração, revisão server-side e gate Neon-specific, browser live deve ser registrado como `SKIPPED/deferred` e consolidado no fechamento do incremento/release.
+
+No Incremento 2, `US-AUTH-008` é o ponto padrão para a matriz live integrada. Se essa matriz realmente exigir runtime público, usar uma única release candidate manual, e não Preview por Story.
+
+Exceções continuam possíveis somente quando o critério de aceitação depender inerentemente de infraestrutura pública/externa impossível de validar de forma equivalente sem deployment.
+
+Autoridades: `00_SYSTEM/DEPLOYMENT_POLICY.md` e `00_SYSTEM/VERIFICATION_PROTOCOL.md`.
 
 ## Incrementos concluídos
 
@@ -40,95 +52,64 @@ US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49 / #50)
   ↓
 US-AUTH-005 cadastro controlado + confirmação de e-mail — CONCLUÍDA (#51 / #52)
   ↓
-US-AUTH-006 login/logout + proteção de sessão — PRÓXIMA
+US-AUTH-006 login/logout + proteção de sessão — EM ANDAMENTO (#53 / #54)
   ↓
 US-AUTH-007 recuperação de senha + gestão/revogação de sessões
   ↓
-US-AUTH-008 auditoria integrada + validação do incremento
+US-AUTH-008 auditoria integrada + validação live do incremento
 ```
 
 Plano detalhado: `docs/INCREMENT_2_PLAN.md`.
 
-## US-AUTH-005 — encerramento integrado
+## US-AUTH-006 — estado recuperado
 
-### GitHub
+### Implementação
 
-```text
-Issue #51: CLOSED
-PR #52: MERGED
-Merge: 9abc3235623c3f7d37531eb94a60997960f526e1
-CI final da branch: #201 / 34398683426 — SUCCESS
-```
+- login e logout via server actions e boundary Neon Auth;
+- `/login` dinâmico e consciente da sessão no servidor;
+- `/app` sob layout privado server-side;
+- sessão ausente/inválida tratada de forma fail-closed;
+- credenciais inválidas retornam mensagem genérica, sem enumeração do provider;
+- conteúdo privado só é retornado após validação server-side;
+- formulário possui estados pending/error acessíveis;
+- logout não declara sucesso quando o provider falha;
+- nenhum `localStorage`, `sessionStorage` ou cookie client-side é autoridade de sessão.
 
-A PR foi revisada sem threads/reviews pendentes antes do merge.
-
-### Baseline Neon — PASS
-
-Projeto: `caleida-nonprod / patient-glade-95136440`  
-Baseline: `main / br-restless-cherry-awpcwy6r`
+### GitHub / CI
 
 ```text
-ledger: 000001–000007
-schema vs verify-us-auth-005: diff vazio
-auth_users: 0
-product_roles: 0
-invitations: 0
-invitation_uses: 0
-access_requests: 0
-signup_permits: 0
-auth_webhook_events: 0
+Issue #53: OPEN
+PR #54: OPEN / draft durante reconciliação
+Commit funcional inicial: 525c8fe9fe80bcc6b19c9ac36f532d3dd31cc4c8
+Correção de contrato visual: df3923a68b30c7e2dfacd1d1ab6e6d5dc3dcd8dc
+CI inicial #206 / 34475743349: FAIL por testes visuais históricos incompatíveis com o novo login real
+CI corrigido #207 / 34476422464: SUCCESS
+Job #102868179449: install + npm run verify + PostgreSQL 18 + npm run verify:db — PASS
 ```
 
-Auth final da baseline:
+O primeiro CI não revelou falha do fluxo Auth: os dois testes antigos ainda proibiam qualquer `href`/interação na home. O contrato foi atualizado sem relaxar os guardrails de UI.
+
+### Neon isolated gate
 
 ```text
-email/password: enabled
-allow_sign_up: true
-verify_email_on_sign_up: true
-require_email_verification: true
-email_verification_method: otp
-auto_sign_in_after_verification: true
-email provider: shared Neon
+Projeto: caleida-nonprod / patient-glade-95136440
+Baseline: main / br-restless-cherry-awpcwy6r
+Branch US-AUTH-006: verify-us-auth-006 / br-cold-block-aww00k4o
+Provider: Better Auth
+Email/password: enabled
+Usuários Auth: 0
+Sessões Auth: 0
+Accounts Auth: 0
+Schema diff vs baseline: vazio
 ```
 
-Checksums promovidos:
+A Story não introduz migration nem mudança de schema. Configuração/isolamento do Managed Better Auth na branch de verificação foram confirmados. A baseline não foi usada como laboratório destrutivo.
 
-```text
-000004_controlled_signup.sql
-633c913deeedae4eca32890268b9f47b03c67178a0fd9a6edf2e8f05f2890535
+### Browser/live
 
-000005_controlled_signup_consume_fix.sql
-c7211562a5aec011b5af8707f63c9db4171a379c1ee0897567c03f79059ab4f1
+`SKIPPED/deferred` nesta Story pela política revisada. Não existe requisito material de infraestrutura pública exclusivo da US-AUTH-006 que justifique pedir outro deployment manual. Login/logout/sessão serão exercitados de forma integrada na `US-AUTH-008`, juntamente com recuperação, autorização e auditoria.
 
-000006_before_create_without_user_id.sql
-5537735b38710032affbe600f5ce4f666da8532e6fc554953c526914357ed68b
-
-000007_claim_signature_compatibility.sql
-823d39d763c32736fa0df1f0d626647f8dd3009d56fe1262fa74cc91d67b02c6
-```
-
-Evidência consolidada: `docs/US_AUTH_005_VERIFICATION.md`.
-
-### Gates live — PASS
-
-No Preview Vercel manual + `verify-us-auth-005` foram comprovados:
-
-- signup sem autorização negado fora da UI;
-- solicitação aprovada permitida e vinculada;
-- convites inválido/expirado/revogado/esgotado/e-mail divergente negados;
-- convite válido consumido e vinculado;
-- `user.before_create` sem user id suportado;
-- `user.created` finalizando o vínculo;
-- assinatura/timestamp inválidos rejeitados;
-- usuário não verificado impedido de autenticar;
-- OTP real recebido e validado;
-- `emailVerified=true` e sign-in pós-verificação permitido.
-
-### Vercel / runtime
-
-O deployment de prova foi criado manualmente pelo usuário conforme ADR-007. A IA não executou deploy, promotion, redeploy, rollback ou hook.
-
-`package.json` declara Node `24.x`; `.nvmrc` e CI permanecem fixos em `24.20.0`. O metadado raiz equivalente em `package-lock.json` ainda reflete o intervalo anterior; o grafo de dependências não mudou e `npm ci`/CI final passaram. Normalizar quando o lockfile for regenerado.
+Isso não é `PASS` fictício: é deferimento canônico explícito do gate live para a Story de validação integrada.
 
 ## Housekeeping não bloqueante
 
@@ -137,6 +118,7 @@ As branches Neon abaixo continuam existentes porque exclusão é destrutiva e ex
 ```text
 verify-us-auth-004 / br-plain-pond-aw5f59ia
 verify-us-auth-005 / br-small-river-aww0rtxo
+verify-us-auth-006 / br-cold-block-aww00k4o
 ```
 
 Não removê-las automaticamente.
@@ -149,5 +131,6 @@ Não removê-las automaticamente.
 - baseline Neon não é laboratório destrutivo;
 - sem Production Neon;
 - sem deployment Vercel pela IA;
+- Preview não é gate obrigatório de Story;
 - Data API permanece fora do escopo atual;
 - não antecipar US-AUTH-007/008 durante US-AUTH-006.
