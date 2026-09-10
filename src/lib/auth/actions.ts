@@ -22,6 +22,8 @@ export async function loginAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  void _previousState;
+
   const email = readTextEntry(formData.get("email")).trim().toLowerCase();
   const password = readTextEntry(formData.get("password"));
 
@@ -44,6 +46,8 @@ export async function loginAction(
 export async function logoutAction(
   _previousState: AuthActionState,
 ): Promise<AuthActionState> {
+  void _previousState;
+
   try {
     const { error } = await createServerAuth().signOut();
     if (error) {

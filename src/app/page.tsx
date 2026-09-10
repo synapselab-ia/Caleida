@@ -29,7 +29,7 @@ export default function Home() {
           <CaleidaLogo className="h-14 max-w-56 sm:h-16 sm:max-w-64" />
           <Link
             href="/login"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus hover:bg-surface-raised"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             Entrar
           </Link>
