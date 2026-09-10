@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { CaleidaLogo } from "@/components/brand/CaleidaLogo";
 
 const categories = [
@@ -25,9 +27,12 @@ export default function Home() {
       <div className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-5 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-10">
         <header className="flex min-w-0 items-center justify-between gap-6 border-b border-border pb-5 sm:pb-6">
           <CaleidaLogo className="h-14 max-w-56 sm:h-16 sm:max-w-64" />
-          <p className="hidden shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-text-muted sm:block">
-            Fundação visual
-          </p>
+          <Link
+            href="/login"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus hover:bg-surface-raised"
+          >
+            Entrar
+          </Link>
         </header>
 
         <section className="grid flex-1 items-center gap-12 py-12 md:py-16 lg:grid-cols-[minmax(0,1.12fr)_minmax(19rem,0.88fr)] lg:gap-16 lg:py-20">
@@ -52,9 +57,8 @@ export default function Home() {
                 mesma história.
               </p>
               <p className="mt-3 text-sm leading-6 text-text-muted">
-                Esta etapa consolida identidade, temas, tipografia, responsividade e
-                acessibilidade. Funcionalidades de produto entram somente nos próximos
-                incrementos.
+                O beta fechado já possui entrada controlada, confirmação de e-mail e
+                acesso autenticado. Os próximos domínios entram de forma incremental.
               </p>
             </div>
           </div>
@@ -90,15 +94,14 @@ export default function Home() {
             </ul>
 
             <p className="mt-7 border-t border-border pt-5 text-sm leading-6 text-text-muted">
-              Nenhuma ação é simulada nesta página. Login, catálogo, biblioteca e demais
-              fluxos só aparecerão quando forem funcionalidades reais.
+              O acesso ao beta é restrito a contas previamente autorizadas e confirmadas.
             </p>
           </aside>
         </section>
 
         <footer className="flex flex-col gap-2 border-t border-border pt-5 text-xs leading-5 text-text-muted sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-          <p>Caleida · fundação visual do produto</p>
-          <p>Light/dark pelo sistema · sem fluxo funcional nesta etapa</p>
+          <p>Caleida · beta fechado em construção</p>
+          <p>Entrada controlada · sessão validada no servidor</p>
         </footer>
       </div>
     </main>
