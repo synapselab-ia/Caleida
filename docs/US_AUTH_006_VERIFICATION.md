@@ -3,8 +3,8 @@
 **Story:** Implementar login, logout e proteção de sessão  
 **Issue:** #53  
 **PR:** #54  
-**Branch:** `feat/us-auth-006-session-protection`  
-**Estado:** EM REVISÃO  
+**Merge:** `b585234a159a73dfec89e1d4cb866201dcfdef34`  
+**Estado:** CONCLUÍDA  
 **Data:** 10/09/2026
 
 ## 1. Escopo verificado
@@ -45,7 +45,7 @@ Run: 34475743349
 Resultado: FAIL
 ```
 
-A falha foi legítima no sentido de detectar inconsistência de contrato, mas não era falha do Auth. Dois testes históricos da fundação visual ainda assumiam que a home não poderia conter qualquer `href` ou interação funcional. Isso deixou de ser verdade quando US-AUTH-006 materializou o link real de login.
+A falha detectou uma inconsistência de contrato, mas não uma falha do Auth. Dois testes históricos da fundação visual ainda assumiam que a home não poderia conter qualquer `href` ou interação funcional. Isso deixou de ser verdade quando US-AUTH-006 materializou o link real de login.
 
 Correção aplicada:
 
@@ -54,7 +54,7 @@ Correção aplicada:
 - continuam proibidos formulário, input, botão e lógica Auth direta na home;
 - warning de parâmetro não usado removido sem alterar comportamento.
 
-### Execução corrigida
+### Execução funcional corrigida
 
 ```text
 Head funcional validado: df3923a68b30c7e2dfacd1d1ab6e6d5dc3dcd8dc
@@ -64,7 +64,17 @@ Job: 102868179449
 Resultado: SUCCESS
 ```
 
-Passaram:
+### Head final da PR
+
+```text
+Head: 2002a8430f2f5d136e817a396969b6c3fc88ef77
+Workflow: #214
+Run: 34500281605
+Job: 102949095456
+Resultado: SUCCESS
+```
+
+No head final passaram:
 
 - instalação reprodutível;
 - `npm run verify`;
@@ -76,7 +86,7 @@ Passaram:
 - PostgreSQL 18;
 - `npm run verify:db`.
 
-As alterações documentais posteriores devem disparar nova execução do CI antes do merge final.
+PR #54 foi marcada pronta, não possuía reviews/threads bloqueantes e foi integrada por squash. Issue #53 foi fechada como `completed` pelo merge.
 
 ## 4. PostgreSQL / migrations
 
@@ -129,7 +139,7 @@ Em 10/09/2026 o protocolo foi reconciliado:
 - para Stories intermediárias cobertas por CI, contratos, revisão server-side e ambiente específico isolado, browser live pode ser `SKIPPED/deferred`;
 - a matriz live integrada do Incremento 2 fica concentrada na `US-AUTH-008`.
 
-Para US-AUTH-006 não foi identificado requisito exclusivamente público que justifique novo deployment manual.
+Para US-AUTH-006 não foi identificado requisito exclusivamente público que justificasse outro deployment manual.
 
 Resultado:
 
@@ -154,14 +164,10 @@ Isso não converte teste não executado em `PASS`; registra explicitamente o def
 
 `verify-us-auth-006 / br-cold-block-aww00k4o` permanece existente. Exclusão é destrutiva e requer autorização explícita do usuário, portanto não faz parte do fechamento automático da Story.
 
-## 9. Critério de encerramento
+## 9. Encerramento
 
-US-AUTH-006 pode ser encerrada quando:
+US-AUTH-006 está **CONCLUÍDA**.
 
-1. o CI do head final, incluindo esta reconciliação documental, estiver `SUCCESS`;
-2. a diff da PR #54 estiver limitada ao escopo;
-3. não existirem reviews/threads bloqueantes;
-4. a documentação canônica estiver coerente;
-5. a PR for integrada em `main` e o CI pós-merge permanecer saudável.
+Próxima Story canônica: `US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões`.
 
-Nenhum Preview Vercel adicional é necessário para esses critérios.
+Nenhum Preview Vercel adicional foi necessário para o encerramento.
