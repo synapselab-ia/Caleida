@@ -22,7 +22,7 @@ test("server auth boundary is lazy, server-only and fail-closed", () => {
   assert.match(authServer, /NEON_AUTH_BASE_URL/);
   assert.match(authServer, /NEON_AUTH_COOKIE_SECRET/);
   assert.match(authServer, /MIN_COOKIE_SECRET_LENGTH\s*=\s*32/);
-  assert.match(authServer, /SESSION_DATA_TTL_SECONDS\s*=\s*300/);
+  assert.match(authServer, /SESSION_DATA_TTL_SECONDS\s*=\s*1/);
   assert.match(authServer, /parsedBaseUrl\.protocol\s*!==\s*["']https:["']/);
   assert.match(authServer, /AuthConfigurationError/);
   assert.match(authServer, /AuthSessionValidationError/);
