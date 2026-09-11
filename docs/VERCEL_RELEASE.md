@@ -1,29 +1,22 @@
 # Vercel — Runbook de release manual
 
-**Status:** runbook operacional de hosting  
-**Decisão canônica:** `ADR-007`  
-**Política:** `00_SYSTEM/DEPLOYMENT_POLICY.md`  
-**Ambientes:** `docs/ENVIRONMENTS.md`
-
-Este documento descreve como preparar e executar uma futura release Vercel do Caleida sem transformar GitHub, CI, pull requests ou merges em mecanismos de deployment.
+**Status:** runbook operacional de hosting atualizado para US-AUTH-008  
+**Decisão:** ADR-007  
+**Política:** `00_SYSTEM/DEPLOYMENT_POLICY.md`
 
 ## 1. Regra central
 
-Deployment do Caleida é uma ação exclusivamente humana, manual e deliberada.
+Deployment do Caleida é exclusivamente humano, manual e deliberado.
 
-Agentes de IA, GitHub Actions, deploy hooks e outras automações não devem criar, promover, repetir ou reverter deployments.
-
-O fluxo normal de desenvolvimento termina em merge:
+IA, GitHub Actions, deploy hooks e automações não criam, promovem, repetem ou revertem deployments.
 
 ```text
-branch → CI → PR → review → merge → SEM DEPLOY AUTOMÁTICO
+branch → CI → PR → review → merge
+                    ≠
+                 release
 ```
 
-Release é um fluxo separado e iniciado pelo usuário somente quando houver motivo real para publicar.
-
-## 2. Guardrail versionado
-
-O repositório contém:
+`vercel.json` mantém:
 
 ```json
 {
@@ -34,147 +27,129 @@ O repositório contém:
 }
 ```
 
-Na documentação oficial da Vercel revalidada em 01/09/2026, `git.deploymentEnabled: false` desabilita deployments automáticos para todas as branches.
+Enquanto ADR-007 estiver vigente, esse guardrail não deve ser removido.
 
-Enquanto `ADR-007` estiver vigente:
+## 2. Estado externo observado em 11/09/2026
 
-- esse valor deve permanecer `false`;
-- não substituir por `github.enabled`, que é configuração legada/deprecated para esse objetivo;
-- não criar regra por branch que reative deployment automático;
-- não depender de Ignored Build Step como substituto desse guardrail.
+O estado antigo deste runbook, que dizia não existir projeto Vercel, ficou obsoleto após a primeira publicação manual do Caleida.
 
-## 3. Estado atual
+Estado real atual:
 
-O Caleida permanece preparado para hosting, mas não conectado/publicado.
-
-No estado verificado durante `US-PLAT-009`:
-
-- não existe projeto Vercel `Caleida`/`caleida` na conta conectada;
-- não existe Project Linking versionado;
-- `.vercel/` permanece ignorado pelo Git;
-- nenhum deployment Caleida foi criado;
-- nenhum `VERCEL_TOKEN` foi adicionado ao GitHub Actions;
-- nenhum deploy hook foi criado;
-- CI continua responsável apenas por validação técnica;
-- `docs/ENVIRONMENTS.md` define a separação local / non-production / Production antes de qualquer release que use secrets.
-
-Esse estado deve ser rechecado antes da primeira release real, porque recursos externos podem mudar independentemente do Git.
-
-## 4. Pré-condições para qualquer release manual
-
-Antes de publicar, confirmar:
-
-1. a ref/commit candidata está identificada;
-2. o CI da ref candidata está `PASS`;
-3. `npm run verify` está aprovado pelo gate aplicável;
-4. `vercel.json` ainda contém `git.deploymentEnabled: false`;
-5. não existe job de deployment na CI;
-6. as variáveis exigidas estão configuradas no **escopo correto** conforme `docs/ENVIRONMENTS.md`;
-7. Preview/non-production não usa secrets ou banco de Production;
-8. Production, quando existir, não reutiliza credenciais non-production;
-9. nenhum secret está versionado;
-10. o ambiente de dados correspondente está correto;
-11. o usuário decidiu explicitamente publicar Preview ou Production;
-12. `docs/CHECKPOINT.md` registra `MANUAL_ACTION_REQUIRED` quando a continuidade do projeto depender dessa publicação.
-
-No estado atual não existe projeto Neon Production nem projeto Vercel Caleida. Não invente valores para satisfazer estas pré-condições.
-
-## 5. Primeiro projeto/deployment
-
-A documentação oficial da Vercel revalidada em 01/09/2026 informa que **o primeiro deployment de um projeto novo é Production mesmo sem `--prod`**.
-
-Consequência operacional: não execute `vercel`, `vercel deploy`, importação via dashboard ou qualquer outro fluxo de criação/publicação supondo que a primeira execução produzirá apenas Preview.
-
-Quando chegar o momento da primeira release real:
-
-- o usuário deve decidir conscientemente criar/publicar o projeto;
-- revisar este runbook e os gates antes da ação;
-- confirmar que `vercel.json` já está na ref candidata;
-- manter Git deployments automáticos desabilitados;
-- configurar somente as variáveis requeridas no ambiente correto;
-- tratar a primeira publicação como ação externa de release, não como teste de build.
-
-A IA pode revisar as pré-condições e diagnosticar o resultado depois, mas não executar a publicação.
-
-## 6. Preview manual futuro
-
-Depois que o projeto existir, Preview pode ser usado opcionalmente pelo usuário para inspeção externa.
-
-A documentação corrente da Vercel aceita deployment manual pela CLI com:
-
-```bash
-vercel deploy
+```text
+Project: caleida
+Project ID: prj_OQw0hRn1YYQWXSpC87OLF47NqZ2r
+Framework: Next.js
+Node: 24.x
+Latest deployment: dpl_8WN2sKEEL6ex3vKt11vmYX9ZGvoN
+Latest state: READY
+Latest Git source: US-AUTH-005
+Production deployment ativo: não
 ```
 
-Esse comando é apresentado apenas como referência para execução humana. Não deve aparecer em GitHub Actions, scripts automáticos de release ou automações do projeto.
+O deployment existente é útil como evidência histórica da US-AUTH-005, mas não contém US-AUTH-006, US-AUTH-007 ou US-AUTH-008.
 
-Preview:
+## 3. Pré-condições para release manual
 
-- não é criado para toda PR;
-- não é gate obrigatório de merge;
-- representa o ambiente publicado **non-production/staging** do Caleida;
-- deve receber somente variáveis/recursos non-production;
-- não deve usar banco ou secrets de Production por conveniência.
+Antes de qualquer publicação:
 
-## 7. Production manual futura
+1. ref candidata identificada;
+2. CI da ref candidata verde;
+3. `npm run verify` e gates de banco aplicáveis em PASS;
+4. `vercel.json` ainda com `git.deploymentEnabled: false`;
+5. CI sem CD/deploy hooks;
+6. variáveis no escopo correto;
+7. Preview usando somente recursos/secrets non-production;
+8. nenhum secret versionado;
+9. ambiente de dados correspondente pronto;
+10. `docs/CHECKPOINT.md` em `MANUAL_ACTION_REQUIRED` quando o gate depender da publicação;
+11. publicação explicitamente decidida pelo usuário.
 
-Quando o usuário decidir publicar Production e todas as pré-condições estiverem satisfeitas, a documentação corrente aceita:
+## 4. Release candidate da US-AUTH-008
 
-```bash
-vercel deploy --prod
+A US-AUTH-008 é o ponto planejado de validação live acumulada do Incremento 2. Os gates técnicos e Neon-specific passaram e a migration `000008` já está na baseline non-production.
+
+A única publicação necessária agora é uma Preview da branch:
+
+```text
+feat/us-auth-008-audit-integrated-validation
 ```
 
-A execução é exclusiva do usuário.
+Não usar Production e não promover a Preview depois do teste.
 
-Antes dessa ação, Production deve possuir recursos e secrets próprios conforme `docs/ENVIRONMENTS.md`. O projeto Neon Production ainda não foi provisionado e nenhuma credencial non-production deve ser promovida por reutilização.
+### Pelo dashboard
 
-IA e automações não devem:
+A Vercel documenta a criação manual de deployment por branch ou SHA no Dashboard. No projeto `caleida`:
 
-- executar o comando;
-- promover Preview;
-- executar rollback;
-- acionar redeploy;
-- criar deploy hook;
-- chamar API/SDK para criar deployment.
+1. abrir **Deployments**;
+2. no menu de três pontos ao lado do cabeçalho de Deployments, escolher **Create Deployment**;
+3. informar `feat/us-auth-008-audit-integrated-validation` para deployment baseado na branch;
+4. confirmar que a configuração selecionada é Preview/non-production;
+5. criar o deployment;
+6. aguardar `READY`;
+7. retornar ao fluxo canônico do Caleida com o deployment disponível para inspeção.
 
-## 8. Falha de release
+A nomenclatura visual do dashboard pode variar, mas a operação deve continuar sendo manual e baseada na ref candidata. Se o dashboard pedir escolha de branch configuration porque o commit aparece em múltiplas branches, selecionar a configuração da feature branch/Preview, não Production.
 
-Se uma publicação manual falhar:
+### CLI — somente referência
 
-1. não repetir deployments de forma especulativa;
-2. identificar o deployment que falhou;
-3. obter logs/build output existentes;
-4. reproduzir a falha localmente quando possível;
-5. confirmar se o erro é de código ou de configuração/escopo de ambiente;
-6. executar os gates técnicos aplicáveis;
-7. corrigir a causa em branch/PR limitada;
-8. somente depois o usuário decide se faz nova tentativa manual.
+A documentação Vercel também suporta `vercel deploy`, mas essa não é a rota necessária para o usuário neste gate e não deve ser adicionada a scripts/CI.
 
-Falha de deployment não autoriza copiar secrets Production para Preview, reduzir testes, autorização, RLS ou guardrails de release.
+## 5. Variáveis da Preview
 
-## 9. O que nunca deve entrar na CI
+A Preview da US-AUTH-008 deve continuar apontando somente para non-production.
 
-Enquanto `ADR-007` estiver vigente, `.github/workflows/ci.yml` não deve ganhar:
+Nomes necessários no estado atual, sem registrar valores:
 
-- `vercel deploy`;
-- `vercel --prod` ou `vercel deploy --prod`;
-- `vercel promote`;
-- `vercel rollback`;
-- deploy hooks;
-- chamadas à API Vercel que criem deployment;
-- `VERCEL_TOKEN` apenas para publicação;
-- connection strings Neon externas apenas para o gate padrão;
-- permissões de escrita desnecessárias para CD.
+```text
+DATABASE_URL
+CALEIDA_RATE_LIMIT_SECRET
+NEON_AUTH_BASE_URL
+NEON_AUTH_COOKIE_SECRET
+```
 
-O CI permanente usa PostgreSQL 18 efêmero e não depende de repository secrets para seus gates atuais. Os testes `tests/ci-contract.test.mjs` e `tests/environment-contract.test.mjs` protegem essa separação.
+Variáveis de tooling como `DATABASE_URL_UNPOOLED`, `CALEIDA_DB_TARGET` e autorização de migration não são requisitos do runtime web comum e não devem ser adicionadas à Preview apenas por conveniência.
 
-## 10. Fontes oficiais revalidadas
+Production Neon não existe. Nunca reutilizar qualquer futuro secret Production nesta Preview.
 
-Consultadas em 01/09/2026:
+## 6. Depois de READY
 
-- Vercel Git Configuration — `https://vercel.com/docs/project-configuration/git-configuration`;
-- Deploying Projects from Vercel CLI — `https://vercel.com/docs/cli/deploying-from-cli`;
-- Vercel Environment Variables / Manage Environment Variables;
-- Vercel Sensitive Environment Variables.
+A IA pode inspecionar o deployment já criado, obter acesso temporário se Vercel Authentication proteger a Preview, revisar logs/runtime e executar a matriz live da US-AUTH-008.
 
-Comportamentos de plataforma devem ser revalidados novamente no momento de uma release real.
+A matriz deve ocorrer sobre uma única RC e cobrir signup/OTP, login/logout, recovery/reset, senha, sessões, autorização, acesso direto, flash privado e auditoria.
+
+## 7. Falha de release
+
+Se a publicação manual falhar:
+
+1. não repetir deployments especulativamente;
+2. identificar o deployment falho;
+3. coletar build logs existentes;
+4. separar erro de código de erro de configuração;
+5. reproduzir pelos gates canônicos quando possível;
+6. corrigir em branch/PR limitada;
+7. somente depois decidir uma nova tentativa manual.
+
+Falha nunca autoriza reduzir Auth/autorização, copiar secrets Production ou reativar Git deployments automáticos.
+
+## 8. Production
+
+Production continua fora do escopo da US-AUTH-008.
+
+A IA não executa:
+
+- Production deployment;
+- promote;
+- rollback;
+- redeploy;
+- deploy hook;
+- API/SDK para criar deployment.
+
+## 9. Fontes Vercel revalidadas
+
+Em 11/09/2026 foi revalidado que:
+
+- `git.deploymentEnabled: false` continua sendo o guardrail para Git deployments automáticos;
+- Vercel continua suportando deployment manual via CLI;
+- o Dashboard suporta iniciar deployment manual a partir de uma branch ou SHA de Git.
+
+Comportamentos externos devem ser novamente conferidos se a interface/plataforma mudar materialmente.

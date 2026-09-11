@@ -1,188 +1,127 @@
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Status:** EM ANDAMENTO; US-AUTH-007 concluída, US-AUTH-008 promovida  
-**Origem:** `EPIC-02 — Contas e autenticação`  
-**Capacidades:** CAP-01, CAP-02, CAP-04 e CAP-35  
-**Prioridade:** P0/P1  
-**Stories concluídas:** `US-AUTH-001` a `US-AUTH-007`  
-**Próxima Story:** `US-AUTH-008 — Consolidar auditoria e validar Incremento 2`
+**Status:** EM REVISÃO FINAL — todas as Stories implementadas; US-AUTH-008 com matriz live em PASS e integração da PR #58 pendente  
+**Origem:** EPIC-02 — Contas e autenticação  
+**Capacidades:** CAP-01, CAP-02, CAP-04, CAP-35  
+**Prioridade:** P0/P1
 
 ## 1. Objetivo
 
-Criar a fundação segura de identidade e entrada controlada do beta fechado, mantendo autenticação gerenciada, autorização, convites, e-mail, cadastro, sessão, recovery e auditoria em Stories separadas e verificáveis.
+Entregar a fundação segura de identidade e entrada controlada do beta fechado: autenticação gerenciada, autorização, convites/aprovação, confirmação de e-mail, login/logout, proteção de sessão, recovery, gestão/revogação de sessões e auditoria sem secrets.
 
-O incremento termina apenas quando:
-
-- Neon Auth estiver integrado e reproduzível em non-production;
-- cadastro só puder ocorrer por convite válido ou solicitação aprovada;
-- confirmação de e-mail, login/logout e superfícies privadas estiverem protegidos;
-- papéis administrativos forem verificados no servidor e no banco;
-- recuperação de senha e gestão/revogação de sessões estiverem implementadas;
-- eventos críticos de acesso estiverem auditados sem secrets;
-- migrations/RLS aplicáveis forem versionadas e verificadas;
-- comportamento Neon-specific for provado em branch isolada quando houver dependência real;
-- a matriz adversarial/browser live integrada for executada no fechamento do incremento;
-- nenhum deployment Vercel automático ou executado por IA ocorrer.
-
-## 2. Arquitetura e gates
-
-Decisões vigentes:
-
-- `ADR-004`: mudanças persistentes de banco somente por migrations;
-- `ADR-005`: Neon como plataforma canônica de dados/identidade;
-- `ADR-007`: deployment Vercel exclusivamente humano/manual;
-- `ADR-008`: PostgreSQL 18 descartável para SQL portável e branch Neon isolada para comportamento Neon-specific;
-- `ADR-009`: provider compartilhado do Neon Auth atende desenvolvimento/non-production enquanto adequado.
-
-### Browser e deployment
-
-Browser real é evidência, não obrigação de Preview por Story. `US-AUTH-008` é a Story deliberadamente reservada para a validação live acumulada do incremento.
-
-Se runtime público for necessário para essa matriz:
-
-- preparar uma única release candidate;
-- registrar `MANUAL_ACTION_REQUIRED` antes da publicação;
-- o usuário executa manualmente a publicação;
-- a IA inspeciona/valida depois da publicação;
-- não criar Preview separado para cada subfluxo.
-
-## 3. Estado integrado atual
+## 2. Decisões e ambientes
 
 ```text
-Projeto Neon: caleida-nonprod / patient-glade-95136440
+Neon project: caleida-nonprod / patient-glade-95136440
 PostgreSQL: 18
-Baseline: main / br-restless-cherry-awpcwy6r / ready
-Managed Better Auth: habilitado
-Email/password: enabled
-Require email verification: true
-Email verification: OTP
-Auth email provider: shared Neon
-Session data cache TTL no app: 1 s
+Baseline: main / br-restless-cherry-awpcwy6r
+Managed Better Auth: enabled
+email/password: enabled
+email verification: required / OTP
+email provider: shared Neon
+sessionDataTtl: 1 s
 Data API: não provisionada
 Production Neon: não provisionada
-Deployment Vercel: exclusivamente humano/manual
+Vercel: deployment exclusivamente humano/manual
 ```
 
-Branches Neon de verificação são housekeeping e não podem ser excluídas automaticamente sem autorização específica.
+Decisões canônicas: ADR-004, ADR-005, ADR-007, ADR-008 e ADR-009.
 
-## 4. Rastreamento de capacidades
-
-| Capacidade | Cobertura principal |
-|---|---|
-| CAP-01 — Contas, autenticação e sessões | US-AUTH-001, 004, 005, 006 e 007 |
-| CAP-02 — Convites e controle de entrada | US-AUTH-003 e 005 |
-| CAP-04 — Papéis e permissões | US-AUTH-002 e 008 |
-| CAP-35 — Auditoria | US-AUTH-002, 003, 007 e 008 |
-
-## 5. Ordem das Stories
+## 3. Stories
 
 ```text
-US-AUTH-001 — fundação Neon Auth + sessão — CONCLUÍDA (#43 / #44)
-  ↓
-US-AUTH-002 — papéis/autorização + bootstrap — CONCLUÍDA (#45 / #46)
-  ↓
-US-AUTH-003 — convites/solicitações + auditoria — CONCLUÍDA (#47 / #48)
-  ↓
-US-AUTH-004 — e-mail Auth non-production — CONCLUÍDA (#49 / #50)
-  ↓
-US-AUTH-005 — cadastro controlado + confirmação de e-mail — CONCLUÍDA (#51 / #52)
-  ↓
-US-AUTH-006 — login/logout + proteção de sessão — CONCLUÍDA (#53 / #54)
-  ↓
-US-AUTH-007 — recovery + gestão/revogação de sessões — CONCLUÍDA (#55 / #56)
-  ↓
-US-AUTH-008 — auditoria integrada + validação live do incremento — NEXT_ACTION
+US-AUTH-001 — fundação Neon Auth + sessão                 CONCLUÍDA (#43/#44)
+US-AUTH-002 — papéis/autorização + bootstrap              CONCLUÍDA (#45/#46)
+US-AUTH-003 — convites/solicitações + auditoria            CONCLUÍDA (#47/#48)
+US-AUTH-004 — e-mail Auth non-production                   CONCLUÍDA (#49/#50)
+US-AUTH-005 — cadastro controlado + confirmação OTP        CONCLUÍDA (#51/#52)
+US-AUTH-006 — login/logout + proteção de sessão            CONCLUÍDA (#53/#54)
+US-AUTH-007 — recovery + gestão/revogação de sessões       CONCLUÍDA (#55/#56)
+US-AUTH-008 — auditoria integrada + validação live final   EM REVISÃO (#57/#58)
 ```
 
-## 6. Stories concluídas 001–006
+## 4. Estado integrado comprovado
 
-Detalhes e evidências permanecem em `docs/US_AUTH_001_VERIFICATION.md` a `docs/US_AUTH_006_VERIFICATION.md`.
+### Autenticação e entrada
 
-Estado consolidado: identidade Managed Better Auth, autorização/papéis de produto separados, entrada controlada por convite/aprovação, e-mail compartilhado Neon, confirmação obrigatória por OTP, login/logout e boundary privado server-side.
+- Managed Better Auth branch-scoped;
+- signup fail-closed por convite válido ou solicitação aprovada;
+- confirmação obrigatória por OTP;
+- login/logout server-side;
+- rotas privadas protegidas antes de retornar conteúdo;
+- recovery com resposta pública anti-enumeração;
+- reset por token de uso único do provider;
+- mudança autenticada exige senha atual;
+- consulta/revogação das próprias sessões sem bearer token no cliente;
+- revogação coletiva implementada por revogação explícita server-side das sessões remotas;
+- cache de dados de sessão limitado a aproximadamente 1 segundo para revalidação rápida.
 
-## 7. US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões
+### Auditoria
 
-**Prioridade:** P0  
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#55 / #56`  
-**Merge:** `31ec6e2238a7b0bdaff7506ac0e9ed51179f3322`  
-**Capacidades:** CAP-01, CAP-35  
-**Contrato:** `docs/SESSION_SECURITY.md`  
-**Evidência:** `docs/US_AUTH_007_VERIFICATION.md`
+`000008_auth_security_audit.sql` adiciona `caleida_audit.auth_security_events` com somente tipo, ator opcional, outcome, reason code e timestamp.
 
-### Resultado
+Não existem colunas de e-mail, senha, OTP, token, cookie, Auth URL ou payload completo.
 
-- `/forgot-password` com resposta pública genérica;
-- callback same-origin validado;
-- `/reset-password` com token de uso único do provider;
-- `/account/security` com alteração de senha e gestão das próprias sessões;
-- alteração autenticada exige senha atual e revoga as demais sessões;
-- listagem expõe metadados seguros, nunca bearer token;
-- revogação individual usa ID opaco e resolve token somente server-side;
-- cache de dados de sessão reduzido para 1 s;
-- nenhum novo schema/migration de produto.
+## 5. Gates — PASS
 
-### Gates
+### CI / PostgreSQL / Neon
 
 ```text
-CI PR #222 / 34597671892 / job 103257145584: SUCCESS
-Merge: 31ec6e2238a7b0bdaff7506ac0e9ed51179f3322
-CI main #223 / 34597951573 / job 103258037267: SUCCESS
-PostgreSQL 18 + verify:db: PASS
-Neon verify-us-auth-007: ready / schema diff vazio
-Browser/live: SKIPPED/deferred para US-AUTH-008
+CI da correção live: #232 / 34616208433 / job 103318914704 — SUCCESS
+PostgreSQL 18 + verify:db — PASS
+verify-us-auth-008 / br-delicate-meadow-aw1u62kn — PASS
+promoção 000008 para baseline main — PASS
+diff final isolada vs baseline — vazio
 ```
 
-A configuração Managed Neon observada não expõe `revokeSessionsOnPasswordReset`; o comportamento live de reset + sessões deve ser medido na US-AUTH-008.
+### Live integrado
 
-## 8. US-AUTH-008 — Consolidar auditoria e validar Incremento 2
-
-**Prioridade:** P1  
-**Estado:** PRONTA / NEXT_ACTION  
-**Dependências:** US-AUTH-001 a US-AUTH-007 concluídas  
-**Capacidades:** CAP-04, CAP-35
-
-### Entrega esperada
-
-- consolidar eventos críticos de autenticação/autorização sem senha/token/cookie/secret;
-- revisar o contrato de auditoria existente e criar somente persistência necessária por migration versionada;
-- executar matriz adversarial de autorização e sessão;
-- validar live signup/OTP, login/logout, recovery/reset, alteração de senha e gestão/revogação de sessões;
-- validar acesso direto e ausência de flash privado;
-- medir revogação remota após a janela de cache de 1 s;
-- validar trusted origin do recovery;
-- produzir evidência final e decidir se o Incremento 2 pode ser marcado `CONCLUÍDO`.
-
-### Matriz transversal mínima
-
-1. visitante/anônimo;
-2. usuário autenticado autorizado;
-3. usuário autenticado não autorizado conhecendo ID válido;
-4. manipulação de ID/ownership/papel;
-5. acesso direto sem UI;
-6. sessão inválida/revogada;
-7. secret ausente/inválido;
-8. papel comum tentando ação administrativa;
-9. concorrência em alteração crítica quando aplicável;
-10. ausência de vazamento durante loading/erro;
-11. recovery válido/inválido/expirado/reutilizado;
-12. senha antiga versus nova após reset;
-13. revogação individual e das demais sessões em cenário multi-device.
-
-## 9. Contrato de ambientes
-
-Nomes versionados, valores reais proibidos:
+RC final:
 
 ```text
-NEON_AUTH_BASE_URL
-NEON_AUTH_COOKIE_SECRET
-CALEIDA_BOOTSTRAP_OWNER_USER_ID
-CALEIDA_BOOTSTRAP_REASON
-CALEIDA_ALLOW_OWNER_BOOTSTRAP
+dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B
+commit c85135418eec133d7e0a5dc8ad6ad816f2c39668
+Preview / READY
 ```
 
-Production Neon continua inexistente.
+Matriz:
 
-## 10. Próxima ação
+```text
+run #13 / 34636223750
+job 103384664571
+SUCCESS
+```
 
-> Criar Issue e branch limitadas a `US-AUTH-008 — Consolidar auditoria e validar Incremento 2`, recuperar os contratos de auditoria/Auth/autorização e executar somente essa Story. Solicitar uma única release candidate manual se e somente se o gate live exigir runtime público.
+Passaram:
+
+1. proteção anônima e ausência de flash privado;
+2. signup controlado;
+3. OTP real e bloqueio pré-verificação;
+4. login/logout;
+5. multi-sessão;
+6. IDOR de session id negado;
+7. revogação individual remota;
+8. revogação de todas as outras sessões preservando a atual;
+9. recovery existente/inexistente sem enumeração na resposta pública;
+10. origem divergente bloqueada pelo CSRF de Server Actions sem disparar recovery;
+11. reset válido e replay negado;
+12. senha antiga/nova após reset;
+13. medição real das sessões após reset;
+14. mudança autenticada de senha revogando as demais;
+15. auditoria live de todos os eventos críticos sem secrets.
+
+## 6. Semântica observada de reset
+
+No Managed Neon Auth exercitado, reset por e-mail **não revogou as sessões existentes**. A troca autenticada de senha, por sua vez, revogou as demais sessões e preservou a corrente.
+
+Essa distinção passa a ser comportamento documentado, sem inventar garantia que o provider/configuração gerenciada não oferece.
+
+## 7. Encerramento
+
+O Incremento 2 pode ser declarado `CONCLUÍDO` assim que a US-AUTH-008 for integrada em `main`, a Issue #57 estiver fechada e o CI pós-merge estiver verde.
+
+Branches e fixtures temporárias de prova não bloqueiam o incremento; limpeza destrutiva depende de autorização explícita.
+
+## 8. Próxima ação
+
+> Integrar a PR #58 após o CI/review final e registrar em `main` o SHA real de merge + CI. Só depois disso definir o próximo incremento canônico.

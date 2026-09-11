@@ -1,14 +1,9 @@
 # Neon Platform — Caleida
 
-**Status:** arquitetura canônica de plataforma após US-AUTH-007  
-**Decisões relacionadas:** `ADR-004`, `ADR-005`, `ADR-008` e `ADR-009`  
-**Project Design:** `PROJECT_DESIGN.md` + `PROJECT_DESIGN_PLATFORM_AMENDMENT.md`
+**Status:** arquitetura canônica de plataforma durante US-AUTH-008  
+**Decisões:** ADR-004, ADR-005, ADR-008 e ADR-009
 
-## 1. Escopo
-
-Este documento define como o Caleida usa Neon para Postgres e identidade. Schema persistente de produto pertence às migrations versionadas no Git; comportamento específico do serviço é verificado em branch Neon isolada.
-
-## 2. Topologia
+## 1. Topologia vigente
 
 ```text
 Next.js
@@ -17,30 +12,107 @@ Next.js
   │     ├── login/logout
   │     └── recovery + gestão/revogação de sessões
   ├── operações server-side confiáveis
-  │     ↓
-  │   Postgres direto com least privilege
-  └── futuro browser/user data path
-        ↓
-      Neon Data API + JWT → PostgreSQL RLS
-
-Object Storage: provider separado, ainda não escolhido
+  │     └── Neon Postgres
+  └── futuro acesso normal sob usuário
+        └── Neon Data API + JWT + RLS
 ```
 
-Data API continua não provisionada.
+Data API continua não provisionada. Object Storage continua desacoplado e sem provider escolhido.
 
-## 3. Ambientes
-
-### Non-production
+## 2. Non-production canônico
 
 ```text
-Projeto: caleida-nonprod / patient-glade-95136440
+Project: caleida-nonprod / patient-glade-95136440
 PostgreSQL: 18
-Baseline: main / br-restless-cherry-awpcwy6r
+Baseline: main / br-restless-cherry-awpcwy6r / ready
+Managed Better Auth: enabled
+email/password: enabled
+allow sign-up: true
+require email verification: true
+verification method: OTP
+email provider: shared Neon
 ```
 
-A branch Neon `main` não é a branch Git `main`.
+A branch Neon `main` é staging/non-production e não é a branch Git `main`.
 
-Branches de verificação existem somente quando um gate Neon-specific exige isolamento. Elas não são fonte canônica de schema e não são removidas automaticamente, pois exclusão é destrutiva sujeita a autorização explícita.
+## 3. Baseline de migrations
+
+A baseline integrada contém:
+
+```text
+000001_migration_ledger.sql
+000002_product_authorization.sql
+000003_entry_control.sql
+000004_controlled_signup.sql
+000005_controlled_signup_consume_fix.sql
+000006_before_create_without_user_id.sql
+000007_claim_signature_compatibility.sql
+000008_auth_security_audit.sql
+```
+
+Checksum de `000008_auth_security_audit.sql`:
+
+```text
+4f2ab39dd53413c522648ce7021a0051a163b009486c5dd6e7fcf1e2f81460b8
+```
+
+`000008` foi promovida somente após:
+
+1. CI + PostgreSQL 18 `PASS`;
+2. migration/testes executados em `verify-us-auth-008`;
+3. ACL adversarial `PASS`;
+4. confirmação de zero fixtures;
+5. comparação de schema limitada ao delta esperado.
+
+Depois da promoção, `compare_database_schema(verify-us-auth-008, main)` retornou diff vazio.
+
+## 4. Auditoria Auth consolidada
+
+Persistência adicionada por US-AUTH-008:
+
+```text
+caleida_audit.auth_security_events
+```
+
+Colunas deliberadamente mínimas:
+
+- id;
+- event_type;
+- actor_auth_user_id opcional;
+- outcome;
+- reason_code;
+- occurred_at.
+
+Eventos permitidos:
+
+```text
+login
+logout
+password_recovery_requested
+password_reset
+password_changed
+session_revoked
+other_sessions_revoked
+auth_proxy_post
+```
+
+Não existem colunas de e-mail, senha, token, cookie, Auth URL, IP ou payload completo. `PUBLIC` não possui acesso à tabela/sequence.
+
+## 5. Sessão e recovery
+
+A aplicação usa `@neondatabase/auth@0.5.0-beta` em boundary server-only.
+
+- `sessionDataTtl = 1 segundo`;
+- recovery público é anti-enumeração;
+- callback é derivado de origem same-origin validada;
+- reset usa token do provider somente no servidor/fluxo de formulário;
+- alteração autenticada exige senha atual e solicita revogação das outras sessões;
+- session token nunca é enviado à UI;
+- revogação individual resolve o token somente após validar ownership pelo session id.
+
+O Managed Neon observado não expõe `revokeSessionsOnPasswordReset`; a US-AUTH-008 deve medir o comportamento live em vez de presumir revogação automática.
+
+## 6. Branches de verificação
 
 Housekeeping atual:
 
@@ -49,136 +121,36 @@ verify-us-auth-004 / br-plain-pond-aw5f59ia
 verify-us-auth-005 / br-small-river-aww0rtxo
 verify-us-auth-006 / br-cold-block-aww00k4o
 verify-us-auth-007 / br-wandering-mountain-awjnqqps
+verify-us-auth-008 / br-delicate-meadow-aw1u62kn
 ```
 
-### Production
-
-`caleida-production` continua não provisionado. Production será projeto separado e nunca serve como laboratório.
-
-## 4. Migrations e verificação
-
-Schema de produto segue `ADR-004`; verificação segue `ADR-008`.
+`verify-us-auth-008` foi criada da baseline, recebeu somente a migration/testes necessários e terminou com:
 
 ```text
-database/migrations/
-database/scripts/
-database/tests/
+auth_security_events: 0
+auth users: 0
+auth sessions: 0
+auth accounts: 0
+auth verifications: 0
 ```
 
-SQL/constraints/RLS portáveis são provados primeiro em PostgreSQL 18 descartável. Branch Neon isolada é adicional quando a mudança depende de Neon Auth, Data API, roles/helpers gerenciados, extensão específica ou outra semântica do serviço.
+Branches temporárias não são fonte de verdade de schema. Exclusão exige autorização explícita porque é destrutiva.
 
-A baseline nunca substitui ambiente de verificação.
+## 7. Production e secrets
 
-## 5. Neon Auth e autorização
-
-Managed Better Auth é a identidade canônica desde US-AUTH-001.
-
-Estado non-production atual:
-
-```text
-Auth provider: better_auth
-Auth schema: neon_auth
-email/password: enabled
-allow sign-up: true
-verify email on sign-up: true
-require email verification: true
-verification method: OTP
-email provider: shared Neon
-```
-
-UUID de `neon_auth.user.id` é a identidade canônica. Senha, recovery token, session token, Auth URL real e cookie secret não são duplicados no schema de produto nem versionados.
-
-Papéis de produto permanecem independentes do Admin Better Auth:
-
-```text
-proprietário
-administrador
-moderador
-curador
-usuário
-```
-
-Persistência de produto relevante:
-
-- `caleida_auth.user_roles`;
-- `caleida_audit.role_changes`;
-- `caleida_access.invitations`;
-- `caleida_access.invitation_uses`;
-- `caleida_access.access_requests`;
-- `caleida_audit.entry_events`;
-- estruturas de signup controlado das migrations `000004`–`000007`.
-
-## 6. Estado integrado da baseline
-
-`caleida-nonprod/main` possui migrations versionadas `000001`–`000007`.
-
-A baseline integrada cobre:
-
-1. ledger de migrations;
-2. autorização/papéis;
-3. entrada controlada e auditoria;
-4. signup fail-closed por convite/aprovação;
-5. verificação de webhooks Auth;
-6. confirmação obrigatória de e-mail por OTP.
-
-US-AUTH-006/007 não adicionaram schema de produto: login/logout, recovery e sessões permanecem gerenciados pelo Auth.
-
-## 7. Sessão e recovery
-
-A aplicação usa `@neondatabase/auth@0.5.0-beta` em boundary server-only.
-
-US-AUTH-007 adotou `sessionDataTtl = 1 segundo`, reduzindo a janela de reutilização do cache assinado antes de revalidação upstream. Operações sensíveis do Better Auth usam sessão autoritativa na implementação corrente.
-
-A configuração Managed Neon observada não expõe `revokeSessionsOnPasswordReset`; por isso reset por e-mail não é documentado como revogação automática de sessões existentes. Alteração autenticada usa `revokeOtherSessions: true`, e o usuário possui controles explícitos de sessão.
-
-Contrato: `docs/SESSION_SECURITY.md`.
-
-Gate US-AUTH-007:
-
-```text
-verify-us-auth-007 / br-wandering-mountain-awjnqqps / ready
-Auth users/sessions/accounts/verifications: 0
-Schema diff vs baseline: vazio
-```
-
-## 8. Data API, RLS e conexão direta
-
-Data API permanece não provisionada. Quando dados privados forem expostos sob identidade de usuário:
-
-- RLS será obrigatória onde aplicável;
-- `authenticated` não equivale a ownership;
-- grants e RLS são controles distintos;
-- identidade gerenciada acoplada a política exige gate Neon-specific.
-
-Conexão direta ao Postgres é server-only para migrations, manutenção, bootstrap ou operações confiáveis com least privilege. Owner/BYPASSRLS não substitui autorização de usuário.
-
-## 9. Secrets
+`caleida-production` continua não provisionado. Production não faz parte da US-AUTH-008 e nunca é laboratório.
 
 Nunca versionar:
 
-- `DATABASE_URL` / `DATABASE_URL_UNPOOLED`;
+- DATABASE_URL / DATABASE_URL_UNPOOLED;
 - Neon API keys;
 - Auth URLs reais;
-- `NEON_AUTH_COOKIE_SECRET`;
+- NEON_AUTH_COOKIE_SECRET;
+- CALEIDA_RATE_LIMIT_SECRET;
 - recovery/session tokens;
-- OAuth client secrets;
-- futuros secrets de e-mail/Storage.
+- OAuth/client secrets;
+- credenciais de e-mail/Storage.
 
-`.env.example` documenta apenas nomes/placeholders seguros.
+## 8. Gate seguinte
 
-## 10. Histórico resumido
-
-- `US-PLAT-004/005`: Neon/PostgreSQL 18 e migrations/testes;
-- `US-AUTH-001`: Managed Better Auth;
-- `US-AUTH-002`: papéis/autorização;
-- `US-AUTH-003`: convites/solicitações/auditoria de entrada;
-- `US-AUTH-004`: provider de e-mail shared Neon;
-- `US-AUTH-005`: signup controlado + confirmação OTP + migrations `000004`–`000007`;
-- `US-AUTH-006`: login/logout + boundary privado;
-- `US-AUTH-007`: recovery, alteração de senha, gestão/revogação de sessões e cache de sessão reduzido.
-
-## 11. Próximo gate
-
-US-AUTH-008 deve usar Neon somente quando necessário à matriz integrada. Se precisar criar nova branch de verificação, derivar da baseline e não reutilizar branches antigas como fonte canônica.
-
-Object Storage segue desacoplado conforme ADR-006. Production Neon permanece inexistente. Vercel é destino de hosting com deployment exclusivamente humano/manual.
+Banco e Auth non-production estão preparados para a única release candidate live da US-AUTH-008. O próximo gate é uma Preview Vercel manual da PR #58, seguida da matriz integrada. Nenhum novo recurso Neon deve ser criado antes desse resultado, exceto fixture temporária estritamente necessária ao teste e removida/neutralizada conforme a evidência.

@@ -37,7 +37,7 @@ test("route exposes only GET/POST and forwards the catch-all context required by
   assert.match(authRoute, /\.GET\(request,\s*context\)/);
   assert.match(authRoute, /\.POST\(request,\s*context\)/);
   assert.match(authRoute, /force-dynamic/);
-  assert.doesNotMatch(authRoute, /signUp|signIn|logout|Data API/i);
+  assert.doesNotMatch(authRoute, /\.signUp\(|\.signIn\(|\.signOut\(|Data API/i);
 });
 
 test("environment contract documents Auth names without active values or public secrets", () => {

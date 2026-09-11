@@ -82,7 +82,13 @@ test("single-session revocation resolves opaque id to token only on the server",
 });
 
 test("user can revoke all other sessions without touching the current one", () => {
-  assert.match(actions, /createServerAuth\(\)\.revokeOtherSessions\(\)/);
+  assert.match(actions, /const \{ data: sessions, error: listError \} = await auth\.listSessions\(\)/);
+  assert.match(
+    actions,
+    /session\.userId === current\.user\.id && session\.id !== current\.session\.id/,
+  );
+  assert.match(actions, /auth\.revokeSession\(\{ token: session\.token \}\)/);
+  assert.doesNotMatch(revokeOtherSessionsForm, /name="token"|session\.token/);
   assert.match(revokeOtherSessionsForm, /Encerrar todas as outras sessões/);
   assert.match(revokeOtherSessionsForm, /aria-busy=\{isPending\}/);
 });

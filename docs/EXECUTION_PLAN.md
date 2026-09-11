@@ -1,154 +1,100 @@
 # Execution Plan — Caleida
 
-**Status:** roadmap operacional canônico  
-**Regra:** uma `NEXT_ACTION` limitada por vez  
-**Roadmap de produto:** `docs/PRODUCT_BACKLOG.md`
+**Estado:** Incremento 2 em revisão final; US-AUTH-008 com gates técnicos e live em PASS, pendente apenas de integração da PR #58.  
+**Fonte de execução:** `docs/CHECKPOINT.md`  
+**Plano detalhado:** `docs/INCREMENT_2_PLAN.md`
 
-Este documento transforma o backlog macro em tarefas executáveis. Evidências detalhadas ficam nos documentos de validação/verificação e nos Issues/PRs indicados.
+## 1. Regras vigentes
 
----
+- uma Story limitada por vez;
+- migrations persistentes somente em `database/migrations/`;
+- PostgreSQL 18 descartável é o gate portável padrão;
+- branch Neon isolada complementa mudanças dependentes de Neon Auth/semântica gerenciada;
+- deployment Vercel é exclusivamente humano/manual conforme ADR-007;
+- Preview não é gate por Story intermediária;
+- US-AUTH-008 concentra a matriz browser/live acumulada do Incremento 2;
+- nenhum secret, senha, OTP, recovery token, session token, cookie, Auth URL ou connection string é persistido em Git/docs/issues;
+- Production Neon e Data API continuam fora do escopo.
 
-# Operações canônicas concluídas
-
-- `OPS-001` — modernizar o protocolo canônico — **CONCLUÍDO**.
-- `OPS-002` — formalizar o pivot Supabase → Neon — **CONCLUÍDO**.
-- `OPS-003` — reconciliar a política de deployment — **CONCLUÍDO**; Vercel é exclusivamente humano/manual e CI permanece separada de CD.
-- `OPS-004` — evoluir o registro de decisões para ADRs — **CONCLUÍDO**.
-- `OPS-005` — refinar o Incremento 1 — **CONCLUÍDO** (`#31`).
-- `OPS-006` — refinar EPIC-02 — **CONCLUÍDO** (`#41 / #42`), com plano em `docs/INCREMENT_2_PLAN.md`.
-
-# Incremento 0 — Fundação executável
-
-**Estado:** CONCLUÍDO  
-**Evidência:** `docs/INCREMENT_0_VALIDATION.md`
-
-# Incremento 1 — Fundação visual / EPIC-01
-
-**Estado:** CONCLUÍDO  
-**Plano:** `docs/INCREMENT_1_PLAN.md`  
-**Evidência:** `docs/INCREMENT_1_VALIDATION.md`
-
-# Incremento 2 — Acesso controlado / EPIC-02
-
-**Estado:** EM ANDAMENTO  
-**Plano:** `docs/INCREMENT_2_PLAN.md`
-
-## Cursor
+## 2. Incrementos
 
 ```text
-US-AUTH-001 fundação Neon Auth + sessão — CONCLUÍDA (#43 / #44)
-  ↓
-US-AUTH-002 papéis/autorização + bootstrap — CONCLUÍDA (#45 / #46)
-  ↓
-US-AUTH-003 convites/solicitações + auditoria — CONCLUÍDA (#47 / #48)
-  ↓
-US-AUTH-004 e-mail Auth non-production — CONCLUÍDA (#49 / #50)
-  ↓
-US-AUTH-005 cadastro controlado + confirmação de e-mail — CONCLUÍDA (#51 / #52)
-  ↓
-US-AUTH-006 login/logout + proteção de sessão — CONCLUÍDA (#53 / #54)
-  ↓
-US-AUTH-007 recuperação de senha + gestão/revogação de sessões — CONCLUÍDA (#55 / #56)
-  ↓
-US-AUTH-008 auditoria integrada + validação live do incremento — NEXT_ACTION
+Incremento 0 — Fundação executável — CONCLUÍDO
+Incremento 1 — Fundação visual — CONCLUÍDO
+Incremento 2 — Acesso controlado / EPIC-02 — EM REVISÃO FINAL
 ```
 
-## US-AUTH-001 a US-AUTH-006
-
-**Estado:** CONCLUÍDAS.  
-Evidências: `docs/US_AUTH_001_VERIFICATION.md` a `docs/US_AUTH_006_VERIFICATION.md`.
-
-Estado consolidado antes da US-AUTH-007: Managed Better Auth, papéis/autorização de produto separados, entrada controlada por convite/aprovação, confirmação obrigatória por OTP, login/logout e boundary privado server-side.
-
-## US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões
-
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#55 / #56`  
-**Merge:** `31ec6e2238a7b0bdaff7506ac0e9ed51179f3322`  
-**Capacidades:** CAP-01, CAP-35  
-**Contrato:** `docs/SESSION_SECURITY.md`  
-**Evidência:** `docs/US_AUTH_007_VERIFICATION.md`
-
-### Resultado
-
-- recovery em `/forgot-password` com resposta anti-enumeração;
-- reset em `/reset-password` usando token do provider sem persistência em Git/logs;
-- callback same-origin validado;
-- alteração autenticada exige senha atual e revoga as outras sessões;
-- `/account/security` lista metadados seguros e permite revogação das próprias sessões;
-- session token permanece server-only;
-- `sessionDataTtl` reduzido para 1 s;
-- nenhuma migration/schema de produto adicional.
-
-### Gates finais
+## 3. Incremento 2
 
 ```text
-Head final: 2c139f817bfcb8c9b7e316e26c0fcb883d33ab71
-CI PR #222 / 34597671892 / job 103257145584: SUCCESS
-Merge: 31ec6e2238a7b0bdaff7506ac0e9ed51179f3322
-CI main #223 / 34597951573 / job 103258037267: SUCCESS
-PostgreSQL 18 + verify:db: PASS
-Neon verify-us-auth-007: ready / schema diff vazio
-Browser/live: SKIPPED/deferred para US-AUTH-008
-Preview Vercel: não requerido
+US-AUTH-001 — Neon Auth + sessão                         CONCLUÍDA (#43/#44)
+US-AUTH-002 — papéis/autorização + bootstrap             CONCLUÍDA (#45/#46)
+US-AUTH-003 — convites/solicitações + auditoria           CONCLUÍDA (#47/#48)
+US-AUTH-004 — e-mail Auth non-production                  CONCLUÍDA (#49/#50)
+US-AUTH-005 — cadastro controlado + confirmação OTP       CONCLUÍDA (#51/#52)
+US-AUTH-006 — login/logout + proteção de sessão           CONCLUÍDA (#53/#54)
+US-AUTH-007 — recovery + gestão/revogação de sessões      CONCLUÍDA (#55/#56)
+US-AUTH-008 — auditoria integrada + validação final       EM REVISÃO (#57/#58)
 ```
 
-O Managed Neon observado não expõe `revokeSessionsOnPasswordReset`; reset por e-mail não é documentado como revogação automática de sessões existentes. A matriz live final deve medir o comportamento real.
+## 4. US-AUTH-008 — gates
 
-## US-AUTH-008 — Consolidar auditoria e validar Incremento 2
+### Código / CI / PostgreSQL — PASS
 
-**Estado:** NEXT_ACTION / PRONTA  
-**Prioridade:** P1  
-**Dependências:** US-AUTH-001 a US-AUTH-007 concluídas  
-**Capacidades:** CAP-04, CAP-35
+- auditoria Auth persistente e sanitizada;
+- migration `000008_auth_security_audit.sql`;
+- testes de contrato e SQL adversarial;
+- correção da revogação coletiva encontrada pelo gate live;
+- CI #232 da correção: SUCCESS;
+- PostgreSQL 18 + `verify:db`: PASS.
 
-### Objetivo
+### Neon — PASS
 
-Consolidar eventos críticos de autenticação/autorização sem secrets e executar a matriz adversarial integrada que encerra o Incremento 2.
+- `verify-us-auth-008 / br-delicate-meadow-aw1u62kn`: PASS;
+- promoção `000008` para a baseline non-production: PASS;
+- checksum correto;
+- diff final isolada vs baseline: vazio.
 
-### Escopo mínimo
+### Browser/live integrado — PASS
 
-- mapear eventos de auditoria necessários e persistir somente metadados mínimos não sensíveis;
-- validar anon/authenticated/forbidden/direct URL/session revoked e ausência de vazamento;
-- validar conjuntamente signup/OTP, login/logout, recovery/reset, mudança de senha e gestão/revogação de sessões;
-- medir o efeito de revogação após a janela de cache de 1 s;
-- validar trusted origin do callback de recovery;
-- validar papéis/autorização de produto e tentativas adversariais relevantes;
-- produzir evidência final do Incremento 2.
+RC final:
 
-### Browser/live e release candidate
+```text
+dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B
+commit c85135418eec133d7e0a5dc8ad6ad816f2c39668
+Preview / non-production / READY
+```
 
-Browser/live é material nesta Story por ser o gate integrado acumulado. Antes de exigir publicação, verificar se existe runtime candidato atual adequado. Se for necessário novo runtime público:
+Probe final:
 
-1. preparar uma única release candidate;
-2. registrar `MANUAL_ACTION_REQUIRED` no Checkpoint;
-3. fornecer ao usuário somente o passo manual necessário;
-4. a IA não executa Preview/Production/promote/redeploy/rollback;
-5. após publicação humana, executar a matriz integrada e concluir a Story.
+```text
+run #13 / 34636223750
+job 103384664571
+SUCCESS
+```
 
-Não criar um Preview separado para cada subfluxo.
+A matriz comprovou signup/OTP, login/logout, proteção privada, recovery/reset, replay de token, trusted-origin/CSRF, multi-sessão, IDOR negado, revogação individual/coletiva, revalidação de cache, troca autenticada de senha e auditoria live sem secrets.
 
----
+Comportamento medido do provider:
 
-# Contrato de execução
+- reset por e-mail troca a senha, rejeita a senha antiga e invalida replay do recovery token;
+- as sessões já existentes permaneceram ativas após o reset no Managed Auth observado;
+- mudança autenticada de senha com a implementação atual revogou as demais sessões e preservou a corrente.
 
-Para cada tarefa:
+O request adversarial com Origin divergente foi recusado pelo Next.js antes da Server Action e não gerou e-mail de recovery. Esse `500 Invalid Server Actions request` é evidência do teste adversarial, não falha funcional do fluxo legítimo.
 
-1. recuperar estado pelo protocolo;
-2. confirmar `NEXT_ACTION`;
-3. inspecionar repositório/documentação/estado externo aplicável;
-4. criar/usar Issue e branch limitadas;
-5. implementar somente o necessário;
-6. executar Verification Protocol proporcional ao escopo;
-7. revisar diff/secrets;
-8. atualizar docs/ADRs quando aplicável;
-9. atualizar Checkpoint/Backlog/Changelog;
-10. revisar/mergear PR quando gates materiais estiverem satisfeitos;
-11. verificar CI pós-merge;
-12. deixar uma única próxima ação.
+## 5. Critério de encerramento
 
-## NEXT_ACTION vigente
+Todos os gates materiais da US-AUTH-008 estão em PASS. Restam somente os gates de integração:
 
-> Criar Issue e branch limitadas a `US-AUTH-008 — consolidar auditoria e validar Incremento 2`, recuperar a matriz integrada e os contratos de auditoria/Auth/autorização existentes e executar somente essa Story. Solicitar uma única release candidate manual apenas se o gate live realmente depender de runtime público.
+1. CI do head documental final da PR #58;
+2. confirmar PR mergeável e ausência de review/thread bloqueante;
+3. marcar ready;
+4. integrar a PR com head esperado;
+5. confirmar fechamento da Issue #57;
+6. confirmar CI de `main`;
+7. atualizar o checkpoint pós-merge com o SHA real e declarar Incremento 2 concluído.
 
-Não iniciar o incremento seguinte, Production Neon, Data API ou deployment Vercel durante US-AUTH-008.
+## 6. NEXT_ACTION
+
+> Finalizar a integração da PR #58. Não iniciar novo incremento antes de registrar o fechamento real da US-AUTH-008 e do Incremento 2 em `main`.
