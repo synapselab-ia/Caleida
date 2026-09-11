@@ -43,28 +43,12 @@ jobs:
           import assert from 'node:assert/strict';
           import { randomBytes } from 'node:crypto';
           import { writeFile } from 'node:fs/promises';
-          const domainsRes = await fetch('https://api.mail.tm/domains');
-          assert.equal(domainsRes.status, 200);
-          const domains = await domainsRes.json();
-          const domain = domains?.['hydra:member']?.find((item) => item.isActive)?.domain;
-          assert.ok(domain);
-          const email = `caleida-usauth008-${randomBytes(7).toString('hex')}@${domain}`;
-          const password = `${randomBytes(22).toString('base64url')}M1!`;
-          process.stdout.write(`::add-mask::${password}\n`);
-          const account = await fetch('https://api.mail.tm/accounts', {
-            method: 'POST', headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ address: email, password }),
-          });
-          assert.equal(account.status, 201);
-          const tokenRes = await fetch('https://api.mail.tm/token', {
-            method: 'POST', headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ address: email, password }),
-          });
-          assert.equal(tokenRes.status, 200);
-          const token = (await tokenRes.json()).token;
-          assert.ok(token);
-          process.stdout.write(`::add-mask::${token}\n`);
-          await writeFile('.tmp-mailbox.json', JSON.stringify({ email, token }), { mode: 0o600 });
+          const email = `caleida-usauth008-${randomBytes(7).toString('hex')}@grabmail.io`;
+          const probe = new URL('https://grabmail.io/api/v1/mailbox');
+          probe.searchParams.set('address', email);
+          const mailboxRes = await fetch(probe);
+          assert.equal(mailboxRes.status, 200);
+          await writeFile('.tmp-mailbox.json', JSON.stringify({ email, provider: 'grabmail' }), { mode: 0o600 });
           await writeFile('.tmp-email.txt', `${email}\n`);
           console.log('CALEIDA_MAILBOX_PREPARED true');
           NODE
@@ -81,6 +65,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('tests/live-us-auth-008-probe.mjs')
           s = p.read_text()
           old = """const anonPrivateLeak = anonApp.text.includes('Área privada') || anonApp.text.includes('Sua sessão está protegida no servidor.');
@@ -109,6 +94,30 @@ jobs:
           if mailbox_old not in s:
               raise SystemExit('probe mailbox patch target not found')
           s = s.replace(mailbox_old, mailbox_new)
+          grabmail = """async function mailboxMessages(mailbox) {
+            const url = new URL('https://grabmail.io/api/v1/mailbox');
+            url.searchParams.set('address', mailbox.email);
+            url.searchParams.set('limit', '50');
+            const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+            if (!res.ok) return [];
+            const data = await res.json();
+            return data?.messages ?? [];
+          }
+
+          async function mailboxMessage(mailbox, id) {
+            await sleep(1_100);
+            const url = new URL(`https://grabmail.io/api/v1/message/${encodeURIComponent(id)}`);
+            url.searchParams.set('mailbox', mailbox.email);
+            const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+            if (!res.ok) return null;
+            const data = await res.json();
+            return { ...data, html: data.html ? [data.html] : [] };
+          }
+
+          async function waitForOtp"""
+          s, count = re.subn(r"async function mailboxMessages\(mailbox\) \{[\s\S]*?async function waitForOtp", grabmail, s, count=1)
+          if count != 1:
+              raise SystemExit('probe mailbox adapter patch target not found')
           if 'attempt < 24' not in s or 'attempt < 30' not in s:
               raise SystemExit('probe email polling patch target not found')
           s = s.replace('attempt < 24', 'attempt < 90', 1)
