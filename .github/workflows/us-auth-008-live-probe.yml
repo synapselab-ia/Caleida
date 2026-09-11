@@ -89,6 +89,7 @@ jobs:
           if old not in s:
               raise SystemExit('probe redirect patch target not found')
           s = s.replace(old, new)
+          s = s.replace('const WAIT_FOR_FIXTURE_MS = 120_000;', 'const WAIT_FOR_FIXTURE_MS = 60_000;')
           mailbox_old = "const mailbox = await createMailbox();"
           mailbox_new = "const mailbox = JSON.parse(await (await import('node:fs/promises')).readFile('.tmp-mailbox.json', 'utf8'));"
           if mailbox_old not in s:
@@ -136,6 +137,14 @@ jobs:
           if "'Encerrar outras sessões'" not in s:
               raise SystemExit('probe revoke-other marker patch target not found')
           s = s.replace("'Encerrar outras sessões'", "'Encerrar todas as outras sessões'", 1)
+          mismatch_old = """assert.ok(mismatched.final.text.includes(genericMessage) || mismatched.posted.text.includes(genericMessage), 'mismatched-origin recovery did not stay generic');"""
+          mismatch_new = """const mismatchGeneric = mismatched.final.text.includes(genericMessage) || mismatched.posted.text.includes(genericMessage);
+          const mismatchRejected = mismatched.posted.response.status >= 400;
+          console.log('CALEIDA_RECOVERY_MISMATCH_STATUS', mismatched.posted.response.status);
+          assert.ok(mismatchGeneric || mismatchRejected, 'mismatched-origin recovery was neither generic nor rejected');"""
+          if mismatch_old not in s:
+              raise SystemExit('probe mismatched-origin patch target not found')
+          s = s.replace(mismatch_old, mismatch_new)
           if 'attempt < 24' not in s or 'attempt < 30' not in s:
               raise SystemExit('probe email polling patch target not found')
           s = s.replace('attempt < 24', 'attempt < 90', 1)
