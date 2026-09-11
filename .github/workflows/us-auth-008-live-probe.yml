@@ -1,0 +1,36 @@
+name: US-AUTH-008 live matrix probe
+
+on:
+  push:
+    branches:
+      - probe/us-auth-008-live
+
+permissions:
+  contents: read
+
+jobs:
+  live-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Verify anonymous private boundary in real Chrome
+        shell: bash
+        env:
+          PREVIEW_ORIGIN: https://caleida-git-feat-us-auth-008-6f2292-synapselabia-8285s-projects.vercel.app
+        run: |
+          set -euo pipefail
+          google-chrome --version
+          google-chrome --headless --no-sandbox --disable-gpu --dump-dom "${PREVIEW_ORIGIN}/app" > /tmp/app-anon.html 2>/tmp/chrome.err
+          grep -q 'Entre no Caleida' /tmp/app-anon.html
+          if grep -q 'Área privada' /tmp/app-anon.html; then
+            echo 'Private content leaked to anonymous Chrome session.' >&2
+            exit 1
+          fi
+          echo 'CALEIDA_CHROME_ANON_NO_PRIVATE_FLASH true'
+      - name: Execute integrated Auth matrix
+        run: node tests/live-us-auth-008-probe.mjs
