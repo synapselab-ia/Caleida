@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: us-auth-008-live-probe
+  cancel-in-progress: true
+
 jobs:
   live-matrix:
     runs-on: ubuntu-latest
@@ -59,7 +63,12 @@ jobs:
           """
           if old not in s:
               raise SystemExit('probe patch target not found')
-          p.write_text(s.replace(old, new))
+          s = s.replace(old, new)
+          marker = "console.log('CALEIDA_LIVE_EMAIL', mailbox.email);"
+          if marker not in s:
+              raise SystemExit('email annotation patch target not found')
+          s = s.replace(marker, marker + "\nconsole.log(`::notice title=CALEIDA_LIVE_EMAIL::${mailbox.email}`);")
+          p.write_text(s)
           PY
           node --check tests/live-us-auth-008-probe.mjs
           node tests/live-us-auth-008-probe.mjs
