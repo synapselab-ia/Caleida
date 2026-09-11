@@ -426,15 +426,33 @@ export async function revokeOtherSessionsAction(
   const actor = actorAuthUserId(current);
 
   try {
-    const { error } = await createServerAuth().revokeOtherSessions();
-    if (error) {
+    const auth = createServerAuth();
+    const { data: sessions, error: listError } = await auth.listSessions();
+    if (listError || !sessions) {
       await tryRecordAuthSecurityEvent({
         eventType: "other_sessions_revoked",
         actorAuthUserId: actor,
         outcome: "error",
-        reasonCode: "provider_rejected",
+        reasonCode: "provider_error",
       });
       return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
+    }
+
+    const remoteSessions = sessions.filter(
+      (session) => session.userId === current.user.id && session.id !== current.session.id,
+    );
+
+    for (const session of remoteSessions) {
+      const { error } = await auth.revokeSession({ token: session.token });
+      if (error) {
+        await tryRecordAuthSecurityEvent({
+          eventType: "other_sessions_revoked",
+          actorAuthUserId: actor,
+          outcome: "error",
+          reasonCode: "provider_rejected",
+        });
+        return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
+      }
     }
   } catch {
     await tryRecordAuthSecurityEvent({
