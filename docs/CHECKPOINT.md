@@ -1,6 +1,6 @@
 # Checkpoint — Caleida
 
-**Status operacional:** `MANUAL_ACTION_REQUIRED`  
+**Status operacional:** `EM_REVISAO`  
 **Fase:** Incremento 2 — Acesso controlado / EPIC-02  
 **Story ativa:** `US-AUTH-008 — Consolidar auditoria e validar Incremento 2`
 
@@ -15,111 +15,92 @@ LAST_COMPLETED_MERGE: 31ec6e2238a7b0bdaff7506ac0e9ed51179f3322
 ACTIVE_TASK: US-AUTH-008 — Consolidar auditoria e validar Incremento 2
 ACTIVE_ISSUE: #57
 ACTIVE_BRANCH: feat/us-auth-008-audit-integrated-validation
-ACTIVE_PR: #58 (draft)
+ACTIVE_PR: #58 (draft até o CI deste head final)
 
-NEXT_ACTION: Publicar manualmente uma Preview Vercel atualizada da ref corrente da PR #58 e retomar a matriz live integrada para revalidar a correção de revogação coletiva e completar recovery/reset/password-change/logout/auditoria.
+NEXT_ACTION: Executar o CI do head documental final da PR #58; se verde e sem review/thread bloqueante, marcar ready, integrar a PR, confirmar fechamento da Issue #57 e CI de main; só então promover o próximo planejamento canônico.
 
-BLOCKERS: a RC já exercitada é imutável e contém a implementação anterior à correção encontrada pelo próprio gate live
-MANUAL_ACTION_REQUIRED: criar uma Preview manual/non-production da ref corrente da branch feat/us-auth-008-audit-integrated-validation; não promover para Production
+BLOCKERS: none
+MANUAL_ACTION_REQUIRED: none
 ON_HOLD: none
 ```
 
-A IA não executa Preview, Production, promote, redeploy ou rollback conforme ADR-007.
-
-## Estado real recuperado
-
-- Issue `#57`: aberta;
-- PR `#58`: aberta em draft e mergeável antes da última atualização documental;
-- reviews/threads bloqueantes observados: nenhum;
-- correção funcional mais recente: `9366069ded22a9f1aed444e86153ab1a11db53b2`;
-- CI `#232` / run `34616208433` / job `103318914704`: `SUCCESS`;
-- runtime contract, `npm run verify`, PostgreSQL 18 e `npm run verify:db`: PASS.
-
 ## Gates US-AUTH-008
 
-### Implementação/auditoria — PASS
+### Implementação / banco — PASS
 
 - migration `000008_auth_security_audit.sql`;
 - `caleida_audit.auth_security_events` com metadados mínimos controlados;
 - writer server-only e parametrizado;
-- sem e-mail, senha, OTP, recovery token, session token, cookie ou payload arbitrário;
-- recovery continua anti-enumeração também na auditoria.
+- nenhum e-mail, senha, OTP, recovery token, session token, cookie, Auth URL, connection string ou payload arbitrário no contrato de auditoria;
+- PostgreSQL 18 e `npm run verify:db`: PASS;
+- Neon isolated `verify-us-auth-008 / br-delicate-meadow-aw1u62kn`: PASS;
+- `000008` promovida para `main / br-restless-cherry-awpcwy6r` com checksum correto e diff final vazio.
 
-### Neon isolated e baseline — PASS
+### Correção encontrada pelo gate live — PASS
 
-```text
-Project: caleida-nonprod / patient-glade-95136440
-Baseline: main / br-restless-cherry-awpcwy6r
-Verification: verify-us-auth-008 / br-delicate-meadow-aw1u62kn
-```
-
-- `000008` aplicada/testada na branch isolada;
-- SQL adversarial/ACL: PASS;
-- promoção para baseline non-production: PASS;
-- checksum correto;
-- diff verify-us-auth-008 vs baseline após promoção: vazio.
-
-### Matriz live — PARCIAL, com defeito encontrado e corrigido
-
-RC exercitada:
+A primeira RC revelou que o atalho `revokeOtherSessions()` retornava sucesso sem invalidar a sessão remota. A PR foi corrigida para listar as sessões no servidor, preservar a atual e revogar explicitamente cada sessão remota com `revokeSession({ token })`, mantendo bearer tokens fora do cliente.
 
 ```text
-dpl_91NQikXRxHEKFMVxE52JRJBNWbjC
-Preview / non-production
+Head funcional da correção: 9366069ded22a9f1aed444e86153ab1a11db53b2
+CI #232 / run 34616208433 / job 103318914704: SUCCESS
 ```
 
-Confirmado no runtime real:
+### Release candidate final — PASS
 
-- visitante em `/app` → redirect sem flash privado;
-- signup não autorizado → negado;
-- signup autorizado → aceito;
-- login antes do OTP → negado;
-- OTP real → recebido e confirmado;
-- login server action → sucesso;
-- duas sessões independentes;
-- IDOR de session id → negado;
-- revogação individual remota → efetiva após revalidação do cache.
-
-Run que revelou o defeito:
+Preview manual/non-production:
 
 ```text
-Probe run #9
-Run ID: 34615577700
-Job ID: 103316542470
+deployment: dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B
+commit publicado: c85135418eec133d7e0a5dc8ad6ad816f2c39668
+branch: feat/us-auth-008-audit-integrated-validation
+state: READY
 ```
 
-Falha real: `revokeOtherSessions()` retornava sucesso, mas a sessão remota permanecia válida e presente no Managed Auth.
+A configuração Preview histórica continua ligada à branch Neon `verify-us-auth-005 / br-small-river-aww0rtxo`. O readback confirmou que ela contém migrations `000001`–`000008`, inclusive o checksum canônico de `000008`, portanto o gate de auditoria live é válido nesse runtime.
 
-Correção já integrada na PR #58:
+Matriz final:
 
-- listar sessões server-side;
-- preservar a sessão corrente;
-- revogar explicitamente cada sessão remota por `revokeSession({ token })`;
-- token nunca sai do servidor;
-- contrato reforçado;
-- CI #232 verde.
+```text
+Probe run #13
+Run ID: 34636223750
+Job ID: 103384664571
+Conclusion: SUCCESS
+```
 
-A Preview anterior não contém essa correção e não pode ser usada como evidência final.
+Comprovado no runtime real:
 
-## Ambiente Preview
+- acesso anônimo sem flash privado;
+- signup não autorizado negado e signup autorizado aceito;
+- OTP real recebido e confirmado;
+- login antes do OTP negado;
+- login autenticado e acesso privado;
+- IDOR de session id negado;
+- revogação individual remota efetiva após revalidação;
+- revogação coletiva efetiva preservando a sessão corrente;
+- recovery inexistente com resposta genérica;
+- Origin divergente rejeitado pelo CSRF de Server Actions antes da action e sem envio de recovery;
+- recovery existente + link real;
+- reset válido e replay do token rejeitado;
+- senha antiga rejeitada e nova aceita;
+- **reset por e-mail não revoga sessões já existentes no Managed Auth observado**;
+- mudança autenticada de senha revoga as demais sessões e preserva a corrente;
+- logout invalida a sessão atual.
 
-A RC reutiliza a configuração histórica Preview vinculada à branch Neon `verify-us-auth-005 / br-small-river-aww0rtxo`. Para o gate atual foram alinhados nessa branch non-production:
+### Auditoria live — PASS
 
-- migration `000008`;
-- trusted origin da RC atual.
+Readback somente de campos não sensíveis confirmou, no intervalo do run #13, eventos para:
 
-A mailbox `mail.tm` falhou em entregar OTP apesar da geração no Neon. A probe descartável passou a usar GrabMail; OTP real foi então recebido e validado. Nenhum endereço temporário/OTP foi persistido nesta documentação.
+- `auth_proxy_post`;
+- `login`;
+- `logout`;
+- `password_recovery_requested`;
+- `password_reset` (success e replay denied);
+- `password_changed`;
+- `session_revoked` (remote success e target-not-owned denied);
+- `other_sessions_revoked` success.
+
+O único HTTP 500 do fluxo foi o request adversarial deliberado com `Origin: evil.example`, recusado pelo próprio Next.js como `Invalid Server Actions request`; nenhum e-mail foi disparado. Não houve falha 5xx não intencional nos caminhos funcionais validados.
 
 ## Housekeeping
 
-Branches Neon temporárias continuam existentes e não bloqueiam a Story:
-
-```text
-verify-us-auth-004 / br-plain-pond-aw5f59ia
-verify-us-auth-005 / br-small-river-aww0rtxo
-verify-us-auth-006 / br-cold-block-aww00k4o
-verify-us-auth-007 / br-wandering-mountain-awjnqqps
-verify-us-auth-008 / br-delicate-meadow-aw1u62kn
-```
-
-Exclusão/limpeza destrutiva exige autorização explícita do usuário.
+Branches Neon temporárias e fixtures sintéticas continuam existentes. Sua remoção é destrutiva e exige autorização explícita; isso não bloqueia o encerramento funcional da Story.
