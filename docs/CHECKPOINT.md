@@ -15,9 +15,9 @@ LAST_COMPLETED_MERGE: 31ec6e2238a7b0bdaff7506ac0e9ed51179f3322
 ACTIVE_TASK: US-AUTH-008 — Consolidar auditoria e validar Incremento 2
 ACTIVE_ISSUE: #57
 ACTIVE_BRANCH: feat/us-auth-008-audit-integrated-validation
-ACTIVE_PR: #58 (draft até o CI deste head final)
+ACTIVE_PR: #58
 
-NEXT_ACTION: Executar o CI do head documental final da PR #58; se verde e sem review/thread bloqueante, marcar ready, integrar a PR, confirmar fechamento da Issue #57 e CI de main; só então promover o próximo planejamento canônico.
+NEXT_ACTION: Revisar/mergear a PR #58 no head 5fff744bc66014d630d16fb3faae5a977d3f597d, confirmar fechamento da Issue #57 e CI de main; só então promover o próximo planejamento canônico.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
@@ -47,16 +47,13 @@ CI #232 / run 34616208433 / job 103318914704: SUCCESS
 
 ### Release candidate final — PASS
 
-Preview manual/non-production:
-
 ```text
 deployment: dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B
 commit publicado: c85135418eec133d7e0a5dc8ad6ad816f2c39668
-branch: feat/us-auth-008-audit-integrated-validation
-state: READY
+Preview / non-production / READY
 ```
 
-A configuração Preview histórica continua ligada à branch Neon `verify-us-auth-005 / br-small-river-aww0rtxo`. O readback confirmou que ela contém migrations `000001`–`000008`, inclusive o checksum canônico de `000008`, portanto o gate de auditoria live é válido nesse runtime.
+A configuração Preview histórica continua ligada à branch Neon `verify-us-auth-005 / br-small-river-aww0rtxo`. O readback confirmou migrations `000001`–`000008`, inclusive checksum canônico de `000008`.
 
 Matriz final:
 
@@ -70,36 +67,25 @@ Conclusion: SUCCESS
 Comprovado no runtime real:
 
 - acesso anônimo sem flash privado;
-- signup não autorizado negado e signup autorizado aceito;
-- OTP real recebido e confirmado;
-- login antes do OTP negado;
-- login autenticado e acesso privado;
+- signup controlado + OTP real;
+- login/logout;
 - IDOR de session id negado;
-- revogação individual remota efetiva após revalidação;
-- revogação coletiva efetiva preservando a sessão corrente;
-- recovery inexistente com resposta genérica;
-- Origin divergente rejeitado pelo CSRF de Server Actions antes da action e sem envio de recovery;
-- recovery existente + link real;
-- reset válido e replay do token rejeitado;
-- senha antiga rejeitada e nova aceita;
-- **reset por e-mail não revoga sessões já existentes no Managed Auth observado**;
-- mudança autenticada de senha revoga as demais sessões e preserva a corrente;
-- logout invalida a sessão atual.
+- revogação individual e coletiva efetivas;
+- recovery inexistente/existente sem enumeração na resposta legítima;
+- Origin divergente bloqueado pelo CSRF de Server Actions sem envio de recovery;
+- reset válido, replay rejeitado e senha antiga rejeitada;
+- reset por e-mail não revogou sessões já existentes no Managed Auth observado;
+- mudança autenticada de senha revogou as demais sessões e preservou a corrente;
+- auditoria live confirmou todos os eventos críticos esperados sem secrets.
 
-### Auditoria live — PASS
+### Head final da PR — PASS
 
-Readback somente de campos não sensíveis confirmou, no intervalo do run #13, eventos para:
+```text
+Head: 5fff744bc66014d630d16fb3faae5a977d3f597d
+CI #244 / run 34637144474 / job 103387716565: SUCCESS
+```
 
-- `auth_proxy_post`;
-- `login`;
-- `logout`;
-- `password_recovery_requested`;
-- `password_reset` (success e replay denied);
-- `password_changed`;
-- `session_revoked` (remote success e target-not-owned denied);
-- `other_sessions_revoked` success.
-
-O único HTTP 500 do fluxo foi o request adversarial deliberado com `Origin: evil.example`, recusado pelo próprio Next.js como `Invalid Server Actions request`; nenhum e-mail foi disparado. Não houve falha 5xx não intencional nos caminhos funcionais validados.
+Runtime contract, `npm run verify`, PostgreSQL 18 e `npm run verify:db` passaram.
 
 ## Housekeeping
 
