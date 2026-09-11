@@ -2,7 +2,7 @@ import "server-only";
 
 import { createNeonAuth } from "@neondatabase/auth/next/server";
 
-const SESSION_DATA_TTL_SECONDS = 300;
+const SESSION_DATA_TTL_SECONDS = 1;
 const MIN_COOKIE_SECRET_LENGTH = 32;
 
 export class AuthConfigurationError extends Error {

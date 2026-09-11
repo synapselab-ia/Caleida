@@ -9,7 +9,10 @@ import { getServerSession } from "@/lib/auth/server";
 export const dynamic = "force-dynamic";
 
 type LoginPageProps = {
-  searchParams: Promise<{ loggedOut?: string | string[] }>;
+  searchParams: Promise<{
+    loggedOut?: string | string[];
+    reset?: string | string[];
+  }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -18,6 +21,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const params = await searchParams;
   const loggedOut = params.loggedOut === "1";
+  const reset = params.reset === "1";
 
   return (
     <main className="min-h-dvh bg-background px-5 py-8 text-text-primary sm:px-8">
@@ -49,11 +53,23 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </Feedback>
         ) : null}
 
+        {reset ? (
+          <Feedback kind="status" title="Senha redefinida">
+            Sua nova senha já pode ser usada para entrar.
+          </Feedback>
+        ) : null}
+
         <section
           aria-label="Formulário de login"
           className="rounded-[2rem] border border-border bg-surface p-6 shadow-sm sm:p-8"
         >
           <LoginForm />
+          <Link
+            href="/forgot-password"
+            className="mt-5 block text-center text-sm font-semibold text-text-primary underline decoration-border underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+          >
+            Esqueci minha senha
+          </Link>
         </section>
       </div>
     </main>

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { CaleidaLogo } from "@/components/brand/CaleidaLogo";
 import { LogoutForm } from "@/components/auth/LogoutForm";
 
@@ -7,8 +9,16 @@ export default function PrivateHomePage() {
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-5xl flex-col">
         <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
           <CaleidaLogo className="h-14 max-w-56" />
-          <div className="sm:min-w-28">
-            <LogoutForm />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link
+              href="/account/security"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Segurança da conta
+            </Link>
+            <div className="sm:min-w-28">
+              <LogoutForm />
+            </div>
           </div>
         </header>
 
@@ -20,8 +30,9 @@ export default function PrivateHomePage() {
             Sua sessão está protegida no servidor.
           </h1>
           <p className="max-w-2xl text-base leading-7 text-text-muted sm:text-lg sm:leading-8">
-            Esta é a primeira superfície autenticada do Caleida. Conteúdo de biblioteca,
-            catálogo pessoal e demais domínios entram apenas nas Stories correspondentes.
+            O acesso autenticado já inclui recuperação de senha e controle das sessões.
+            Biblioteca, catálogo pessoal e demais domínios entram apenas nas Stories
+            correspondentes.
           </p>
         </section>
       </div>

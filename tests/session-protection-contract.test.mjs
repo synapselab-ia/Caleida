@@ -42,11 +42,12 @@ test("private route is guarded server-side before private content is returned", 
   assert.doesNotMatch(privatePage, /getSession\(|useSession\(/);
 });
 
-test("login route is dynamic, checks existing server session and exposes no signup or recovery shortcut", () => {
+test("login route stays dynamic, checks existing server session and only adds real recovery", () => {
   assert.match(loginPage, /dynamic = "force-dynamic"/);
   assert.match(loginPage, /getServerSession\(\)/);
   assert.match(loginPage, /session\?\.user/);
-  assert.doesNotMatch(loginPage, /forgot|reset|recuperar|cadastro|sign.?up/i);
+  assert.match(loginPage, /href="\/forgot-password"/);
+  assert.doesNotMatch(loginPage, /cadastro|sign.?up/i);
 });
 
 test("logout UX reports provider failure instead of pretending the session ended", () => {
