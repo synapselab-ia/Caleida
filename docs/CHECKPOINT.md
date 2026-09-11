@@ -17,123 +17,102 @@ ACTIVE_ISSUE: #57
 ACTIVE_BRANCH: feat/us-auth-008-audit-integrated-validation
 ACTIVE_PR: #58 (draft)
 
-NEXT_ACTION: Publicar manualmente uma única Preview Vercel da ref atual da PR #58 e, após o deployment ficar READY, retomar esta Story para executar a matriz live integrada do Incremento 2 e coletar a evidência final.
+NEXT_ACTION: Publicar manualmente uma Preview Vercel atualizada da ref corrente da PR #58 e retomar a matriz live integrada para revalidar a correção de revogação coletiva e completar recovery/reset/password-change/logout/auditoria.
 
-BLOCKERS: nenhum bloqueio técnico; a continuidade do gate live depende da release manual prevista por ADR-007
-MANUAL_ACTION_REQUIRED: criar uma Preview manual do projeto Vercel caleida usando a branch feat/us-auth-008-audit-integrated-validation; não promover para Production
+BLOCKERS: a RC já exercitada é imutável e contém a implementação anterior à correção encontrada pelo próprio gate live
+MANUAL_ACTION_REQUIRED: criar uma Preview manual/non-production da ref corrente da branch feat/us-auth-008-audit-integrated-validation; não promover para Production
 ON_HOLD: none
 ```
 
-A ação manual só deve ocorrer depois que o CI do commit que contém este checkpoint estiver verde. A IA não executa Preview, Production, promote, redeploy ou rollback.
+A IA não executa Preview, Production, promote, redeploy ou rollback conforme ADR-007.
 
-## Estado GitHub recuperado
+## Estado real recuperado
 
-- Issue `#57` aberta;
-- PR `#58` aberta em draft e mergeável;
-- head funcional antes desta reconciliação documental: `f093df971207793fcd7a25edcf135707f65973b0`;
-- CI `#229` / run `34601223118` / job `103268721995`: `SUCCESS`;
-- `main`: `6ba68307ae34db8f4878d2d9c14fcb11e635cf3b`;
-- nenhum review/comment bloqueante observado.
+- Issue `#57`: aberta;
+- PR `#58`: aberta em draft e mergeável antes da última atualização documental;
+- reviews/threads bloqueantes observados: nenhum;
+- correção funcional mais recente: `9366069ded22a9f1aed444e86153ab1a11db53b2`;
+- CI `#232` / run `34616208433` / job `103318914704`: `SUCCESS`;
+- runtime contract, `npm run verify`, PostgreSQL 18 e `npm run verify:db`: PASS.
 
-## Entrega técnica da US-AUTH-008
+## Gates US-AUTH-008
 
-Implementado na PR #58:
+### Implementação/auditoria — PASS
 
-- migration append-only `000008_auth_security_audit.sql`;
+- migration `000008_auth_security_audit.sql`;
 - `caleida_audit.auth_security_events` com metadados mínimos controlados;
-- auditoria server-only de login, logout, recovery, reset, mudança de senha e revogação de sessões;
-- auditoria de POST do proxy Auth sem ler request body;
-- recovery continua anti-enumeração também na persistência de auditoria;
-- nenhum e-mail, senha, token, cookie, Auth URL, connection string ou payload arbitrário é aceito pelo contrato da tabela/writer;
-- testes de contrato e PostgreSQL atualizados sem remover gates históricos.
+- writer server-only e parametrizado;
+- sem e-mail, senha, OTP, recovery token, session token, cookie ou payload arbitrário;
+- recovery continua anti-enumeração também na auditoria.
 
-## Gates executados
-
-### CI / PostgreSQL 18 — PASS
-
-No head funcional `f093df9...`:
-
-```text
-npm run verify: PASS
-lint/typecheck/test/build: PASS
-PostgreSQL 18: PASS
-npm run verify:db: PASS
-migration 000008: PASS
-SQL audit test + testes concorrentes: PASS
-CI #229: SUCCESS
-```
-
-Os CIs intermediários que falharam identificaram apenas contratos/ordenação de testes e foram corrigidos sem relaxar segurança.
-
-### Neon isolated — PASS
+### Neon isolated e baseline — PASS
 
 ```text
 Project: caleida-nonprod / patient-glade-95136440
-Baseline parent: main / br-restless-cherry-awpcwy6r
-Verification branch: verify-us-auth-008 / br-delicate-meadow-aw1u62kn / ready
+Baseline: main / br-restless-cherry-awpcwy6r
+Verification: verify-us-auth-008 / br-delicate-meadow-aw1u62kn
 ```
 
-Readback antes da migration: ledger `000001`–`000007`.
+- `000008` aplicada/testada na branch isolada;
+- SQL adversarial/ACL: PASS;
+- promoção para baseline non-production: PASS;
+- checksum correto;
+- diff verify-us-auth-008 vs baseline após promoção: vazio.
 
-Após aplicar `000008`:
+### Matriz live — PARCIAL, com defeito encontrado e corrigido
+
+RC exercitada:
 
 ```text
-checksum: 4f2ab39dd53413c522648ce7021a0051a163b009486c5dd6e7fcf1e2f81460b8
-SQL adversarial audit test: PASS
-auth_security_events após cleanup: 0
-auth users/sessions/accounts/verifications: 0
-schema diff vs baseline antes da promoção: somente tabela/sequence/índices esperados
+dpl_91NQikXRxHEKFMVxE52JRJBNWbjC
+Preview / non-production
 ```
 
-### Promoção baseline non-production — PASS
+Confirmado no runtime real:
 
-A migration `000008` foi promovida deliberadamente para `main / br-restless-cherry-awpcwy6r` somente após CI/PG18 e Neon isolated PASS.
+- visitante em `/app` → redirect sem flash privado;
+- signup não autorizado → negado;
+- signup autorizado → aceito;
+- login antes do OTP → negado;
+- OTP real → recebido e confirmado;
+- login server action → sucesso;
+- duas sessões independentes;
+- IDOR de session id → negado;
+- revogação individual remota → efetiva após revalidação do cache.
 
-Readback:
+Run que revelou o defeito:
 
 ```text
-ledger baseline: 000001–000008
-checksum 000008: correto
-auth_security_events: 0
-auth users/sessions/accounts/verifications: 0
-schema diff verify-us-auth-008 vs main: vazio
+Probe run #9
+Run ID: 34615577700
+Job ID: 103316542470
 ```
 
-Nenhuma fixture foi transportada para a baseline.
+Falha real: `revokeOtherSessions()` retornava sucesso, mas a sessão remota permanecia válida e presente no Managed Auth.
 
-## Vercel / gate live
+Correção já integrada na PR #58:
 
-O projeto Vercel `caleida` existe. O deployment mais recente ainda é `dpl_8WN2sKEEL6ex3vKt11vmYX9ZGvoN`, `READY`, baseado na US-AUTH-005. Ele não contém US-AUTH-006/007/008 e não serve para o gate live final.
+- listar sessões server-side;
+- preservar a sessão corrente;
+- revogar explicitamente cada sessão remota por `revokeSession({ token })`;
+- token nunca sai do servidor;
+- contrato reforçado;
+- CI #232 verde.
 
-Por isso US-AUTH-008 chegou ao único ponto em que uma nova publicação é materialmente necessária. Conforme ADR-007 e a política de deployment, deve existir **uma única Preview manual** da PR #58, não um deploy por Story/subfluxo.
+A Preview anterior não contém essa correção e não pode ser usada como evidência final.
 
-A release deve ser Preview/non-production e usar exclusivamente os recursos/secrets non-production já configurados para o projeto. Production Neon continua inexistente e não deve ser criada nesta Story.
+## Ambiente Preview
 
-## Matriz live pendente após a Preview
+A RC reutiliza a configuração histórica Preview vinculada à branch Neon `verify-us-auth-005 / br-small-river-aww0rtxo`. Para o gate atual foram alinhados nessa branch non-production:
 
-A retomada deve validar, na mesma RC:
+- migration `000008`;
+- trusted origin da RC atual.
 
-1. visitante/anônimo em `/app` e `/account/security` → redirecionado sem flash privado;
-2. login válido e credencial inválida com feedback genérico;
-3. logout invalida o acesso privado;
-4. recovery para conta existente e inexistente sem enumeração;
-5. reset válido, inválido/expirado e reutilização de token;
-6. senha antiga versus nova após reset;
-7. trusted origin do callback de recovery;
-8. duas sessões independentes e metadados seguros na área de segurança;
-9. revogação individual e perda de acesso remoto após a janela aproximada de 1 s;
-10. alteração autenticada de senha revoga as demais sessões e preserva a corrente;
-11. efeito real do reset por e-mail sobre sessões existentes, sem presumir configuração indisponível;
-12. tentativas adversariais de sessão/ownership/autorização aplicáveis;
-13. signup/OTP integrado, reutilizando a metodologia segura da US-AUTH-005;
-14. persistência dos eventos críticos na auditoria sem secrets e sem payloads sensíveis;
-15. ausência de erros críticos de console/runtime nos caminhos exercitados.
-
-Nenhum OTP, recovery token, senha, cookie, session token ou e-mail temporário deve ser persistido na documentação.
+A mailbox `mail.tm` falhou em entregar OTP apesar da geração no Neon. A probe descartável passou a usar GrabMail; OTP real foi então recebido e validado. Nenhum endereço temporário/OTP foi persistido nesta documentação.
 
 ## Housekeeping
 
-Branches Neon temporárias atuais:
+Branches Neon temporárias continuam existentes e não bloqueiam a Story:
 
 ```text
 verify-us-auth-004 / br-plain-pond-aw5f59ia
@@ -143,4 +122,4 @@ verify-us-auth-007 / br-wandering-mountain-awjnqqps
 verify-us-auth-008 / br-delicate-meadow-aw1u62kn
 ```
 
-Exclusão é destrutiva e exige autorização explícita do usuário; não é blocker da Story.
+Exclusão/limpeza destrutiva exige autorização explícita do usuário.
