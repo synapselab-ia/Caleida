@@ -38,31 +38,32 @@ Estados: A FAZER, PRONTA, EM ANDAMENTO, EM REVISÃO, CONCLUÍDA, BLOQUEADA.
 
 ## US-AUTH-008 — estado atual
 
-**Prioridade:** P1  
-**Capacidades:** CAP-04, CAP-35
+Entregue e verde:
 
-Entregue tecnicamente:
-
-- auditoria de segurança Auth persistente e sanitizada;
+- auditoria Auth persistente/sanitizada;
 - migration `000008_auth_security_audit.sql`;
-- contratos e testes adversariais;
-- CI/PostgreSQL 18 verdes;
-- gate Neon isolado verde;
-- promoção de `000008` para a baseline non-production com paridade de schema e sem fixtures.
+- testes adversariais;
+- Neon isolated + promoção baseline non-production;
+- CI #232 após a correção live: PASS.
+
+A matriz live já provou signup controlado, OTP, login, proteção privada, múltiplas sessões, negação de IDOR e revogação individual. Ela encontrou uma falha material na revogação coletiva: o provider retornava sucesso sem invalidar a sessão remota.
+
+A PR #58 foi corrigida para revogar explicitamente cada sessão remota server-side, preservando a atual e sem expor bearer token. O contrato automatizado foi reforçado e o CI passou.
 
 Pendente para conclusão:
 
-- uma única Preview manual Vercel da PR #58;
-- matriz live acumulada de signup/OTP, login/logout, recovery/reset, senha, sessões, autorização, acesso direto e auditoria;
-- evidência final e decisão de encerramento do Incremento 2.
+- Preview manual atualizada da ref corrente da PR #58, pois a RC anterior é imutável e contém o código defeituoso;
+- reexecução/conclusão da matriz live com revogação coletiva, recovery/reset, password change, logout e auditoria final;
+- evidência final e merge se todos os gates passarem.
 
 ## Regra de execução
 
-- deployment não é consequência de push/PR/merge;
+- deployment não é consequência automática de push/PR/merge;
 - a IA não executa deployment;
 - US-AUTH-008 é o ponto deliberado de validação live acumulada;
+- uma nova RC só é exigida agora porque o próprio gate encontrou um bug e o código foi alterado;
 - Production Neon, Data API e o incremento seguinte não devem ser antecipados.
 
 # Próxima ação operacional
 
-> Depois do CI verde da ref candidata, publicar manualmente uma única Preview Vercel da branch `feat/us-auth-008-audit-integrated-validation` e retomar US-AUTH-008 para executar a matriz live final.
+> Publicar manualmente uma Preview Vercel da ref corrente da branch `feat/us-auth-008-audit-integrated-validation`; quando ficar `READY`, retomar a matriz live imediatamente.
