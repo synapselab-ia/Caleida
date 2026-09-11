@@ -1,6 +1,6 @@
 # Arquitetura técnica
 
-**Status:** arquitetura de referência vigente após US-AUTH-004.
+**Status:** arquitetura de referência vigente durante US-AUTH-007.
 
 ## 1. Visão geral
 
@@ -17,8 +17,10 @@ Vercel
   └── destino de hosting; release exclusivamente manual pelo usuário
         ↓
 Neon
-  ├── Neon Auth
-  │    └── e-mail compartilhado do Neon em non-production enquanto adequado ao desenvolvimento/beta fechado
+  ├── Neon Auth / Managed Better Auth
+  │    ├── email/password + confirmação OTP
+  │    ├── login/logout
+  │    └── recovery + gestão/revogação de sessões
   ├── Neon Data API
   ├── Postgres
   └── PostgreSQL Row Level Security
@@ -75,7 +77,7 @@ Projeto Neon dedicado a staging e integração com o serviço gerenciado.
 
 - branch canônica de staging/homologação;
 - branches temporárias para verificação Neon-specific e desenvolvimento integrado quando necessárias;
-- branches descartáveis devem ser resetadas/removidas após uso;
+- branches descartáveis devem ser resetadas/removidas após uso somente com autorização quando a ferramenta classificar a ação como destrutiva;
 - nenhuma branch temporária é fonte canônica de schema;
 - baseline `main` não é laboratório destrutivo;
 - o servidor compartilhado de e-mail do Neon Auth é suficiente para desenvolvimento e beta fechado enquanto seus limites forem adequados.
@@ -88,6 +90,8 @@ Projeto Neon separado do non-production.
 - secrets próprios;
 - sem testes destrutivos;
 - migrations chegam a partir do Git depois dos gates aplicáveis.
+
+Production ainda não foi provisionada.
 
 ### Vercel Preview
 
@@ -130,7 +134,7 @@ Os domínios devem permanecer separados, mas podem compartilhar componentes e se
 - catálogo global separado dos dados pessoais;
 - uma relação de biblioteca por usuário e obra;
 - identificadores externos únicos por provedor quando aplicável;
-- RLS desde a primeira tabela privada/user-scoped exposta;
+- RLS desde a primeira tabela privada/user-scoped exposta relevante;
 - dados externos normalizados e preservados localmente apenas quando necessários;
 - cache com expiração e limpeza;
 - auditoria compacta e sem secrets;
@@ -138,9 +142,22 @@ Os domínios devem permanecer separados, mas podem compartilhar componentes e se
 
 ## 6. Autenticação e acesso a dados
 
-Neon Auth será a identidade canônica inicial.
+Neon Auth / Managed Better Auth é a identidade canônica inicial.
 
-Para CRUD normal sob contexto de usuário, a arquitetura prefere Neon Data API com JWT e RLS quando esse caminho for adequado ao caso de uso.
+Estado implementado até US-AUTH-007:
+
+- email/password habilitado;
+- confirmação obrigatória de e-mail por OTP;
+- cadastro fail-closed por convite/aprovação;
+- login/logout e boundary privado server-side;
+- recuperação e alteração de senha;
+- consulta e revogação das próprias sessões;
+- session/recovery tokens permanecem server-only;
+- `sessionDataTtl = 1 segundo` para limitar a janela stale antes de revalidação upstream.
+
+O contrato detalhado de password/session fica em `docs/SESSION_SECURITY.md`.
+
+Para CRUD normal sob contexto de usuário, a arquitetura prefere Neon Data API com JWT e RLS quando esse caminho for adequado ao caso de uso. A Data API ainda não foi provisionada.
 
 Regras:
 
