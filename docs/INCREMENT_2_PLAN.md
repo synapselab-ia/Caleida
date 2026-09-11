@@ -1,6 +1,6 @@
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Status:** EM ANDAMENTO — US-AUTH-008 aguarda a única release manual necessária para a matriz live final  
+**Status:** EM ANDAMENTO — US-AUTH-008 aguarda revalidação da correção encontrada na matriz live final  
 **Origem:** EPIC-02 — Contas e autenticação  
 **Capacidades:** CAP-01, CAP-02, CAP-04, CAP-35  
 **Prioridade:** P0/P1
@@ -42,9 +42,7 @@ US-AUTH-007 — recovery + gestão/revogação de sessões       CONCLUÍDA (#55
 US-AUTH-008 — auditoria integrada + validação live final   EM ANDAMENTO (#57/#58)
 ```
 
-Evidências individuais: `docs/US_AUTH_001_VERIFICATION.md` a `docs/US_AUTH_008_VERIFICATION.md`.
-
-## 4. Estado integrado antes do gate live final
+## 4. Estado integrado
 
 ### Autenticação e entrada
 
@@ -57,111 +55,84 @@ Evidências individuais: `docs/US_AUTH_001_VERIFICATION.md` a `docs/US_AUTH_008_
 - reset por token do provider;
 - mudança autenticada exige senha atual;
 - listagem e revogação das próprias sessões sem expor bearer token;
-- revogação remota revalidada após cache assinado de aproximadamente 1 segundo.
+- cache de sessão limitado a aproximadamente 1 segundo para revalidação rápida.
 
-### Autorização
+### Auditoria
 
-Papéis de produto permanecem separados do Admin Better Auth:
+Migration `000008_auth_security_audit.sql` adiciona `caleida_audit.auth_security_events` com apenas tipo, ator opcional, outcome, reason code e timestamp.
 
-```text
-proprietário
-administrador
-moderador
-curador
-usuário
-```
+Não há colunas de e-mail, senha, OTP, token, cookie, Auth URL ou payload completo.
 
-Fronteiras server-side e banco preservam as negações adversariais já comprovadas nas Stories anteriores.
+## 5. Gates concluídos
 
-### Auditoria consolidada — US-AUTH-008
+### CI/PostgreSQL 18 — PASS
 
-Migration `000008_auth_security_audit.sql` adiciona `caleida_audit.auth_security_events` com apenas:
-
-- tipo de evento controlado;
-- UUID opcional do ator;
-- outcome controlado;
-- reason code controlado;
-- timestamp.
-
-Não existem colunas de e-mail, senha, token, cookie, Auth URL ou payload completo.
-
-Eventos cobertos:
+Após a correção encontrada pelo live gate:
 
 ```text
-login
-logout
-password_recovery_requested
-password_reset
-password_changed
-session_revoked
-other_sessions_revoked
-auth_proxy_post
-```
-
-## 5. Gates US-AUTH-008 já concluídos
-
-### CI e PostgreSQL 18 — PASS
-
-```text
-Head funcional: f093df971207793fcd7a25edcf135707f65973b0
-CI #229 / run 34601223118 / job 103268721995: SUCCESS
+Head funcional: 9366069ded22a9f1aed444e86153ab1a11db53b2
+CI #232 / run 34616208433 / job 103318914704: SUCCESS
 npm run verify: PASS
-npm run verify:db: PASS
+PostgreSQL 18 + npm run verify:db: PASS
 ```
 
-### Neon isolated — PASS
+### Neon isolated/baseline — PASS
 
 ```text
-verify-us-auth-008 / br-delicate-meadow-aw1u62kn / ready
+verify-us-auth-008 / br-delicate-meadow-aw1u62kn
+baseline main / br-restless-cherry-awpcwy6r
 ```
 
-- branch criada da baseline atual;
-- readback inicial `000001`–`000007`;
-- migration `000008` aplicada com checksum correto;
-- teste SQL e ACL adversarial: PASS;
-- zero fixtures após cleanup;
-- zero usuários/sessões/accounts/verificações Auth.
+- migration `000008` e teste SQL/ACL: PASS;
+- promoção `000008` para baseline non-production: PASS;
+- checksum correto;
+- diff final verify-us-auth-008 vs baseline: vazio.
 
-### Promoção baseline — PASS
+## 6. Gate live acumulado — estado real
 
-`000008` foi promovida deliberadamente para `main / br-restless-cherry-awpcwy6r` depois dos gates portável e Neon-specific.
+A primeira RC Preview da PR #58 foi criada manualmente e usada para a matriz real.
 
-Readback:
+Já passaram:
 
-```text
-migrations: 000001–000008
-auth_security_events: 0
-auth users/sessions/accounts/verifications: 0
-schema diff verify-us-auth-008 vs main: vazio
-```
+1. acesso anônimo e ausência de flash privado;
+2. signup sem autorização negado;
+3. signup autorizado aceito;
+4. usuário não confirmado não autentica;
+5. OTP real recebido/confirmado;
+6. login autenticado e acesso `/app`;
+7. duas sessões independentes;
+8. tentativa de revogar session id alheio negada;
+9. revogação individual remota efetiva após a janela de cache.
 
-## 6. Gate live acumulado — MANUAL_ACTION_REQUIRED
+A matriz encontrou um defeito material na etapa seguinte: a chamada coletiva `revokeOtherSessions()` retornava sucesso sem remover a sessão remota no Managed Auth.
 
-O deployment Vercel mais recente ainda corresponde à US-AUTH-005. Não possui US-AUTH-006/007/008.
+A PR foi corrigida para usar listagem server-side + `revokeSession()` explícito em cada sessão remota, preservando a atual. O token permanece exclusivamente no servidor. O CI #232 passou após a correção.
 
-É materialmente necessário criar **uma única Preview manual** da branch da PR #58 para validar, no mesmo runtime:
+## 7. Revalidação necessária
 
-1. signup + OTP;
-2. login válido/inválido e logout;
-3. acesso direto anônimo e ausência de flash privado;
-4. recovery existente/inexistente sem enumeração;
-5. reset válido/inválido/expirado/reutilizado;
-6. senha antiga/nova após reset;
-7. trusted origin do recovery;
-8. duas sessões independentes;
-9. revogação individual/remota e janela de cache;
-10. mudança autenticada revogando outras sessões;
-11. efeito real do reset por e-mail sobre sessões existentes;
-12. autorização/adversariais aplicáveis;
-13. persistência de auditoria sem secrets;
-14. console/runtime sem falha crítica.
+A RC anterior é imutável e não contém o fix. Por isso uma **Preview manual atualizada** da ref corrente da PR #58 é necessária para fechar o mesmo gate final.
 
-A Preview é non-production. A IA não executa deployment e nenhuma publicação Production faz parte desta Story.
+Na nova RC, reexecutar e concluir:
 
-## 7. Housekeeping
+- proteção anônima;
+- signup/OTP/login;
+- revogação individual e coletiva;
+- recovery existente/inexistente indistinguível;
+- trusted/same-origin e origem divergente;
+- reset válido + replay negado;
+- senha antiga/nova após reset;
+- comportamento real das sessões existentes após reset;
+- mudança autenticada de senha revogando demais sessões;
+- logout;
+- readback final da auditoria sem secrets;
+- ausência de erros críticos/5xx.
 
-Branches de verificação Neon não são fonte canônica de schema e sua exclusão exige autorização específica. A existência delas não bloqueia o Incremento.
+Não publicar Production e não criar Preview separado por subfluxo.
 
-## 8. Próxima ação
+## 8. Housekeeping
 
-> Após o CI verde da ref candidata, o usuário publica manualmente uma única Preview Vercel da branch `feat/us-auth-008-audit-integrated-validation`. Quando ela estiver `READY`, retomar a US-AUTH-008 e executar a matriz live completa antes de decidir o encerramento do Incremento 2.
+Branches/fixtures temporárias non-production não são fonte canônica de schema. Sua exclusão é destrutiva e exige autorização explícita; a existência delas não bloqueia o Incremento.
+
+## 9. Próxima ação
+
+> Publicar manualmente uma Preview Vercel da ref corrente da branch `feat/us-auth-008-audit-integrated-validation`. Quando ficar `READY`, retomar imediatamente a matriz live para concluir US-AUTH-008 e decidir o fechamento do Incremento 2.
