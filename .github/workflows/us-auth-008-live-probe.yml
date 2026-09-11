@@ -109,6 +109,10 @@ jobs:
           if mailbox_old not in s:
               raise SystemExit('probe mailbox patch target not found')
           s = s.replace(mailbox_old, mailbox_new)
+          if 'attempt < 24' not in s or 'attempt < 30' not in s:
+              raise SystemExit('probe email polling patch target not found')
+          s = s.replace('attempt < 24', 'attempt < 90', 1)
+          s = s.replace('attempt < 30', 'attempt < 90', 1)
           p.write_text(s)
           PY
           node --check tests/live-us-auth-008-probe.mjs
