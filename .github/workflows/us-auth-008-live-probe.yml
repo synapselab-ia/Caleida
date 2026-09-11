@@ -144,3 +144,5 @@ jobs:
           PY
           node --check tests/live-us-auth-008-probe.mjs
           node tests/live-us-auth-008-probe.mjs
+
+# revalidate corrected RC dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B
