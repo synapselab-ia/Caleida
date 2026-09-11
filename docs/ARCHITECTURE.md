@@ -1,6 +1,6 @@
 # Arquitetura técnica
 
-**Status:** arquitetura de referência vigente durante US-AUTH-007.
+**Status:** arquitetura de referência vigente após US-AUTH-007.
 
 ## 1. Visão geral
 
@@ -69,46 +69,31 @@ Para migrations, constraints e RLS portáveis:
 - migrations aplicadas desde a baseline conhecida;
 - testes de banco executados antes do merge.
 
-Em `US-PLAT-005`, a referência é PostgreSQL 18 conforme `ADR-008`.
+A referência atual é PostgreSQL 18 conforme `ADR-008`.
 
 ### Neon Non-Production
 
 Projeto Neon dedicado a staging e integração com o serviço gerenciado.
 
 - branch canônica de staging/homologação;
-- branches temporárias para verificação Neon-specific e desenvolvimento integrado quando necessárias;
-- branches descartáveis devem ser resetadas/removidas após uso somente com autorização quando a ferramenta classificar a ação como destrutiva;
+- branches temporárias para verificação Neon-specific quando necessárias;
+- branches descartáveis só são removidas com autorização quando a ferramenta classifica a ação como destrutiva;
 - nenhuma branch temporária é fonte canônica de schema;
 - baseline `main` não é laboratório destrutivo;
-- o servidor compartilhado de e-mail do Neon Auth é suficiente para desenvolvimento e beta fechado enquanto seus limites forem adequados.
+- provider compartilhado de e-mail do Neon Auth é suficiente para desenvolvimento/non-production enquanto adequado.
 
 ### Neon Production
 
-Projeto Neon separado do non-production.
+Projeto Neon separado do non-production. Production ainda não foi provisionada e nunca serve como laboratório.
 
-- utilizado pelo beta real e futura operação pública;
-- secrets próprios;
-- sem testes destrutivos;
-- migrations chegam a partir do Git depois dos gates aplicáveis.
+### Vercel
 
-Production ainda não foi provisionada.
+Preview e Production são releases manuais:
 
-### Vercel Preview
-
-Preview é ambiente de publicação opcional e manual.
-
-- não é criado automaticamente por PR/branch;
-- não é gate obrigatório de merge;
-- quando usado, deve receber configuração non-production apropriada;
-- só é publicado pelo usuário.
-
-### Vercel Production
-
-Production é ambiente de release manual.
-
+- push/PR/merge não publicam automaticamente;
+- Preview não é gate obrigatório por Story;
 - somente o usuário inicia publicação;
-- IA pode preparar release candidate/runbook e verificar estado já publicado;
-- merge na `main` não publica automaticamente.
+- IA pode preparar release candidate/runbook e verificar estado já publicado.
 
 ## 4. Domínios previstos
 
@@ -155,9 +140,9 @@ Estado implementado até US-AUTH-007:
 - session/recovery tokens permanecem server-only;
 - `sessionDataTtl = 1 segundo` para limitar a janela stale antes de revalidação upstream.
 
-O contrato detalhado de password/session fica em `docs/SESSION_SECURITY.md`.
+Contrato detalhado: `docs/SESSION_SECURITY.md`.
 
-Para CRUD normal sob contexto de usuário, a arquitetura prefere Neon Data API com JWT e RLS quando esse caminho for adequado ao caso de uso. A Data API ainda não foi provisionada.
+Para CRUD normal sob contexto de usuário, a arquitetura prefere Neon Data API com JWT e RLS quando esse caminho for adequado. A Data API ainda não foi provisionada.
 
 Regras:
 
@@ -189,70 +174,29 @@ database/tests/
 - comportamento específico do Neon exige verificação adicional em branch Neon isolada quando aplicável;
 - Production nunca é ambiente de teste destrutivo.
 
-O tooling usa Node.js + `psql`, sem ORM introduzido apenas para migrations. A política de ambientes de teste segue `ADR-008`.
+O tooling usa Node.js + `psql`, sem ORM introduzido apenas para migrations.
 
 ## 8. Estratégia de integração externa
 
-APIs externas serão acessadas preferencialmente por rotas server-side quando houver segredo ou necessidade de controle.
-
-O cliente não recebe chaves privadas. Resultados são normalizados antes de chegar à interface. A indisponibilidade de um provedor não pode remover obras já salvas.
+APIs externas serão acessadas preferencialmente por rotas server-side quando houver segredo ou necessidade de controle. O cliente não recebe chaves privadas.
 
 ## 9. Estratégia de imagens e arquivos
 
 - capas externas permanecem por URL quando os termos permitirem;
 - conteúdo próprio como avatar/banner exige Object Storage privado e controlado;
 - o provedor de Storage ainda não foi escolhido;
-- uploads futuros terão validação, compressão, limites e limpeza de órfãos;
 - metadados de arquivo devem permanecer desacoplados do provedor.
 
 ## 10. CI e deployment
 
-### CI
-
-O fluxo normal é:
+Fluxo normal:
 
 ```text
 branch → implementação → lint/typecheck/test/build → PR → review → merge
 ```
 
-GitHub Actions valida, mas não publica.
+GitHub Actions valida, mas não publica. `vercel.json` mantém Git deployments automáticos desabilitados. IA não executa Preview, Production, promote, rollback ou redeploy.
 
-### Guardrail Vercel
+## 11. Próximo fechamento arquitetural
 
-Quando `vercel.json` existir, a configuração deve desabilitar Git deployments automáticos conforme a documentação oficial corrente. Em OPS-003, o contrato validado é:
-
-```json
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": {
-    "deploymentEnabled": false
-  }
-}
-```
-
-### Release
-
-Release é separada do ciclo de integração:
-
-```text
-release candidate verificada
-  ↓
-MANUAL_ACTION_REQUIRED quando necessário
-  ↓
-usuário publica manualmente
-```
-
-IA não executa Preview, Production, promote, rollback ou redeploy.
-
-## 11. Decisões ainda pendentes
-
-Serão decididas em tarefas específicas:
-
-- ferramenta de testes unitários além do runner nativo atual, se houver necessidade;
-- ferramenta de testes end-to-end;
-- biblioteca de componentes acessíveis, se utilizada;
-- provedor de Object Storage;
-- provedor externo/configuração própria de e-mail transacional quando o servidor compartilhado do Neon deixar de ser adequado ao beta/produção;
-- serviço/estratégia de backup de longo prazo;
-- monitoramento e rastreamento de erros;
-- estratégia final de domínio.
+`US-AUTH-008` deve consolidar auditoria e validar live a arquitetura de acesso construída no Incremento 2. Mudança material de arquitetura detectada nessa Story exige ADR próprio; validação de comportamento existente não exige ADR novo.

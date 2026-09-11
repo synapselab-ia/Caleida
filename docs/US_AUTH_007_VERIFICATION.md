@@ -1,15 +1,16 @@
 # US-AUTH-007 — Verification
 
 **Story:** Recuperação de senha e gestão/revogação de sessões  
-**Issue:** #55  
-**PR:** #56  
+**Issue:** #55 — CLOSED / completed  
+**PR:** #56 — MERGED  
 **Branch:** `feat/us-auth-007-password-session-management`  
-**Estado:** EM REVISÃO  
-**Data:** 10/09/2026
+**Merge:** `31ec6e2238a7b0bdaff7506ac0e9ed51179f3322`  
+**Estado:** CONCLUÍDA  
+**Data de encerramento:** 11/09/2026
 
 ## 1. Escopo implementado
 
-US-AUTH-007 materializa:
+US-AUTH-007 materializou:
 
 - `/forgot-password` com resposta anti-enumeração;
 - `/reset-password` para conclusão por token do provider;
@@ -17,7 +18,7 @@ US-AUTH-007 materializa:
 - `/account/security` sob o boundary privado existente;
 - listagem das próprias sessões;
 - revogação individual por ID opaco resolvido server-side;
-- encerramento de todas as outras sessões;
+- encerramento das outras sessões;
 - redução explícita do cache de dados de sessão de 300 s para 1 s;
 - testes de contrato específicos para recovery/password/session management.
 
@@ -25,13 +26,13 @@ Contrato: `docs/SESSION_SECURITY.md`.
 
 ## 2. SDK e implementação upstream revalidados
 
-A versão continuou exatamente:
+Versão utilizada:
 
 ```text
 @neondatabase/auth 0.5.0-beta
 ```
 
-Foi revalidado o código oficial corrente do Neon SDK (`neondatabase/neon-js`, commit `029a3367ee140d2c8987601b0e338000fe6db1e6`):
+Código oficial corrente do Neon SDK revalidado em `neondatabase/neon-js` commit `029a3367ee140d2c8987601b0e338000fe6db1e6`:
 
 - `requestPasswordReset()`;
 - `resetPassword()`;
@@ -39,109 +40,97 @@ Foi revalidado o código oficial corrente do Neon SDK (`neondatabase/neon-js`, c
 - `listSessions()`;
 - `revokeSession()`;
 - `revokeOtherSessions()`;
-- `sessionDataTtl` positivo, com default upstream de 300 s.
+- `sessionDataTtl` positivo, default upstream 300 s.
 
-Também foi revalidada a implementação corrente do Better Auth (`better-auth/better-auth`, commit `8d37cc3b7732a04908b28d8abb7f010a286d6c43`):
+Implementação Better Auth revalidada no commit `8d37cc3b7732a04908b28d8abb7f010a286d6c43`:
 
-- request de recovery retorna resposta equivalente para usuário inexistente e simula trabalho para reduzir timing leak;
-- token de reset é armazenado como verification temporária, expira por padrão em 1 hora e é consumido antes da alteração de senha, tornando o uso concorrente single-winner;
-- operações sensíveis usam sessão autoritativa em deployments stateful, desabilitando cookie cache para autorização sensível;
-- `revokeSession` só remove sessão que pertença ao mesmo usuário autenticado;
+- request de recovery usa resposta equivalente para usuário inexistente e simula trabalho para reduzir timing leak;
+- token de reset é temporário, expira por padrão em uma hora e é consumido antes da mudança de senha;
+- operações sensíveis usam sessão autoritativa em deployment stateful;
+- `revokeSession` restringe remoção ao mesmo usuário autenticado;
 - `revokeOtherSessions` preserva a sessão corrente;
-- reset de senha só revoga todas as sessões automaticamente se `revokeSessionsOnPasswordReset` estiver habilitado no servidor.
-
-Nenhum comportamento beta foi inferido apenas pela memória do chat.
+- reset só revoga todas as sessões automaticamente quando `revokeSessionsOnPasswordReset` está habilitado no servidor.
 
 ## 3. Segurança do fluxo
 
 ### Anti-enumeração
 
-`requestPasswordResetAction` sempre devolve ao usuário a mesma mensagem pública:
+A resposta pública da solicitação de recovery é sempre:
 
 ```text
 Se existir uma conta para esse e-mail, você receberá instruções para redefinir a senha.
 ```
 
-Erros retornados/lançados pelo provider não são ecoados para a UI.
+Erros do provider não são ecoados para a UI.
 
 ### Callback
 
-O callback de recovery é construído a partir da origem da própria requisição somente quando:
+O callback é derivado da origem da própria requisição apenas quando host e origin/referer correspondem. HTTPS é obrigatório, com HTTP permitido somente para localhost/127.0.0.1. Nenhum domínio real de Preview/Production é hardcoded.
 
-- host e origin/referer correspondem;
-- protocolo é HTTPS;
-- HTTP é aceito somente para localhost/127.0.0.1.
-
-Nenhum domínio de Preview/Production é hardcoded no código.
-
-### Tokens
+### Tokens e senha
 
 - recovery token não é escrito em logs/docs;
 - session token não é serializado para UI;
-- a UI de revogação envia somente `session.id`;
-- o servidor lista as sessões próprias e resolve `target.token` internamente apenas depois de validar ownership.
-
-### Senha
-
-- 8–128 caracteres no boundary do Caleida;
-- reset inválido/expirado usa mensagem genérica;
-- alteração autenticada exige senha atual;
-- alteração autenticada usa `revokeOtherSessions: true`.
+- revogação recebe somente `session.id` no cliente;
+- bearer token é resolvido server-side após ownership;
+- senha nova possui boundary local de 8–128 caracteres;
+- alteração autenticada exige senha atual e `revokeOtherSessions: true`.
 
 ## 4. Cache e revogação
 
-Antes da Story:
+Antes:
 
 ```text
 sessionDataTtl = 300 s
 ```
 
-Depois da Story:
+Depois:
 
 ```text
 sessionDataTtl = 1 s
 ```
 
-O SDK corrente rejeita TTL `<= 0`; 1 s é o menor valor positivo adotado pelo produto.
+O SDK rejeita TTL `<= 0`; 1 s é o menor valor positivo adotado.
 
-Semântica resultante:
+Semântica aprovada:
 
-- endpoints sensíveis Better Auth fazem validação autoritativa server-side;
-- o boundary comum pode reutilizar dados assinados por no máximo aproximadamente 1 s antes de revalidar upstream;
-- uma sessão revogada remotamente pode permanecer aparentemente válida apenas dentro dessa janela de cache já emitida;
-- a duração do token de sessão não foi alterada.
+- endpoints sensíveis fazem validação autoritativa upstream;
+- o boundary comum pode reutilizar dados assinados por aproximadamente 1 s antes de revalidar;
+- sessão revogada remotamente pode permanecer aparentemente válida somente dentro dessa pequena janela de cache já emitida;
+- isso não altera a duração do token de sessão.
 
-## 5. Reset por e-mail e revogação automática
+## 5. Reset por e-mail e sessões existentes
 
-O schema gerenciado `neon_auth.project_config` da branch isolada foi inspecionado apenas de forma read-only. As chaves atuais de `email_and_password` são:
+Readback do schema gerenciado `neon_auth.project_config` na branch isolada mostrou as chaves atuais de `email_and_password` sem `revokeSessionsOnPasswordReset`.
 
-```text
-autoSignInAfterVerification
-disableSignUp
-emailVerificationMethod
-enabled
-requireEmailVerification
-sendVerificationEmailOnSignIn
-sendVerificationEmailOnSignUp
-```
-
-A opção upstream `revokeSessionsOnPasswordReset` não aparece na configuração gerenciada exposta nesse ambiente.
-
-Consequência: US-AUTH-007 **não afirma** que recovery por e-mail revoga automaticamente sessões existentes. Isso não impede que as sessões sejam consultadas/revogadas explicitamente; alteração autenticada já encerra as demais. O comportamento live de reset + sessões será medido em `US-AUTH-008`.
+Consequência: o Caleida **não afirma** que recovery por e-mail revoga automaticamente sessões pré-existentes. Alteração autenticada encerra as demais sessões e a área de segurança fornece revogação explícita. US-AUTH-008 deve medir o comportamento live real do reset em cenário multi-device.
 
 ## 6. GitHub / CI
 
-Primeiro head funcional:
+### Primeiro head funcional
 
 ```text
 Commit: df745df9a05232372e8a1e1b269bc5502499503b
-Workflow: #221
-Run: 34519793813
-Job: 103014162360
-Resultado: SUCCESS
+CI #221 / run 34519793813 / job 103014162360: SUCCESS
 ```
 
-Passaram:
+### Head final da PR
+
+```text
+Commit: 2c139f817bfcb8c9b7e316e26c0fcb883d33ab71
+CI #222 / run 34597671892 / job 103257145584: SUCCESS
+```
+
+### Integração
+
+```text
+PR #56: MERGED
+Merge: 31ec6e2238a7b0bdaff7506ac0e9ed51179f3322
+Issue #55: CLOSED / completed
+CI pós-merge #223 / run 34597951573 / job 103258037267: SUCCESS
+```
+
+Nos CIs finais passaram:
 
 - runtime contract Node 24;
 - instalação reproduzível;
@@ -149,75 +138,55 @@ Passaram:
 - migration integrity check;
 - lint;
 - typecheck;
-- testes Node, incluindo `password-session-management-contract.test.mjs`;
+- testes Node;
 - build Next.js;
 - PostgreSQL 18;
 - `npm run verify:db`.
 
-Não houve correção de código exigida pelo primeiro CI funcional.
-
-Alterações documentais de fechamento devem gerar novo CI antes do merge.
-
 ## 7. PostgreSQL / migrations
-
-A Story não cria schema próprio para senha/sessão e não duplica tabelas do Managed Better Auth.
 
 ```text
 nova migration: não
 mudança de schema de produto: não
-PostgreSQL 18: PASS via CI
+PostgreSQL 18: PASS
 verify:db: PASS
 ```
 
-## 8. Neon-specific
+Senha e sessão continuam gerenciadas pelo Managed Better Auth; nenhuma credencial foi duplicada em schema próprio.
 
-Branch isolada:
+## 8. Neon-specific
 
 ```text
 Projeto: caleida-nonprod / patient-glade-95136440
 Baseline: main / br-restless-cherry-awpcwy6r
 Verificação: verify-us-auth-007 / br-wandering-mountain-awjnqqps
 Estado: ready
+Provider: Better Auth
+Email/password: enabled
+Confirmação de e-mail: required / OTP
+Email provider: shared Neon
+Usuários/sessões/accounts/verifications: 0
+Schema diff versus baseline: vazio
 ```
 
-Readback:
-
-- provider Better Auth;
-- email/password enabled;
-- confirmação de e-mail obrigatória por OTP;
-- provider de e-mail shared Neon;
-- branch Auth isolada da baseline;
-- usuários: 0;
-- sessões: 0;
-- accounts: 0;
-- verification rows: 0;
-- schema diff versus baseline: vazio.
-
-Nenhuma Auth URL real é persistida aqui.
+Nenhuma Auth URL real é persistida neste documento. A baseline não foi usada como laboratório destrutivo.
 
 Resultado Neon-specific estrutural/configuração: **PASS**.
 
-Não foram fabricados usuários/sessões diretamente no banco para simular uma prova do provider.
-
-## 9. Browser/live e recovery real
-
-Conforme o protocolo revisado, browser live não é gate automático por Story.
-
-Nesta Story:
+## 9. Browser/live
 
 ```text
-browser/live: SKIPPED/deferred para US-AUTH-008
+browser/live US-AUTH-007: SKIPPED/deferred para US-AUTH-008
 Preview Vercel adicional: NÃO REQUERIDO
-MANUAL_ACTION_REQUIRED: none
 ```
 
-A validação integrada de `US-AUTH-008` deve incluir um recovery real porque o callback depende do trusted origin do runtime candidato. Isso será feito junto dos demais fluxos em uma única release candidate quando material, e não com um Preview adicional só para US-AUTH-007.
+A decisão segue a política canônica: o gate live acumulado será executado em US-AUTH-008. Recovery real, trusted origin, senha antiga/nova e revogação multi-device devem fazer parte dessa matriz.
 
 ## 10. Auditoria
 
-Nenhum novo storage de auditoria foi criado nesta Story para não antecipar US-AUTH-008 nem introduzir conexão runtime de banco apenas para logging.
+US-AUTH-007 não criou novo storage de auditoria para não antecipar US-AUTH-008. Nenhum log persistente da Story registra senha, recovery token, session token, cookie, Auth URL ou secret.
 
-Guardrail já aplicado: nenhum log de aplicação contém senha atual/nova, recovery token, session token, cookie, Auth URL ou secret. US-AUTH-008 consolidará eventos auditáveis apenas com metadados mínimos não sensíveis.
+US-AUTH-008 consolidará os eventos auditáveis com metadados mínimos não sensíveis.
 
 ## 11. Non-goals preservados
 
@@ -227,17 +196,10 @@ Guardrail já aplicado: nenhum log de aplicação contém senha atual/nova, reco
 - Production Neon;
 - deployment Vercel pela IA;
 - criação manual de credenciais no schema `neon_auth`;
-- auditoria integrada final;
 - exclusão automática de branches Neon.
 
-## 12. Critério de encerramento
+## 12. Resultado
 
-US-AUTH-007 pode ser integrada quando:
+US-AUTH-007 está **CONCLUÍDA**. Todos os gates materiais da Story passaram, a PR #56 foi integrada e a `main` permaneceu saudável no CI pós-merge.
 
-1. documentação canônica estiver reconciliada;
-2. CI do head final estiver `SUCCESS`;
-3. diff não contiver mudança fora da Story ou secret;
-4. não houver review/thread bloqueante;
-5. PR #56 for integrada e CI pós-merge permanecer saudável.
-
-Após isso, a única próxima Story é `US-AUTH-008 — consolidar auditoria e validar Incremento 2`.
+Próxima Story única: `US-AUTH-008 — Consolidar auditoria e validar Incremento 2`.

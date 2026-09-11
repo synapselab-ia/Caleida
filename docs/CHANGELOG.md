@@ -82,7 +82,7 @@ Mudanças relevantes do Caleida. Evidências detalhadas ficam nos documentos de 
 
 #### US-AUTH-007 — Recovery + gestão/revogação de sessões (#55/#56)
 
-Em revisão:
+Concluída:
 
 - `/forgot-password` com resposta anti-enumeração;
 - `/reset-password` usando recovery token do provider sem persistência em Git/logs;
@@ -93,20 +93,24 @@ Em revisão:
 - encerramento da sessão atual via `signOut()` e das demais via provider;
 - `sessionDataTtl` reduzido de 300 s para 1 s;
 - contrato em `docs/SESSION_SECURITY.md`;
-- primeiro CI funcional #221 / `34519793813`: PASS incluindo build e PostgreSQL 18/`verify:db`;
+- CI funcional #221 PASS;
+- CI final da PR #222 / `34597671892`: PASS;
+- merge `31ec6e2238a7b0bdaff7506ac0e9ed51179f3322`;
+- CI pós-merge #223 / `34597951573`: PASS;
 - branch Neon `verify-us-auth-007` sem usuários/sessões/accounts/verificações e sem drift de schema;
-- opção upstream `revokeSessionsOnPasswordReset` não aparece na configuração Managed Neon observada; por isso reset por e-mail não é documentado como revogação automática de sessões existentes;
-- browser/live e recovery real ficam consolidados em US-AUTH-008, sem novo Preview intermediário;
+- `revokeSessionsOnPasswordReset` não aparece na configuração Managed Neon observada; reset por e-mail não é documentado como revogação automática de sessões existentes;
+- browser/live e recovery real ficam consolidados em US-AUTH-008, sem Preview intermediário;
 - evidência em `docs/US_AUTH_007_VERIFICATION.md`.
 
 ### Estado operacional atual
 
 - baseline Neon: `caleida-nonprod/main`, PostgreSQL 18, migrations `000001`–`000007`;
 - Managed Better Auth: email/password habilitado, confirmação obrigatória por OTP, provider de e-mail shared Neon;
+- cache de dados de sessão no app: 1 s;
 - Data API e Production Neon: não provisionadas;
 - Vercel: deployment exclusivamente humano/manual;
 - branches de verificação Neon permanecem housekeeping porque exclusão exige autorização explícita.
 
 ### Próxima ação canônica
 
-> Finalizar revisão/CI documental e integrar a PR #56 da US-AUTH-007. Após merge saudável, promover somente US-AUTH-008 — auditoria integrada e validação do Incremento 2.
+> Executar `US-AUTH-008 — Consolidar auditoria e validar Incremento 2`, incluindo a matriz adversarial/live acumulada. Se runtime público for material, usar uma única release candidate publicada manualmente pelo usuário.

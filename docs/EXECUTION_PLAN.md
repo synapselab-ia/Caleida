@@ -17,29 +17,16 @@ Este documento transforma o backlog macro em tarefas executáveis. Evidências d
 - `OPS-005` — refinar o Incremento 1 — **CONCLUÍDO** (`#31`).
 - `OPS-006` — refinar EPIC-02 — **CONCLUÍDO** (`#41 / #42`), com plano em `docs/INCREMENT_2_PLAN.md`.
 
----
-
 # Incremento 0 — Fundação executável
 
 **Estado:** CONCLUÍDO  
 **Evidência:** `docs/INCREMENT_0_VALIDATION.md`
-
-Fundação consolidada: Next.js 16 / React 19, TypeScript strict, Tailwind CSS 4, Node 24.x, CI permanente sem CD, Neon/PostgreSQL 18 non-production e Vercel preparado para release manual.
 
 # Incremento 1 — Fundação visual / EPIC-01
 
 **Estado:** CONCLUÍDO  
 **Plano:** `docs/INCREMENT_1_PLAN.md`  
 **Evidência:** `docs/INCREMENT_1_VALIDATION.md`
-
-```text
-US-DS-001 tokens/temas — CONCLUÍDA (#33 / #34)
-US-DS-002 tipografia/marca — CONCLUÍDA (#35 / #36)
-US-DS-003 primitivos acessíveis — CONCLUÍDA (#37 / #38)
-US-DS-004 fundação responsiva aplicada — CONCLUÍDA (#39 / #40)
-```
-
----
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
@@ -61,116 +48,85 @@ US-AUTH-005 cadastro controlado + confirmação de e-mail — CONCLUÍDA (#51 / 
   ↓
 US-AUTH-006 login/logout + proteção de sessão — CONCLUÍDA (#53 / #54)
   ↓
-US-AUTH-007 recuperação de senha + gestão/revogação de sessões — EM REVISÃO (#55 / #56)
+US-AUTH-007 recuperação de senha + gestão/revogação de sessões — CONCLUÍDA (#55 / #56)
   ↓
-US-AUTH-008 auditoria integrada + validação live do incremento
+US-AUTH-008 auditoria integrada + validação live do incremento — NEXT_ACTION
 ```
 
-## US-AUTH-001 — Fundação Neon Auth e contrato de sessão
+## US-AUTH-001 a US-AUTH-006
 
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#43 / #44`  
-**Evidência:** `docs/US_AUTH_001_VERIFICATION.md`
+**Estado:** CONCLUÍDAS.  
+Evidências: `docs/US_AUTH_001_VERIFICATION.md` a `docs/US_AUTH_006_VERIFICATION.md`.
 
-Resultado: SDK Neon Auth pinado; boundary server-only/lazy/fail-closed; Managed Better Auth integrado em non-production.
-
-## US-AUTH-002 — Papéis, autorização e bootstrap administrativo
-
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#45 / #46`  
-**Evidência:** `docs/US_AUTH_002_VERIFICATION.md`
-
-Resultado: papéis de produto separados da identidade Better Auth; autorização crítica server-only + banco; bootstrap owner controlado.
-
-## US-AUTH-003 — Convites, solicitações de acesso e auditoria de entrada
-
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#47 / #48`  
-**Evidência:** `docs/US_AUTH_003_VERIFICATION.md`
-
-Resultado: convites, solicitações, auditoria e consumo concorrente/serializado versionados e verificados em PostgreSQL 18.
-
-## US-AUTH-004 — E-mail Auth non-production
-
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#49 / #50`  
-**Evidência:** `docs/US_AUTH_004_VERIFICATION.md`  
-**ADR:** `docs/adr/ADR-009-neon-shared-email-nonproduction.md`
-
-Resultado: provider compartilhado Neon confirmado; SMTP/provedor externo adiado até necessidade material.
-
-## US-AUTH-005 — Cadastro controlado por convite ou aprovação
-
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#51 / #52`  
-**Merge:** `9abc3235623c3f7d37531eb94a60997960f526e1`  
-**Evidência:** `docs/US_AUTH_005_VERIFICATION.md`
-
-Resultado: signup fail-closed por convite/aprovação; confirmação obrigatória por OTP; migrations `000004`–`000007` promovidas; gates integrados aprovados.
-
-## US-AUTH-006 — Login, logout e proteção de sessão
-
-**Estado:** CONCLUÍDA  
-**Issue/PR:** `#53 / #54`  
-**Merge:** `b585234a159a73dfec89e1d4cb866201dcfdef34`  
-**Evidência:** `docs/US_AUTH_006_VERIFICATION.md`
-
-Resultado: login/logout server-side, `/app` privado, acesso direto fail-closed, mensagem anti-enumeração e estados acessíveis. CI/PG18/Neon-specific passaram; browser live foi corretamente deferred para US-AUTH-008.
+Estado consolidado antes da US-AUTH-007: Managed Better Auth, papéis/autorização de produto separados, entrada controlada por convite/aprovação, confirmação obrigatória por OTP, login/logout e boundary privado server-side.
 
 ## US-AUTH-007 — Recuperação de senha e gestão/revogação de sessões
 
-**Estado:** EM REVISÃO  
-**Issue:** `#55`  
-**PR:** `#56`  
-**Branch:** `feat/us-auth-007-password-session-management`  
-**Prioridade:** P0  
-**Dependências:** US-AUTH-004 e 006  
+**Estado:** CONCLUÍDA  
+**Issue/PR:** `#55 / #56`  
+**Merge:** `31ec6e2238a7b0bdaff7506ac0e9ed51179f3322`  
 **Capacidades:** CAP-01, CAP-35  
 **Contrato:** `docs/SESSION_SECURITY.md`  
 **Evidência:** `docs/US_AUTH_007_VERIFICATION.md`
 
-### Resultado implementado
+### Resultado
 
-- recuperação em `/forgot-password` com resposta pública genérica;
+- recovery em `/forgot-password` com resposta anti-enumeração;
 - reset em `/reset-password` usando token do provider sem persistência em Git/logs;
-- callback derivado de origem same-origin validada;
-- alteração autenticada exige senha atual e usa `revokeOtherSessions: true`;
-- `/account/security` lista somente metadados seguros das próprias sessões;
-- revogação individual recebe `session.id`, valida ownership e só resolve `session.token` no servidor;
-- sessão corrente pode ser encerrada por `signOut()`;
-- cache de dados de sessão reduzido de 300 s para 1 s para limitar janela stale;
-- nenhum schema/migration adicional criado.
+- callback same-origin validado;
+- alteração autenticada exige senha atual e revoga as outras sessões;
+- `/account/security` lista metadados seguros e permite revogação das próprias sessões;
+- session token permanece server-only;
+- `sessionDataTtl` reduzido para 1 s;
+- nenhuma migration/schema de produto adicional.
 
-### Semântica explícita
-
-- operações sensíveis Better Auth usam validação autoritativa server-side na implementação upstream corrente;
-- rotas comuns podem reutilizar dados assinados por até aproximadamente 1 segundo antes de revalidar upstream;
-- reset por e-mail **não é declarado** como revogação automática de sessões existentes, porque `revokeSessionsOnPasswordReset` não está exposto na configuração Managed Neon observada;
-- alteração autenticada e controles explícitos de sessão fornecem revogação das sessões próprias;
-- comportamento live do reset, trusted origin e multi-device entra em US-AUTH-008.
-
-### Gates atuais
+### Gates finais
 
 ```text
-Head funcional: df745df9a05232372e8a1e1b269bc5502499503b
-CI #221 / 34519793813 / job 103014162360: SUCCESS
-npm run verify: PASS
+Head final: 2c139f817bfcb8c9b7e316e26c0fcb883d33ab71
+CI PR #222 / 34597671892 / job 103257145584: SUCCESS
+Merge: 31ec6e2238a7b0bdaff7506ac0e9ed51179f3322
+CI main #223 / 34597951573 / job 103258037267: SUCCESS
 PostgreSQL 18 + verify:db: PASS
-Neon verify-us-auth-007: ready
-Auth users/sessions/accounts/verifications: 0
-Schema diff vs baseline: vazio
+Neon verify-us-auth-007: ready / schema diff vazio
 Browser/live: SKIPPED/deferred para US-AUTH-008
 Preview Vercel: não requerido
 ```
 
-A integração depende apenas do CI do head documental final, revisão da diff/threads e merge da PR #56.
+O Managed Neon observado não expõe `revokeSessionsOnPasswordReset`; reset por e-mail não é documentado como revogação automática de sessões existentes. A matriz live final deve medir o comportamento real.
 
 ## US-AUTH-008 — Consolidar auditoria e validar Incremento 2
 
-**Estado:** A FAZER  
-**Dependências:** US-AUTH-001 a 007
+**Estado:** NEXT_ACTION / PRONTA  
+**Prioridade:** P1  
+**Dependências:** US-AUTH-001 a US-AUTH-007 concluídas  
+**Capacidades:** CAP-04, CAP-35
 
-Fechar lacunas de auditoria e executar a matriz integrada do incremento. Este é o ponto padrão para browser/live consolidado de cadastro, login, logout, recuperação, alteração de senha, sessão, autorização, acesso direto e ausência de flash privado. Se runtime público for material, usar uma única release candidate manual conforme a política de deployment.
+### Objetivo
+
+Consolidar eventos críticos de autenticação/autorização sem secrets e executar a matriz adversarial integrada que encerra o Incremento 2.
+
+### Escopo mínimo
+
+- mapear eventos de auditoria necessários e persistir somente metadados mínimos não sensíveis;
+- validar anon/authenticated/forbidden/direct URL/session revoked e ausência de vazamento;
+- validar conjuntamente signup/OTP, login/logout, recovery/reset, mudança de senha e gestão/revogação de sessões;
+- medir o efeito de revogação após a janela de cache de 1 s;
+- validar trusted origin do callback de recovery;
+- validar papéis/autorização de produto e tentativas adversariais relevantes;
+- produzir evidência final do Incremento 2.
+
+### Browser/live e release candidate
+
+Browser/live é material nesta Story por ser o gate integrado acumulado. Antes de exigir publicação, verificar se existe runtime candidato atual adequado. Se for necessário novo runtime público:
+
+1. preparar uma única release candidate;
+2. registrar `MANUAL_ACTION_REQUIRED` no Checkpoint;
+3. fornecer ao usuário somente o passo manual necessário;
+4. a IA não executa Preview/Production/promote/redeploy/rollback;
+5. após publicação humana, executar a matriz integrada e concluir a Story.
+
+Não criar um Preview separado para cada subfluxo.
 
 ---
 
@@ -184,15 +140,15 @@ Para cada tarefa:
 4. criar/usar Issue e branch limitadas;
 5. implementar somente o necessário;
 6. executar Verification Protocol proporcional ao escopo;
-7. não transformar ausência de Preview manual em blocker automático;
-8. revisar diff/secrets;
-9. atualizar docs/ADRs quando aplicável;
-10. atualizar Checkpoint/Backlog/Changelog;
-11. revisar/mergear PR quando gates materiais estiverem satisfeitos;
+7. revisar diff/secrets;
+8. atualizar docs/ADRs quando aplicável;
+9. atualizar Checkpoint/Backlog/Changelog;
+10. revisar/mergear PR quando gates materiais estiverem satisfeitos;
+11. verificar CI pós-merge;
 12. deixar uma única próxima ação.
 
 ## NEXT_ACTION vigente
 
-> Finalizar `US-AUTH-007` na PR #56: revalidar CI após a documentação de fechamento, revisar diff/threads e integrar a Story sem exigir Preview Vercel intermediário. Depois do merge saudável, promover somente `US-AUTH-008 — consolidar auditoria e validar Incremento 2`.
+> Criar Issue e branch limitadas a `US-AUTH-008 — consolidar auditoria e validar Incremento 2`, recuperar a matriz integrada e os contratos de auditoria/Auth/autorização existentes e executar somente essa Story. Solicitar uma única release candidate manual apenas se o gate live realmente depender de runtime público.
 
-Não iniciar US-AUTH-008 antes da integração de US-AUTH-007 e não executar deployment Vercel pela IA.
+Não iniciar o incremento seguinte, Production Neon, Data API ou deployment Vercel durante US-AUTH-008.

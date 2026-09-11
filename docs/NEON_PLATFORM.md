@@ -1,6 +1,6 @@
 # Neon Platform — Caleida
 
-**Status:** arquitetura canônica de plataforma durante US-AUTH-007  
+**Status:** arquitetura canônica de plataforma após US-AUTH-007  
 **Decisões relacionadas:** `ADR-004`, `ADR-005`, `ADR-008` e `ADR-009`  
 **Project Design:** `PROJECT_DESIGN.md` + `PROJECT_DESIGN_PLATFORM_AMENDMENT.md`
 
@@ -15,7 +15,7 @@ Next.js
   ├── Neon Auth / Managed Better Auth
   │     ├── email/password + OTP
   │     ├── login/logout
-  │     └── recovery + gestão de sessões
+  │     └── recovery + gestão/revogação de sessões
   ├── operações server-side confiáveis
   │     ↓
   │   Postgres direto com least privilege
@@ -40,7 +40,7 @@ Baseline: main / br-restless-cherry-awpcwy6r
 
 A branch Neon `main` não é a branch Git `main`.
 
-Branches de verificação existem somente quando um gate Neon-specific exige isolamento. Elas não são fonte canônica de schema e não são removidas automaticamente, pois exclusão é ação destrutiva sujeita a autorização explícita.
+Branches de verificação existem somente quando um gate Neon-specific exige isolamento. Elas não são fonte canônica de schema e não são removidas automaticamente, pois exclusão é destrutiva sujeita a autorização explícita.
 
 Housekeeping atual:
 
@@ -121,17 +121,25 @@ A baseline integrada cobre:
 5. verificação de webhooks Auth;
 6. confirmação obrigatória de e-mail por OTP.
 
-As Stories US-AUTH-006/007 não adicionam schema de produto: login/logout, recovery e sessões permanecem gerenciados pelo Auth.
+US-AUTH-006/007 não adicionaram schema de produto: login/logout, recovery e sessões permanecem gerenciados pelo Auth.
 
 ## 7. Sessão e recovery
 
 A aplicação usa `@neondatabase/auth@0.5.0-beta` em boundary server-only.
 
-US-AUTH-007 adota `sessionDataTtl = 1 segundo`, reduzindo a janela de reutilização do cache assinado antes de revalidação upstream. Operações sensíveis do Better Auth usam sessão autoritativa na implementação corrente.
+US-AUTH-007 adotou `sessionDataTtl = 1 segundo`, reduzindo a janela de reutilização do cache assinado antes de revalidação upstream. Operações sensíveis do Better Auth usam sessão autoritativa na implementação corrente.
 
 A configuração Managed Neon observada não expõe `revokeSessionsOnPasswordReset`; por isso reset por e-mail não é documentado como revogação automática de sessões existentes. Alteração autenticada usa `revokeOtherSessions: true`, e o usuário possui controles explícitos de sessão.
 
 Contrato: `docs/SESSION_SECURITY.md`.
+
+Gate US-AUTH-007:
+
+```text
+verify-us-auth-007 / br-wandering-mountain-awjnqqps / ready
+Auth users/sessions/accounts/verifications: 0
+Schema diff vs baseline: vazio
+```
 
 ## 8. Data API, RLS e conexão direta
 
@@ -169,6 +177,8 @@ Nunca versionar:
 - `US-AUTH-006`: login/logout + boundary privado;
 - `US-AUTH-007`: recovery, alteração de senha, gestão/revogação de sessões e cache de sessão reduzido.
 
-## 11. Production, Storage e release
+## 11. Próximo gate
 
-Object Storage segue desacoplado conforme ADR-006. Production Neon permanece inexistente. Vercel é destino de hosting com deployment exclusivamente humano/manual; Preview não é gate por Story.
+US-AUTH-008 deve usar Neon somente quando necessário à matriz integrada. Se precisar criar nova branch de verificação, derivar da baseline e não reutilizar branches antigas como fonte canônica.
+
+Object Storage segue desacoplado conforme ADR-006. Production Neon permanece inexistente. Vercel é destino de hosting com deployment exclusivamente humano/manual.
