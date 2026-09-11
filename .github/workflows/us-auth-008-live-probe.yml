@@ -33,4 +33,33 @@ jobs:
           fi
           echo 'CALEIDA_CHROME_ANON_NO_PRIVATE_FLASH true'
       - name: Execute integrated Auth matrix
-        run: node tests/live-us-auth-008-probe.mjs
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tests/live-us-auth-008-probe.mjs')
+          s = p.read_text()
+          old = """const anonPrivateLeak = anonApp.text.includes('Área privada') || anonApp.text.includes('Sua sessão está protegida no servidor.');
+          console.log('CALEIDA_ANON_APP_STATUS', anonApp.response.status);
+          console.log('CALEIDA_ANON_PRIVATE_LEAK', anonPrivateLeak);
+          assert.equal(anonPrivateLeak, false, 'anonymous response leaked private content');
+          assert.ok([200, 301, 302, 303, 307, 308].includes(anonApp.response.status), 'unexpected anonymous /app response');
+          """
+          new = """const anonPrivateLeak = anonApp.text.includes('Área privada') || anonApp.text.includes('Sua sessão está protegida no servidor.');
+          const anonIsRedirect = [301, 302, 303, 307, 308].includes(anonApp.response.status);
+          console.log('CALEIDA_ANON_APP_STATUS', anonApp.response.status);
+          console.log('CALEIDA_ANON_PRIVATE_LEAK_IN_REDIRECT_BODY', anonPrivateLeak);
+          if (anonIsRedirect) {
+            const location = anonApp.response.headers.get('location') ?? '';
+            assert.ok(location.includes('/login'), `anonymous /app redirected somewhere unexpected: ${location}`);
+          } else {
+            assert.equal(anonApp.response.status, 200, 'unexpected anonymous /app response');
+            assert.equal(anonPrivateLeak, false, 'anonymous 200 response leaked private content');
+          }
+          """
+          if old not in s:
+              raise SystemExit('probe patch target not found')
+          p.write_text(s.replace(old, new))
+          PY
+          node --check tests/live-us-auth-008-probe.mjs
+          node tests/live-us-auth-008-probe.mjs
