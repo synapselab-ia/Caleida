@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+import { tryRecordAuthSecurityEvent } from "@/lib/audit/auth-security";
 import { createServerAuth, getServerSession } from "@/lib/auth/server";
 
 export type AuthActionState = {
@@ -37,6 +38,10 @@ function validPasswordLength(password: string) {
 
 function plausibleEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function actorAuthUserId(session: Awaited<ReturnType<typeof getServerSession>>) {
+  return typeof session?.user?.id === "string" ? session.user.id : null;
 }
 
 async function getTrustedRequestOrigin() {
@@ -81,18 +86,38 @@ export async function loginAction(
   const password = readTextEntry(formData.get("password"));
 
   if (!email || !password) {
+    await tryRecordAuthSecurityEvent({
+      eventType: "login",
+      outcome: "denied",
+      reasonCode: "invalid_input",
+    });
     return { status: "error", message: LOGIN_ERROR_MESSAGE };
   }
 
   try {
     const { error } = await createServerAuth().signIn.email({ email, password });
     if (error) {
+      await tryRecordAuthSecurityEvent({
+        eventType: "login",
+        outcome: "denied",
+        reasonCode: "invalid_credentials",
+      });
       return { status: "error", message: LOGIN_ERROR_MESSAGE };
     }
   } catch {
+    await tryRecordAuthSecurityEvent({
+      eventType: "login",
+      outcome: "error",
+      reasonCode: "provider_error",
+    });
     return { status: "error", message: LOGIN_ERROR_MESSAGE };
   }
 
+  await tryRecordAuthSecurityEvent({
+    eventType: "login",
+    outcome: "success",
+    reasonCode: "completed",
+  });
   redirect("/app");
 }
 
@@ -100,16 +125,36 @@ export async function logoutAction(
   _previousState: AuthActionState,
 ): Promise<AuthActionState> {
   void _previousState;
+  const current = await getServerSession().catch(() => null);
+  const actor = actorAuthUserId(current);
 
   try {
     const { error } = await createServerAuth().signOut();
     if (error) {
+      await tryRecordAuthSecurityEvent({
+        eventType: "logout",
+        actorAuthUserId: actor,
+        outcome: "error",
+        reasonCode: "provider_rejected",
+      });
       return { status: "error", message: LOGOUT_ERROR_MESSAGE };
     }
   } catch {
+    await tryRecordAuthSecurityEvent({
+      eventType: "logout",
+      actorAuthUserId: actor,
+      outcome: "error",
+      reasonCode: "provider_error",
+    });
     return { status: "error", message: LOGOUT_ERROR_MESSAGE };
   }
 
+  await tryRecordAuthSecurityEvent({
+    eventType: "logout",
+    actorAuthUserId: actor,
+    outcome: "success",
+    reasonCode: "completed",
+  });
   redirect("/login?loggedOut=1");
 }
 
@@ -129,9 +174,15 @@ export async function requestPasswordResetAction(
         redirectTo: new URL("/reset-password", origin).toString(),
       });
     } catch {
-      // Intentionally indistinguishable from a successful request to prevent account enumeration.
+      // Public and persisted audit semantics intentionally stay indistinguishable.
     }
   }
+
+  await tryRecordAuthSecurityEvent({
+    eventType: "password_recovery_requested",
+    outcome: "accepted",
+    reasonCode: "generic_response",
+  });
 
   return { status: "success", message: RESET_REQUEST_MESSAGE };
 }
@@ -146,18 +197,26 @@ export async function resetPasswordAction(
   const newPassword = readTextEntry(formData.get("newPassword"));
   const confirmPassword = readTextEntry(formData.get("confirmPassword"));
 
-  if (!validPasswordLength(newPassword)) {
+  if (!validPasswordLength(newPassword) || newPassword !== confirmPassword) {
+    await tryRecordAuthSecurityEvent({
+      eventType: "password_reset",
+      outcome: "denied",
+      reasonCode: "invalid_input",
+    });
     return {
       status: "error",
-      message: `A nova senha deve ter entre ${MIN_PASSWORD_LENGTH} e ${MAX_PASSWORD_LENGTH} caracteres.`,
+      message: !validPasswordLength(newPassword)
+        ? `A nova senha deve ter entre ${MIN_PASSWORD_LENGTH} e ${MAX_PASSWORD_LENGTH} caracteres.`
+        : "As senhas informadas não coincidem.",
     };
   }
 
-  if (newPassword !== confirmPassword) {
-    return { status: "error", message: "As senhas informadas não coincidem." };
-  }
-
   if (!token) {
+    await tryRecordAuthSecurityEvent({
+      eventType: "password_reset",
+      outcome: "denied",
+      reasonCode: "invalid_or_expired",
+    });
     return { status: "error", message: RESET_ERROR_MESSAGE };
   }
 
@@ -167,12 +226,27 @@ export async function resetPasswordAction(
       token,
     });
     if (error) {
+      await tryRecordAuthSecurityEvent({
+        eventType: "password_reset",
+        outcome: "denied",
+        reasonCode: "invalid_or_expired",
+      });
       return { status: "error", message: RESET_ERROR_MESSAGE };
     }
   } catch {
+    await tryRecordAuthSecurityEvent({
+      eventType: "password_reset",
+      outcome: "error",
+      reasonCode: "provider_error",
+    });
     return { status: "error", message: RESET_ERROR_MESSAGE };
   }
 
+  await tryRecordAuthSecurityEvent({
+    eventType: "password_reset",
+    outcome: "success",
+    reasonCode: "completed",
+  });
   redirect("/login?reset=1");
 }
 
@@ -181,24 +255,30 @@ export async function changePasswordAction(
   formData: FormData,
 ): Promise<AuthActionState> {
   void _previousState;
-  await getAuthenticatedSessionOrRedirect();
+  const current = await getAuthenticatedSessionOrRedirect();
+  const actor = actorAuthUserId(current);
 
   const currentPassword = readTextEntry(formData.get("currentPassword"));
   const newPassword = readTextEntry(formData.get("newPassword"));
   const confirmPassword = readTextEntry(formData.get("confirmPassword"));
 
-  if (!currentPassword) {
-    return { status: "error", message: CHANGE_PASSWORD_ERROR_MESSAGE };
-  }
+  if (!currentPassword || !validPasswordLength(newPassword) || newPassword !== confirmPassword) {
+    await tryRecordAuthSecurityEvent({
+      eventType: "password_changed",
+      actorAuthUserId: actor,
+      outcome: "denied",
+      reasonCode: "invalid_input",
+    });
 
-  if (!validPasswordLength(newPassword)) {
-    return {
-      status: "error",
-      message: `A nova senha deve ter entre ${MIN_PASSWORD_LENGTH} e ${MAX_PASSWORD_LENGTH} caracteres.`,
-    };
-  }
-
-  if (newPassword !== confirmPassword) {
+    if (!currentPassword) {
+      return { status: "error", message: CHANGE_PASSWORD_ERROR_MESSAGE };
+    }
+    if (!validPasswordLength(newPassword)) {
+      return {
+        status: "error",
+        message: `A nova senha deve ter entre ${MIN_PASSWORD_LENGTH} e ${MAX_PASSWORD_LENGTH} caracteres.`,
+      };
+    }
     return { status: "error", message: "As senhas informadas não coincidem." };
   }
 
@@ -209,12 +289,30 @@ export async function changePasswordAction(
       revokeOtherSessions: true,
     });
     if (error) {
+      await tryRecordAuthSecurityEvent({
+        eventType: "password_changed",
+        actorAuthUserId: actor,
+        outcome: "denied",
+        reasonCode: "current_password_or_provider_rejected",
+      });
       return { status: "error", message: CHANGE_PASSWORD_ERROR_MESSAGE };
     }
   } catch {
+    await tryRecordAuthSecurityEvent({
+      eventType: "password_changed",
+      actorAuthUserId: actor,
+      outcome: "error",
+      reasonCode: "provider_error",
+    });
     return { status: "error", message: CHANGE_PASSWORD_ERROR_MESSAGE };
   }
 
+  await tryRecordAuthSecurityEvent({
+    eventType: "password_changed",
+    actorAuthUserId: actor,
+    outcome: "success",
+    reasonCode: "completed",
+  });
   revalidatePath("/account/security");
   return {
     status: "success",
@@ -229,18 +327,32 @@ export async function revokeSessionAction(
   void _previousState;
 
   const current = await getAuthenticatedSessionOrRedirect();
+  const actor = actorAuthUserId(current);
   const sessionId = readTextEntry(formData.get("sessionId"));
 
   if (!sessionId) {
+    await tryRecordAuthSecurityEvent({
+      eventType: "session_revoked",
+      actorAuthUserId: actor,
+      outcome: "denied",
+      reasonCode: "invalid_input",
+    });
     return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
   }
 
   let revokedCurrentSession = false;
+  let revocationReasonCode = "remote_session";
 
   try {
     const auth = createServerAuth();
     const { data: sessions, error: listError } = await auth.listSessions();
     if (listError || !sessions) {
+      await tryRecordAuthSecurityEvent({
+        eventType: "session_revoked",
+        actorAuthUserId: actor,
+        outcome: "error",
+        reasonCode: "provider_error",
+      });
       return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
     }
 
@@ -249,24 +361,56 @@ export async function revokeSessionAction(
     );
 
     if (!target) {
+      await tryRecordAuthSecurityEvent({
+        eventType: "session_revoked",
+        actorAuthUserId: actor,
+        outcome: "denied",
+        reasonCode: "target_not_owned",
+      });
       return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
     }
 
     if (target.id === current.session.id) {
       const { error } = await auth.signOut();
       if (error) {
+        await tryRecordAuthSecurityEvent({
+          eventType: "session_revoked",
+          actorAuthUserId: actor,
+          outcome: "error",
+          reasonCode: "provider_rejected",
+        });
         return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
       }
       revokedCurrentSession = true;
+      revocationReasonCode = "current_session";
     } else {
       const { error } = await auth.revokeSession({ token: target.token });
       if (error) {
+        await tryRecordAuthSecurityEvent({
+          eventType: "session_revoked",
+          actorAuthUserId: actor,
+          outcome: "error",
+          reasonCode: "provider_rejected",
+        });
         return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
       }
     }
   } catch {
+    await tryRecordAuthSecurityEvent({
+      eventType: "session_revoked",
+      actorAuthUserId: actor,
+      outcome: "error",
+      reasonCode: "provider_error",
+    });
     return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
   }
+
+  await tryRecordAuthSecurityEvent({
+    eventType: "session_revoked",
+    actorAuthUserId: actor,
+    outcome: "success",
+    reasonCode: revocationReasonCode,
+  });
 
   if (revokedCurrentSession) redirect("/login?loggedOut=1");
 
@@ -278,17 +422,36 @@ export async function revokeOtherSessionsAction(
   _previousState: AuthActionState,
 ): Promise<AuthActionState> {
   void _previousState;
-  await getAuthenticatedSessionOrRedirect();
+  const current = await getAuthenticatedSessionOrRedirect();
+  const actor = actorAuthUserId(current);
 
   try {
     const { error } = await createServerAuth().revokeOtherSessions();
     if (error) {
+      await tryRecordAuthSecurityEvent({
+        eventType: "other_sessions_revoked",
+        actorAuthUserId: actor,
+        outcome: "error",
+        reasonCode: "provider_rejected",
+      });
       return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
     }
   } catch {
+    await tryRecordAuthSecurityEvent({
+      eventType: "other_sessions_revoked",
+      actorAuthUserId: actor,
+      outcome: "error",
+      reasonCode: "provider_error",
+    });
     return { status: "error", message: SESSION_ACTION_ERROR_MESSAGE };
   }
 
+  await tryRecordAuthSecurityEvent({
+    eventType: "other_sessions_revoked",
+    actorAuthUserId: actor,
+    outcome: "success",
+    reasonCode: "completed",
+  });
   revalidatePath("/account/security");
   return { status: "success", message: "As outras sessões foram encerradas." };
 }
