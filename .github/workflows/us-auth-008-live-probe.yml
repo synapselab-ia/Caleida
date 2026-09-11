@@ -118,6 +118,21 @@ jobs:
           s, count = re.subn(r"async function mailboxMessages\(mailbox\) \{[\s\S]*?async function waitForOtp", grabmail, s, count=1)
           if count != 1:
               raise SystemExit('probe mailbox adapter patch target not found')
+          session_old = """securityA = await page(a, '/account/security');
+          const bForm = findForm(securityA.text, 'Caleida-Probe-B-UA');
+          const revokeBData = formDataFromHtml(bForm);"""
+          session_new = """securityA = await page(a, '/account/security');
+          const bSessionResult = await jsonRequest(b, '/api/auth/get-session');
+          const bSessionId = bSessionResult.data?.session?.id;
+          assert.ok(bSessionId, 'session B id unavailable');
+          const bForm = [...securityA.text.matchAll(/<form\\b[\\s\\S]*?<\\/form>/gi)]
+            .map((match) => match[0])
+            .find((form) => formDataFromHtml(form).get('sessionId') === bSessionId);
+          assert.ok(bForm, 'session B revoke form not found by session id');
+          const revokeBData = formDataFromHtml(bForm);"""
+          if session_old not in s:
+              raise SystemExit('probe session B patch target not found')
+          s = s.replace(session_old, session_new)
           if 'attempt < 24' not in s or 'attempt < 30' not in s:
               raise SystemExit('probe email polling patch target not found')
           s = s.replace('attempt < 24', 'attempt < 90', 1)
