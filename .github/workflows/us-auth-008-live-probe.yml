@@ -133,6 +133,9 @@ jobs:
           if session_old not in s:
               raise SystemExit('probe session B patch target not found')
           s = s.replace(session_old, session_new)
+          if "'Encerrar outras sessões'" not in s:
+              raise SystemExit('probe revoke-other marker patch target not found')
+          s = s.replace("'Encerrar outras sessões'", "'Encerrar todas as outras sessões'", 1)
           if 'attempt < 24' not in s or 'attempt < 30' not in s:
               raise SystemExit('probe email polling patch target not found')
           s = s.replace('attempt < 24', 'attempt < 90', 1)
