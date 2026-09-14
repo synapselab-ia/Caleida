@@ -1,61 +1,46 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `IN_PROGRESS`  
-**Fase:** OPS-007 - Refino do Incremento 3 / EPIC-03  
-**Story ativa:** nenhuma Story de implementação
+**Status operacional:** `READY`  
+**Fase:** Incremento 3 - Perfis e privacidade / EPIC-03 - REFINADO  
+**Story ativa:** nenhuma
 
 ## Cursor
 
 ```text
-LAST_COMPLETED_TASK: US-AUTH-008 - Consolidar auditoria e validar Incremento 2
-LAST_COMPLETED_ISSUE: #57
-LAST_COMPLETED_PR: #58
-LAST_COMPLETED_MERGE: 84f7fecb018d6f4b6bc36817accef15f1976f05f
+LAST_COMPLETED_TASK: OPS-007 - Refinar EPIC-03: Perfis e privacidade
+LAST_COMPLETED_ISSUE: #59
+LAST_COMPLETED_PR: #60
+LAST_COMPLETED_MERGE: f8424916dc1ecff5276451bab9c636cbcc57dc32
 
-ACTIVE_TASK: OPS-007 - Refinar EPIC-03: Perfis e privacidade
-ACTIVE_ISSUE: #59
-ACTIVE_BRANCH: ops/007-refine-epic-03
-ACTIVE_PR: #60
+ACTIVE_TASK: none
+ACTIVE_ISSUE: none
+ACTIVE_BRANCH: none
+ACTIVE_PR: none
 
-NEXT_ACTION: Concluir somente OPS-007: revisar o diff documental, exigir CI da PR #60 em PASS e integrar o refino. Após a integração, promover exclusivamente US-PRIV-001 conforme docs/INCREMENT_3_PLAN.md.
+NEXT_ACTION: Executar somente US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS, conforme docs/INCREMENT_3_PLAN.md. Criar a Issue/branch da Story antes de implementar e não antecipar US-PRIV-002, Storage, catálogo, relações sociais, Production Neon ou deployment Vercel.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
 ON_HOLD: none
 ```
 
-## Estado real de partida de OPS-007
+## Encerramento de OPS-007
 
-### GitHub
+- Issue `#59` fechada como `completed` pelo merge;
+- PR `#60` integrada em `main`;
+- merge SHA `f8424916dc1ecff5276451bab9c636cbcc57dc32`;
+- head final pré-merge `cdce0a3b5c772b21afe7b2cbfe14df9f20863c21`;
+- CI da PR `#249` / run `34865945415` / job `104050019727`: `SUCCESS`;
+- CI pós-merge `#250` / run `34866254670` / job `104050724959`: `SUCCESS`;
+- diff final da PR limitado a seis arquivos em `docs/`;
+- nenhuma migration, dependência, código funcional ou workflow alterado;
+- browser: `SKIPPED`, pois OPS-007 é somente documental;
+- gate Neon-specific: `SKIPPED`, pois nenhum recurso/configuração Neon foi alterado;
+- deployment Vercel: não executado.
 
-```text
-main: 9ea9f9253a0123eb491d8980fd252401b6ea8f10
-CI main: #247 / 34851172467 / SUCCESS
-Issues abertas antes de OPS-007: nenhuma
-PRs abertas antes de OPS-007: nenhuma
-Issue OPS-007: #59
-PR OPS-007: #60
-```
+## Plano canônico do Incremento 3
 
-### Neon
-
-```text
-Project: caleida-nonprod / patient-glade-95136440
-PostgreSQL: 18
-Baseline: main / br-restless-cherry-awpcwy6r / ready
-Managed Better Auth: enabled
-Migrations baseline: 000001-000008
-Data API: não provisionada
-Production Neon: não provisionada
-```
-
-Branches Neon históricas de verificação continuam existentes e não bloqueiam o trabalho. Sua remoção é destrutiva e exige autorização explícita do usuário.
-
-## Resultado planejado em OPS-007
-
-Arquivo canônico criado: `docs/INCREMENT_3_PLAN.md`.
-
-Ordem refinada:
+Arquivo: `docs/INCREMENT_3_PLAN.md`.
 
 ```text
 US-PRIV-001 - perfil básico user-scoped + Data API/RLS       PRONTA
@@ -75,41 +60,41 @@ US-PRIV-007 - finalização segura da exclusão                  A FAZER
 US-PRIV-008 - validação integrada + fechamento                A FAZER
 ```
 
-## Decisões de escopo
+Somente `US-PRIV-001` está promovida como próxima unidade executável.
 
-- perfil de produto permanece separado da identidade `neon_auth`;
+## Decisões vigentes de EPIC-03
+
+- perfil de produto separado da identidade `neon_auth`;
 - primeiro domínio user-scoped deve provar Data API + JWT + grants mínimos + RLS;
-- visibilidade default é `only_me`;
-- `followers` e `connections` não aparecem como opção funcional antes de EPIC-13;
-- bloqueio entra agora porque tem efeito real sobre leitura de perfil;
-- mute/restrict ficam para EPIC-13, sem UI/state falso neste incremento;
+- visibilidade default `only_me`;
+- `followers` e `connections` não são opções funcionais antes de EPIC-13;
+- bloqueio entra no Incremento 3 porque tem efeito verificável sobre perfil;
+- mute/restrict ficam para EPIC-13 e não recebem UI/state sem efeito;
 - avatar/banner ficam para EPIC-16/CAP-30 e não escolhem Storage antecipadamente;
 - obras favoritas dependem do catálogo de EPIC-04;
 - CAP-33 usa desativação reversível e exclusão em fases com janela inicial de 30 dias, cancelamento, export e finalização explícita;
-- exclusão gerenciada deve usar API oficial do provider, nunca DELETE direto no schema `neon_auth`.
+- exclusão da identidade deve usar API oficial do provider, nunca DELETE direto no schema `neon_auth`;
+- export de encerramento cobre dados existentes e não substitui CAP-32/EPIC-17.
 
-## Revalidação corrente
+## Estado Neon verificado em OPS-007
 
-A documentação oficial Neon revalidada em OPS-007 confirmou:
+```text
+Project: caleida-nonprod / patient-glade-95136440
+PostgreSQL: 18
+Baseline: main / br-restless-cherry-awpcwy6r / ready
+Managed Better Auth: enabled
+Migrations baseline: 000001-000008
+Data API: não provisionada
+Production Neon: não provisionada
+Storage: não adotado
+```
 
-- Data API é branch-scoped e usa PostgreSQL para autorização;
-- `GRANT` controla objetos e RLS controla linhas;
-- JWT válido opera normalmente como papel `authenticated`;
-- `authenticated` não substitui ownership;
-- `auth.user_id()` extrai `sub` como texto e `auth.uid()` o interpreta como UUID;
-- RLS habilitada sem policy bloqueia por padrão;
-- Managed Better Auth continua devendo ser revalidado na Story destrutiva antes de exclusão final.
+Branches Neon históricas de verificação continuam existentes e não bloqueiam o projeto. Sua remoção é destrutiva e exige autorização explícita do usuário.
 
-## Verificação de OPS-007
+## Próxima ação técnica
 
-OPS-007 é exclusivamente documental.
+Executar somente:
 
-- implementação funcional: nenhuma;
-- migration/schema/RLS funcional: nenhuma alteração;
-- dependências/package-lock: nenhuma alteração;
-- Neon Data API/Storage/Production: nenhum recurso criado;
-- conta real: nenhuma alteração;
-- deployment Vercel: `SKIPPED/PROIBIDO` para IA;
-- gate Neon-specific: `SKIPPED`, pois OPS-007 somente lê estado/documentação;
-- browser: `SKIPPED`, pois não existe mudança visual/funcional;
-- gate obrigatório antes do merge: CI da PR #60 em `SUCCESS`.
+> `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS`
+
+A Story deve começar por revalidar documentação/versões correntes, criar Issue e branch Git, criar branch Neon isolada para a prova específica e falhar fechado se ownership por JWT/RLS não puder ser demonstrado sem credencial privilegiada.
