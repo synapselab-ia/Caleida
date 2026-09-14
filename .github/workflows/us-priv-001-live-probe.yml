@@ -1,0 +1,51 @@
+name: US-PRIV-001 live probe
+
+on:
+  push:
+    branches:
+      - probe/us-priv-001-live
+
+permissions:
+  contents: read
+
+concurrency:
+  group: us-priv-001-live-probe
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_PROJECT_ID: patient-glade-95136440
+      NEON_BRANCH_ID: br-silent-rain-aw4fqrhg
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Verify Neon runtime access
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${NEON_API_KEY:-}" ]; then
+            echo 'CALEIDA_NEON_API_KEY_AVAILABLE false'
+            exit 42
+          fi
+          echo '::add-mask::'"${NEON_API_KEY}"
+          echo 'CALEIDA_NEON_API_KEY_AVAILABLE true'
+          npm install --global neon@latest >/dev/null
+          neon --version
+          auth_json="$(neon neon-auth status --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color)"
+          data_json="$(neon data-api get --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --database neondb --output json --no-color)"
+          webhook_json="$(neon neon-auth config webhook get --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color)"
+          auth_url_count="$(printf '%s' "$auth_json" | jq '[.. | strings | select(test("^https://.*\\.neonauth\\..*/auth$"))] | length')"
+          data_url_count="$(printf '%s' "$data_json" | jq '[.. | strings | select(test("^https://.*\\.apirest\\..*/rest/v1$"))] | length')"
+          webhook_enabled="$(printf '%s' "$webhook_json" | jq -r '.. | objects | .enabled? // empty' | head -n1)"
+          echo "CALEIDA_AUTH_URL_DISCOVERABLE $([[ "$auth_url_count" -ge 1 ]] && echo true || echo false)"
+          echo "CALEIDA_DATA_API_URL_DISCOVERABLE $([[ "$data_url_count" -ge 1 ]] && echo true || echo false)"
+          echo "CALEIDA_WEBHOOK_ENABLED ${webhook_enabled:-unknown}"
+          test "$auth_url_count" -ge 1
+          test "$data_url_count" -ge 1
