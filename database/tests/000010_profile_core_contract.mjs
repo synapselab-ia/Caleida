@@ -31,6 +31,17 @@ const rlsFlags = runPsql({
 });
 assert.equal(rlsFlags, "true|true");
 
+const identityHelperSecurity = runPsql({
+  databaseUrl,
+  tuplesOnly: true,
+  sql: `
+    SELECT prosecdef::text
+    FROM pg_proc
+    WHERE oid = 'caleida_profile.current_auth_user_id()'::regprocedure;
+  `,
+});
+assert.equal(identityHelperSecurity, "true");
+
 const policies = runPsql({
   databaseUrl,
   tuplesOnly: true,
@@ -112,8 +123,6 @@ if (target === "ephemeral") {
       END
       $block$;
 
-      GRANT USAGE ON SCHEMA auth TO caleida_profile_test_authenticated;
-      GRANT EXECUTE ON FUNCTION auth.uid() TO caleida_profile_test_authenticated;
       GRANT USAGE ON SCHEMA caleida_profile TO caleida_profile_test_authenticated;
       GRANT SELECT, INSERT, UPDATE ON caleida_profile.profiles TO caleida_profile_test_authenticated;
       GRANT EXECUTE ON FUNCTION caleida_profile.current_auth_user_id() TO caleida_profile_test_authenticated;
