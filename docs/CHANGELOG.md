@@ -22,7 +22,7 @@ Concluído. Evidência: `docs/INCREMENT_0_VALIDATION.md`.
 
 Concluído. Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 
-### Incremento 2 — Acesso controlado
+### Incremento 2 — Acesso controlado — CONCLUÍDO
 
 #### US-AUTH-001 — Neon Auth e sessão (#43/#44)
 
@@ -46,7 +46,7 @@ Concluído. Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 #### US-AUTH-005 — Cadastro controlado + OTP (#51/#52)
 
 - signup fail-closed por convite/aprovação;
-- confirmação de e-mail por OTP comprovada live;
+- confirmação por OTP comprovada live;
 - migrations `000004`–`000007` promovidas;
 - merge `9abc3235623c3f7d37531eb94a60997960f526e1`.
 
@@ -54,7 +54,6 @@ Concluído. Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 
 - login/logout por server actions;
 - `/app` protegido server-side;
-- credencial inválida com feedback genérico;
 - merge `b585234a159a73dfec89e1d4cb866201dcfdef34`.
 
 #### US-AUTH-007 — Recovery + gestão/revogação de sessões (#55/#56)
@@ -68,39 +67,38 @@ Concluído. Evidência: `docs/INCREMENT_1_VALIDATION.md`.
 
 #### US-AUTH-008 — Auditoria integrada + validação final (#57/#58)
 
-Em revisão final:
+Concluída:
 
-- migration append-only `000008_auth_security_audit.sql`;
-- `caleida_audit.auth_security_events` com metadados controlados e sem secrets;
-- login/logout/recovery/reset/mudança de senha/revogação auditados;
-- proxy Auth auditado sem leitura de request body;
+- migration `000008_auth_security_audit.sql`;
+- auditoria Auth sanitizada em `caleida_audit.auth_security_events`;
 - PostgreSQL 18, SQL adversarial e Neon isolated: PASS;
-- `000008` promovida para a baseline non-production com checksum correto;
-- matriz live inicial encontrou bug real em `revokeOtherSessions()`;
-- revogação coletiva corrigida para listar sessões server-side e revogar explicitamente cada sessão remota;
-- CI #232 da correção / `34616208433`: SUCCESS;
-- Preview final manual `dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B` publicada com commit `c85135418eec133d7e0a5dc8ad6ad816f2c39668`;
-- matriz live final run #13 / `34636223750`: SUCCESS;
+- `000008` promovida para baseline non-production;
+- live gate encontrou bug real de revogação coletiva e a implementação foi corrigida para revogar explicitamente sessões remotas server-side;
+- CI da correção #232 / `34616208433`: SUCCESS;
+- Preview manual final `dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B` / READY;
+- matriz live final #13 / `34636223750`: SUCCESS;
 - signup/OTP/login/logout/proteção privada/recovery/reset/replay/multi-sessão/IDOR/revogação/password change: PASS;
-- Origin divergente bloqueado pelo CSRF de Server Actions sem disparar e-mail;
-- comportamento observado: reset por e-mail não revoga sessões existentes; password change autenticado revoga as demais;
-- auditoria live confirmou todos os eventos críticos esperados sem dados sensíveis;
-- evidência final pré-merge em `docs/US_AUTH_008_VERIFICATION.md`.
+- Origin divergente bloqueado por CSRF sem disparar recovery;
+- reset por e-mail não revogou sessões existentes no provider observado; password change autenticado revogou as demais;
+- auditoria live confirmou eventos críticos sem dados sensíveis;
+- PR #58 integrada no merge `84f7fecb018d6f4b6bc36817accef15f1976f05f`;
+- Issue #57 fechada como completed;
+- CI pós-merge #246 / `34850194033` / job `103995893357`: SUCCESS.
 
 ### Estado operacional atual
 
 ```text
-Git: PR #58 / feat/us-auth-008-audit-integrated-validation / revisão final
+Git: main / nenhuma Issue ou PR aberta
+Último merge funcional: 84f7fecb018d6f4b6bc36817accef15f1976f05f
 Neon baseline: caleida-nonprod/main / migrations 000001–000008
-Neon Preview data-plane histórico: verify-us-auth-005 / migrations 000001–000008
 Auth: email/password + OTP obrigatório + shared email
 Session data cache: 1 s
 Data API: não provisionada
 Production Neon: não provisionada
-Vercel RC: dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B / READY
+Vercel RC validada: dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B / READY
 Deployment: exclusivamente humano/manual
 ```
 
 ### Próxima ação canônica
 
-> Executar CI/revisão do head documental final da PR #58, integrar se verde e registrar em `main` o fechamento real da US-AUTH-008 e do Incremento 2 antes de planejar o próximo incremento.
+> Planejar o Incremento 3 — Perfis e privacidade / EPIC-03, decompondo CAP-03, CAP-05 e CAP-33 em Stories limitadas antes de iniciar implementação.

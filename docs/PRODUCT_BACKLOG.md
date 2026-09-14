@@ -1,7 +1,7 @@
 # Product Backlog
 
-**Status:** Incrementos 0 e 1 concluídos; Incremento 2 em revisão final, com todos os gates da US-AUTH-008 em PASS e integração da PR #58 pendente.  
-**Plano vigente:** `docs/INCREMENT_2_PLAN.md`
+**Status:** Incrementos 0, 1 e 2 concluídos. Próximo trabalho: planejamento do Incremento 3 / EPIC-03.  
+**Plano concluído:** `docs/INCREMENT_2_PLAN.md`
 
 ## Convenções
 
@@ -22,7 +22,7 @@ Estados: A FAZER, PRONTA, EM ANDAMENTO, EM REVISÃO, CONCLUÍDA, BLOQUEADA.
 
 # Incremento 2 — Acesso controlado / EPIC-02
 
-**Estado:** EM REVISÃO FINAL  
+**Estado:** CONCLUÍDO  
 **Plano:** `docs/INCREMENT_2_PLAN.md`
 
 | Story | Estado | Issue/PR | Evidência |
@@ -34,41 +34,34 @@ Estados: A FAZER, PRONTA, EM ANDAMENTO, EM REVISÃO, CONCLUÍDA, BLOQUEADA.
 | US-AUTH-005 — Cadastro controlado + OTP | CONCLUÍDA | #51/#52 | `US_AUTH_005_VERIFICATION.md` |
 | US-AUTH-006 — Login/logout + proteção de sessão | CONCLUÍDA | #53/#54 | `US_AUTH_006_VERIFICATION.md` |
 | US-AUTH-007 — Recovery + gestão/revogação de sessões | CONCLUÍDA | #55/#56 | `US_AUTH_007_VERIFICATION.md` |
-| US-AUTH-008 — Auditoria integrada + validação final | EM REVISÃO | #57/#58 | `US_AUTH_008_VERIFICATION.md` |
+| US-AUTH-008 — Auditoria integrada + validação final | CONCLUÍDA | #57/#58 | `US_AUTH_008_VERIFICATION.md` |
 
-## US-AUTH-008 — resultado
+Fechamento do incremento:
 
-Entregue e validado:
+```text
+Merge US-AUTH-008: 84f7fecb018d6f4b6bc36817accef15f1976f05f
+CI main #246 / 34850194033 / job 103995893357: SUCCESS
+Live matrix #13 / 34636223750: SUCCESS
+```
 
-- auditoria Auth persistente/sanitizada;
-- migration `000008_auth_security_audit.sql`;
-- testes adversariais;
-- Neon isolated + promoção baseline non-production;
-- bug de revogação coletiva encontrado pelo live gate e corrigido;
-- CI #232 após a correção: PASS;
-- Preview final `dpl_HqRV6x1Vn5f3GL69wGgy85UDVc9B`: READY;
-- matriz live run #13 / `34636223750`: SUCCESS;
-- readback de auditoria live: PASS.
+O Incremento 2 encerra a fundação segura de contas, autenticação, autorização, entrada controlada, recovery, sessões e auditoria Auth.
 
-A matriz comprovou signup/OTP, login/logout, proteção privada, recovery/reset, replay de token, CSRF/trusted origin, multi-sessão, negação de IDOR, revogação individual/coletiva, troca de senha e auditoria sem secrets.
+# Próximo incremento — Perfis e privacidade / EPIC-03
 
-Comportamento documentado do provider: reset por e-mail não revogou sessões existentes no ambiente gerenciado observado; mudança autenticada de senha revogou as demais sessões.
+**Estado:** A PLANEJAR  
+**Capacidades:** CAP-03, CAP-05, CAP-33
 
-Pendente apenas:
+Escopo de alto nível do Project Design:
 
-- CI do head documental final;
-- revisão/merge da PR #58;
-- fechamento da Issue #57;
-- CI de main;
-- checkpoint pós-merge.
+- perfil e personalização;
+- visibilidade e privacidade;
+- bloqueio, silenciamento e restrições;
+- ciclo de conta nos limites de CAP-33;
+- autorização server-side e banco desde o desenho;
+- sem antecipar comunidade, Storage ou catálogo além do necessário.
 
-## Regra de execução
-
-- deployment não é consequência automática de push/PR/merge;
-- a IA não executa deployment;
-- Production Neon e Data API continuam fora do escopo;
-- branches/fixtures de verificação só podem ser limpas com autorização destrutiva explícita.
+Nenhuma Story do Incremento 3 foi criada ainda.
 
 # Próxima ação operacional
 
-> Finalizar a PR #58 e registrar o fechamento real do Incremento 2 em `main`. O próximo incremento deve ser definido canonicamente somente depois desse fechamento.
+> Criar o plano canônico do Incremento 3 / EPIC-03, decompor CAP-03/CAP-05/CAP-33 em Stories limitadas e deixar somente a primeira Story como próxima unidade executável.

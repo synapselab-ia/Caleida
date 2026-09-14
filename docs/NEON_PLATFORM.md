@@ -1,6 +1,6 @@
 # Neon Platform — Caleida
 
-**Status:** arquitetura canônica de plataforma durante US-AUTH-008  
+**Status:** arquitetura canônica de plataforma após o fechamento da US-AUTH-008  
 **Decisões:** ADR-004, ADR-005, ADR-008 e ADR-009
 
 ## 1. Topologia vigente
@@ -27,7 +27,6 @@ PostgreSQL: 18
 Baseline: main / br-restless-cherry-awpcwy6r / ready
 Managed Better Auth: enabled
 email/password: enabled
-allow sign-up: true
 require email verification: true
 verification method: OTP
 email provider: shared Neon
@@ -37,18 +36,7 @@ A branch Neon `main` é staging/non-production e não é a branch Git `main`.
 
 ## 3. Baseline de migrations
 
-A baseline integrada contém:
-
-```text
-000001_migration_ledger.sql
-000002_product_authorization.sql
-000003_entry_control.sql
-000004_controlled_signup.sql
-000005_controlled_signup_consume_fix.sql
-000006_before_create_without_user_id.sql
-000007_claim_signature_compatibility.sql
-000008_auth_security_audit.sql
-```
+A baseline integrada contém migrations `000001`–`000008`.
 
 Checksum de `000008_auth_security_audit.sql`:
 
@@ -56,65 +44,37 @@ Checksum de `000008_auth_security_audit.sql`:
 4f2ab39dd53413c522648ce7021a0051a163b009486c5dd6e7fcf1e2f81460b8
 ```
 
-`000008` foi promovida somente após:
-
-1. CI + PostgreSQL 18 `PASS`;
-2. migration/testes executados em `verify-us-auth-008`;
-3. ACL adversarial `PASS`;
-4. confirmação de zero fixtures;
-5. comparação de schema limitada ao delta esperado.
-
-Depois da promoção, `compare_database_schema(verify-us-auth-008, main)` retornou diff vazio.
+`000008` foi promovida somente após CI/PostgreSQL 18, gate Neon isolated e ACL adversarial em PASS. Depois da promoção, o diff entre `verify-us-auth-008` e a baseline ficou vazio.
 
 ## 4. Auditoria Auth consolidada
 
-Persistência adicionada por US-AUTH-008:
+Persistência:
 
 ```text
 caleida_audit.auth_security_events
 ```
 
-Colunas deliberadamente mínimas:
+Metadados deliberadamente mínimos: id, event_type, actor_auth_user_id opcional, outcome, reason_code e occurred_at.
 
-- id;
-- event_type;
-- actor_auth_user_id opcional;
-- outcome;
-- reason_code;
-- occurred_at.
+Eventos permitidos incluem login, logout, recovery, reset, password change, revogação individual/coletiva e POSTs relevantes do proxy Auth.
 
-Eventos permitidos:
+Não existem colunas de e-mail, senha, token, cookie, Auth URL, IP ou payload completo. `PUBLIC` não possui acesso direto à tabela/sequence.
 
-```text
-login
-logout
-password_recovery_requested
-password_reset
-password_changed
-session_revoked
-other_sessions_revoked
-auth_proxy_post
-```
-
-Não existem colunas de e-mail, senha, token, cookie, Auth URL, IP ou payload completo. `PUBLIC` não possui acesso à tabela/sequence.
-
-## 5. Sessão e recovery
+## 5. Sessão e recovery — semântica consolidada
 
 A aplicação usa `@neondatabase/auth@0.5.0-beta` em boundary server-only.
 
-- `sessionDataTtl = 1 segundo`;
+- `sessionDataTtl = 1 s`;
 - recovery público é anti-enumeração;
 - callback é derivado de origem same-origin validada;
-- reset usa token do provider somente no servidor/fluxo de formulário;
-- alteração autenticada exige senha atual e solicita revogação das outras sessões;
+- reset usa token do provider no fluxo server-side;
 - session token nunca é enviado à UI;
-- revogação individual resolve o token somente após validar ownership pelo session id.
+- revogação individual valida ownership por session id antes de resolver token;
+- revogação coletiva usa listagem server-side + revogação explícita de cada sessão remota, preservando a atual.
 
-O Managed Neon observado não expõe `revokeSessionsOnPasswordReset`; a US-AUTH-008 deve medir o comportamento live em vez de presumir revogação automática.
+A matriz live da US-AUTH-008 confirmou que reset por e-mail não revoga automaticamente sessões existentes no Managed Neon observado, enquanto mudança autenticada de senha revoga as demais sessões.
 
 ## 6. Branches de verificação
-
-Housekeeping atual:
 
 ```text
 verify-us-auth-004 / br-plain-pond-aw5f59ia
@@ -124,33 +84,16 @@ verify-us-auth-007 / br-wandering-mountain-awjnqqps
 verify-us-auth-008 / br-delicate-meadow-aw1u62kn
 ```
 
-`verify-us-auth-008` foi criada da baseline, recebeu somente a migration/testes necessários e terminou com:
-
-```text
-auth_security_events: 0
-auth users: 0
-auth sessions: 0
-auth accounts: 0
-auth verifications: 0
-```
-
 Branches temporárias não são fonte de verdade de schema. Exclusão exige autorização explícita porque é destrutiva.
 
 ## 7. Production e secrets
 
-`caleida-production` continua não provisionado. Production não faz parte da US-AUTH-008 e nunca é laboratório.
+`caleida-production` continua não provisionado. Production nunca é laboratório.
 
-Nunca versionar:
+Nunca versionar DATABASE_URLs, Neon API keys, Auth URLs reais, cookie secrets, rate-limit secrets, recovery/session tokens, OAuth/client secrets ou credenciais de e-mail/Storage.
 
-- DATABASE_URL / DATABASE_URL_UNPOOLED;
-- Neon API keys;
-- Auth URLs reais;
-- NEON_AUTH_COOKIE_SECRET;
-- CALEIDA_RATE_LIMIT_SECRET;
-- recovery/session tokens;
-- OAuth/client secrets;
-- credenciais de e-mail/Storage.
+## 8. Próximo gate de plataforma
 
-## 8. Gate seguinte
+Não há gate Neon ativo após o encerramento do Incremento 2.
 
-Banco e Auth non-production estão preparados para a única release candidate live da US-AUTH-008. O próximo gate é uma Preview Vercel manual da PR #58, seguida da matriz integrada. Nenhum novo recurso Neon deve ser criado antes desse resultado, exceto fixture temporária estritamente necessária ao teste e removida/neutralizada conforme a evidência.
+O próximo incremento deve primeiro ser planejado (EPIC-03 — Perfis e privacidade). Qualquer nova tabela, RLS, Data API ou integração de Storage depende de Story própria e dos ADRs aplicáveis; nada deve ser provisionado antecipadamente.

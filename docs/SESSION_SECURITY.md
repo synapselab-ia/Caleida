@@ -1,50 +1,39 @@
 # Segurança de senha e sessões — Caleida
 
-**Status:** contrato de `US-AUTH-007`, revalidado live por `US-AUTH-008`  
+**Status:** contrato consolidado de `US-AUTH-007` + validação live de `US-AUTH-008`  
 **Capacidades:** CAP-01, CAP-35  
-**Provider:** Managed Better Auth / Neon Auth  
-**Evidências:** `docs/US_AUTH_007_VERIFICATION.md` e `docs/US_AUTH_008_VERIFICATION.md`
+**Provider:** Managed Better Auth / Neon Auth
 
-## 1. Objetivo
-
-Definir como o Caleida recupera/altera senha e permite ao usuário consultar/revogar suas próprias sessões sem duplicar credenciais, bearer tokens ou estado de autenticação.
-
-## 2. Recuperação de senha
+## 1. Recuperação de senha
 
 Fluxo oficial:
 
 1. usuário informa o e-mail em `/forgot-password`;
 2. o servidor deriva uma origem same-origin válida da requisição;
 3. `requestPasswordReset()` é chamado com callback para `/reset-password`;
-4. a resposta pública legítima é genérica, independentemente de o e-mail existir;
+4. a resposta pública permanece genérica independentemente de a conta existir;
 5. o provider entrega o link e valida o token;
-6. `/reset-password` recebe o token somente no fluxo de recuperação e chama `resetPassword()`;
+6. `/reset-password` recebe o token apenas no fluxo de recovery e chama `resetPassword()`;
 7. sucesso redireciona para `/login?reset=1`.
 
 Regras:
 
-- não registrar token, senha, cookie ou payload do provider;
-- token inválido/expirado produz erro genérico;
-- token é de uso único no comportamento upstream observado;
-- limite local de senha: 8–128 caracteres;
-- ausência de conta não é distinguível na UI de recuperação;
-- request cross-origin forjado pode ser recusado pelo CSRF do framework antes da action; isso é comportamento desejado e não deve ser contornado.
+- token inválido/expirado/reutilizado é rejeitado;
+- senha, token, cookie e payload do provider não são persistidos em logs/documentação;
+- ausência de conta não é distinguível na UI de recovery;
+- callback só pode ser derivado de origem same-origin válida.
 
-## 3. Alteração autenticada de senha
+A matriz live da US-AUTH-008 confirmou recovery real, anti-enumeração, replay negado e bloqueio de Origin divergente pelo CSRF de Server Actions sem envio de recovery.
 
-A área `/account/security` exige a sessão privada server-side existente.
+## 2. Alteração autenticada de senha
 
-`changePassword()` recebe senha atual e nova senha com revogação das demais sessões solicitada ao provider.
+A área `/account/security` exige sessão privada server-side.
 
-A matriz live da US-AUTH-008 confirmou:
+A alteração autenticada exige senha atual. Após sucesso, a implementação revoga explicitamente as demais sessões do mesmo usuário e preserva a sessão corrente.
 
-- a senha atual é exigida;
-- a nova senha passa a autenticar;
-- a senha anterior deixa de autenticar;
-- a sessão corrente permanece;
-- as demais sessões são efetivamente revogadas.
+Falha do provider, senha atual incorreta ou sessão inválida não ecoam mensagens internas do Better Auth.
 
-## 4. Consulta de sessões
+## 3. Consulta de sessões
 
 `listSessions()` é chamado somente no servidor.
 
@@ -53,43 +42,42 @@ A UI recebe apenas:
 - `session.id` opaco;
 - indicação de sessão atual;
 - criação/atualização/expiração;
-- user-agent truncado como indicação de dispositivo.
+- user-agent truncado.
 
-A UI não recebe `session.token`, cookie, password/recovery token, connection string ou Auth URL.
+A UI não recebe session token, cookie, senha, recovery token, connection string ou Auth URL.
 
-## 5. Revogação
-
-### Sessão específica
+## 4. Revogação individual
 
 A UI envia somente `session.id`.
 
 No servidor:
 
-1. validar a sessão atual;
-2. listar as sessões próprias;
-3. exigir que o `session.id` recebido pertença ao mesmo usuário;
-4. resolver `target.token` somente no servidor;
-5. revogar a sessão remota por `revokeSession({ token })`.
+1. a sessão atual é validada;
+2. `listSessions()` recupera as sessões próprias;
+3. o `session.id` recebido precisa pertencer ao mesmo usuário autenticado;
+4. o token da sessão alvo é resolvido exclusivamente server-side;
+5. `revokeSession({ token })` encerra a sessão remota.
 
 Se o alvo for a sessão corrente, o Caleida usa `signOut()`.
 
-### Todas as outras sessões
+A matriz live confirmou que tentativa de IDOR é negada e que sessão remota revogada perde acesso após a janela de revalidação.
 
-A RC inicial da US-AUTH-008 demonstrou que o atalho `revokeOtherSessions()` retornava sucesso sem invalidar a sessão remota nessa integração gerenciada.
+## 5. Revogação de todas as outras sessões
 
-Contrato corrigido:
+O gate live da US-AUTH-008 demonstrou que o atalho upstream `revokeOtherSessions()` retornava sucesso sem invalidar a sessão remota na integração gerenciada observada.
 
-1. listar as sessões no servidor;
+A implementação canônica passou a:
+
+1. listar sessões server-side;
 2. limitar ao usuário autenticado;
-3. excluir a sessão corrente;
-4. revogar explicitamente cada sessão remota por `revokeSession({ token })`;
-5. falhar fechado se a listagem ou qualquer revogação falhar.
+3. preservar a sessão corrente;
+4. revogar explicitamente cada sessão remota com `revokeSession({ token })`;
+5. manter tokens exclusivamente no servidor;
+6. falhar fechado se listagem ou revogação for rejeitada.
 
-O token permanece exclusivamente no servidor. A matriz final comprovou que a sessão remota perde acesso e a corrente permanece ativa.
+A RC final confirmou a revogação coletiva efetiva.
 
 ## 6. Cache de sessão
-
-O Caleida configura:
 
 ```text
 sessionDataTtl = 1 segundo
@@ -97,33 +85,36 @@ sessionDataTtl = 1 segundo
 
 O SDK rejeita TTL `<= 0`; 1 segundo é o menor valor positivo adotado.
 
-Semântica comprovada:
+Semântica:
 
-- o cache assinado pode expirar rapidamente;
-- após a expiração, o runtime revalida a sessão no provider;
-- a revogação remota tornou-se efetiva após a janela usada pela matriz live;
-- warning de cookie de dados expirado durante o gate não representou autorização stale: a leitura seguiu para revalidação autoritativa.
+- endpoints sensíveis usam leitura autoritativa;
+- o boundary comum pode reutilizar cache assinado por até aproximadamente 1 segundo;
+- depois disso revalida upstream;
+- revogação remota pode levar até essa janela curta para refletir em uma rota comum.
 
-## 7. Reset por e-mail e sessões existentes
+## 7. Reset por e-mail e sessões existentes — comportamento medido
 
-A implementação Better Auth possui opção upstream para revogar sessões no reset, porém essa opção não estava exposta na configuração Managed Neon observada.
+A implementação Better Auth possui opção upstream `revokeSessionsOnPasswordReset`, mas a configuração Managed Neon observada não expõe essa chave.
 
-A US-AUTH-008 mediu o comportamento real:
+A matriz live da US-AUTH-008 mediu o comportamento real:
 
-- reset válido alterou a senha;
-- replay do recovery token foi rejeitado;
-- senha antiga deixou de autenticar;
-- nova senha autenticou;
-- **sessões existentes antes do reset continuaram ativas**.
+- reset por e-mail alterou a senha;
+- a senha anterior deixou de autenticar;
+- o recovery token tornou-se inutilizável após uso;
+- **sessões existentes permaneceram ativas após o reset**;
+- mudança autenticada de senha revogou as demais sessões e preservou a corrente.
 
-Portanto o Caleida não promete revogação automática de sessões após reset por e-mail. O usuário pode revogar sessões pela área de segurança e a mudança autenticada de senha revoga as demais explicitamente.
+Portanto o Caleida não promete revogação automática de sessões após reset por e-mail no provider/configuração atual.
 
-## 8. Auditoria e logs
+## 8. Auditoria
 
-US-AUTH-008 consolidou auditoria persistente em `caleida_audit.auth_security_events` usando somente metadados controlados.
+US-AUTH-008 adicionou auditoria sanitizada para login, logout, recovery, reset, mudança de senha, revogação individual/coletiva e POSTs relevantes do proxy Auth.
 
-Nenhum log/audit persistente pode conter senha atual/nova, token de recovery, session token, cookie, Auth URL ou secret.
+Nenhum evento persistente pode conter senha atual/nova, OTP, recovery token, session token, cookie, Auth URL, connection string ou payload arbitrário.
 
-## 9. Browser/live
+## 9. Evidência
 
-A matriz integrada da US-AUTH-008 passou em Preview real, incluindo recovery, reset, replay, multi-sessão, revogações, password change e logout. Evidência detalhada: `docs/US_AUTH_008_VERIFICATION.md`.
+- `docs/US_AUTH_007_VERIFICATION.md`;
+- `docs/US_AUTH_008_VERIFICATION.md`;
+- live matrix `#13 / 34636223750` — SUCCESS;
+- merge da US-AUTH-008 `84f7fecb018d6f4b6bc36817accef15f1976f05f`.
