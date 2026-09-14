@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION caleida_profile.current_auth_user_id()
 RETURNS uuid
 LANGUAGE plpgsql
 STABLE
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = pg_catalog
 AS $$
 DECLARE
