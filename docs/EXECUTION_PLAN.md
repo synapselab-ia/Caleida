@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 refinado em OPS-007; nenhuma Story de implementação ativa.  
+**Estado:** Incremento 3 em execução; US-PRIV-001 bloqueada no gate JWT/Data API live.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -14,7 +14,8 @@
 - nenhum secret, senha, OTP, recovery token, session token, cookie, Auth URL ou connection string é persistido em Git/docs/issues;
 - Production Neon e Storage não são criados sem Story/decisão própria;
 - Data API somente é provisionada quando a Story user-scoped realmente a exigir e depois de prova em branch Neon isolada;
-- não criar fluxo social, catálogo ou upload falso para satisfazer requisitos que dependem de épicos futuros.
+- não criar fluxo social, catálogo ou upload falso para satisfazer requisitos que dependem de épicos futuros;
+- owner/BYPASSRLS não substitui evidência de autorização de usuário real.
 
 ## 2. Incrementos concluídos
 
@@ -34,18 +35,16 @@ CI pós-merge #246 / 34850194033: SUCCESS
 Live matrix #13 / 34636223750: SUCCESS
 ```
 
-A baseline operacional usada por OPS-007 é `main` em `9ea9f9253a0123eb491d8980fd252401b6ea8f10`, com CI `#247 / 34851172467` em `SUCCESS`.
-
 ## 3. Incremento 3 - Perfis e privacidade / EPIC-03
 
 **Capacidades:** CAP-03, CAP-05 e CAP-33  
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
-**Estado:** REFINADO
+**Estado:** EM ANDAMENTO
 
 Ordem planejada:
 
 ```text
-US-PRIV-001 - perfil básico user-scoped + Data API/RLS       PRONTA
+US-PRIV-001 - perfil básico user-scoped + Data API/RLS       BLOQUEADA NO GATE LIVE
   ↓
 US-PRIV-002 - personalização segura do perfil                A FAZER
   ↓
@@ -62,7 +61,83 @@ US-PRIV-007 - finalização segura da exclusão                  A FAZER
 US-PRIV-008 - validação integrada + fechamento                A FAZER
 ```
 
-## 4. Limites deliberados
+Nenhuma Story posterior pode iniciar enquanto US-PRIV-001 estiver bloqueada.
+
+## 4. Estado técnico de US-PRIV-001
+
+Já concluído em código e gates não-live:
+
+- migration `000009_profile_core.sql`;
+- perfil básico em `caleida_profile.profiles`;
+- ownership UUID Auth imutável pelo payload;
+- visibilidade default `only_me`;
+- grants mínimos + RLS forçada;
+- owner `SELECT/INSERT/UPDATE`;
+- outro usuário/anônimo negados no contrato adversarial;
+- nenhum `DELETE` normal;
+- Data API ativa somente em `verify-us-priv-001`;
+- boundary normal de aplicação usa JWT server-side + Data API, não owner connection;
+- `/account/profile` oferece setup/edição real de username/display name;
+- CI #263 / run `34981001267` / job `104421003400`: SUCCESS;
+- PostgreSQL 18 e `npm run verify:db`: PASS;
+- ledger Neon isolado em `000001-000009`.
+
+A baseline `main / br-restless-cherry-awpcwy6r` continua em `000001-000008` e sem Data API.
+
+## 5. Gate obrigatório pendente
+
+O fechamento de US-PRIV-001 exige duas identidades Auth sintéticas reais A/B e anônimo atravessando JWT, Data API e RLS.
+
+O probe está pronto:
+
+```text
+Branch: probe/us-priv-001-live
+Workflow: US-PRIV-001 live probe
+Run #4: 34981435532
+Job: 104422466974
+Probe syntax: PASS
+Preflight NEON_API_KEY: FAIL-CLOSED / secret ausente
+Cleanup: SUCCESS
+```
+
+A matriz preparada cobre:
+
+- JWT real A e B;
+- token anônimo;
+- insert do owner;
+- isolamento de leitura A/B;
+- update cruzado negado;
+- forged ownership negado;
+- transferência de ownership negada;
+- `DELETE` negado;
+- anônimo sem leitura;
+- cleanup de perfis/identidades sintéticas.
+
+Nenhum endpoint real, JWT, OTP, API key ou connection string é persistido.
+
+## 6. Intervenção externa mínima
+
+É necessário configurar no repositório GitHub Actions o secret `NEON_API_KEY`, com acesso somente ao necessário no projeto Neon non-production.
+
+A chave não deve ser enviada pelo chat.
+
+Após a configuração, rerodar somente o job `104422466974`. Não recriar recursos já existentes.
+
+## 7. Critério para retomar promoção
+
+Somente depois de o gate live ficar em PASS:
+
+1. promover deliberadamente `000009` para a baseline non-production com o tooling canônico;
+2. provisionar/configurar Data API na baseline com grants mínimos;
+3. fazer readback do ledger, schema, RLS, grants e Data API;
+4. executar CI final;
+5. atualizar `CHECKPOINT`, backlog, changelog e evidência;
+6. mergear PR #62 e fechar Issue #61;
+7. somente então promover US-PRIV-002 como próxima Story.
+
+Se o live gate encontrar defeito, corrigir US-PRIV-001 e repetir os gates antes de qualquer promoção.
+
+## 8. Limites deliberados
 
 O Incremento 3 não antecipa dependências sem superfície real:
 
@@ -75,22 +150,6 @@ O Incremento 3 não antecipa dependências sem superfície real:
 
 Bloqueio entra neste incremento porque já possui efeito real sobre leitura de perfil e deve prevalecer sobre visibilidade pública entre usuários autenticados.
 
-## 5. Estratégia de dados e segurança
+## 9. NEXT_ACTION
 
-A primeira Story deve criar o primeiro domínio user-scoped com ownership real:
-
-- perfil separado da identidade `neon_auth`;
-- UUID Auth como ownership imutável;
-- visibilidade default `only_me`;
-- Data API + JWT + grants mínimos + RLS;
-- `authenticated` não concede acesso genérico;
-- owner/BYPASSRLS não é caminho normal de CRUD;
-- outro usuário e anônimo são negados na Story inicial;
-- profile public/anonymous somente entra na Story de visibilidade;
-- qualquer estado social ainda não implementado resolve fail-closed.
-
-A documentação oficial corrente da Neon foi revalidada em OPS-007 para Data API, access control/RLS e Managed Better Auth. A Story deve confirmar novamente versões e APIs imediatamente antes de implementar.
-
-## 6. NEXT_ACTION
-
-> Executar somente `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS`, conforme `docs/INCREMENT_3_PLAN.md`. Não iniciar US-PRIV-002, Storage, catálogo, relações sociais, Production Neon ou deployment Vercel por antecipação.
+> Configurar com segurança `NEON_API_KEY` em GitHub Actions e rerodar somente o live probe existente da US-PRIV-001. Não promover baseline, mergear #62 ou iniciar US-PRIV-002 antes de PASS da matriz JWT/Data API/RLS.
