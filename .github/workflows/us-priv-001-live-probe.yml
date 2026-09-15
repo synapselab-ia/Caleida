@@ -62,11 +62,13 @@ jobs:
           NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
             --project-id "$NEON_PROJECT_ID" \
             --database-name neondb \
+            --role-name neondb_owner \
             -- -v ON_ERROR_STOP=1 -c "DELETE FROM caleida_profile.profiles WHERE username LIKE 'probe\\_%' ESCAPE '\\';" >/dev/null
 
           stale_ids="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
             --project-id "$NEON_PROJECT_ID" \
             --database-name neondb \
+            --role-name neondb_owner \
             -- -At -v ON_ERROR_STOP=1 -c "SELECT id FROM neon_auth.\"user\" WHERE email LIKE 'caleida-uspriv001-%@grabmail.io';")"
           while IFS= read -r stale_id; do
             if [[ "$stale_id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
@@ -109,11 +111,13 @@ jobs:
           NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
             --project-id "$NEON_PROJECT_ID" \
             --database-name neondb \
+            --role-name neondb_owner \
             -- -v ON_ERROR_STOP=1 -c "DELETE FROM caleida_profile.profiles WHERE username LIKE 'probe\\_%' ESCAPE '\\';" >/dev/null
 
           synthetic_ids="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
             --project-id "$NEON_PROJECT_ID" \
             --database-name neondb \
+            --role-name neondb_owner \
             -- -At -v ON_ERROR_STOP=1 -c "SELECT id FROM neon_auth.\"user\" WHERE email LIKE 'caleida-uspriv001-%@grabmail.io';")"
           while IFS= read -r synthetic_id; do
             if [[ "$synthetic_id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
@@ -125,10 +129,12 @@ jobs:
           remaining_profiles="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
             --project-id "$NEON_PROJECT_ID" \
             --database-name neondb \
+            --role-name neondb_owner \
             -- -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM caleida_profile.profiles WHERE username LIKE 'probe\\_%' ESCAPE '\\';" | tr -d '[:space:]')"
           remaining_users="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
             --project-id "$NEON_PROJECT_ID" \
             --database-name neondb \
+            --role-name neondb_owner \
             -- -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM neon_auth.\"user\" WHERE email LIKE 'caleida-uspriv001-%@grabmail.io';" | tr -d '[:space:]')"
 
           test "$remaining_profiles" = "0"
