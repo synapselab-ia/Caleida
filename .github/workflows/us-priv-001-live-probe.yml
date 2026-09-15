@@ -13,9 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  preflight:
+  live-matrix:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
       NEON_PROJECT_ID: patient-glade-95136440
@@ -26,7 +26,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      - name: Verify Neon runtime access
+
+      - name: Prepare isolated Neon fixtures
         shell: bash
         run: |
           set -euo pipefail
@@ -34,18 +35,89 @@ jobs:
             echo 'CALEIDA_NEON_API_KEY_AVAILABLE false'
             exit 42
           fi
-          echo '::add-mask::'"${NEON_API_KEY}"
+
+          echo "::add-mask::${NEON_API_KEY}"
           echo 'CALEIDA_NEON_API_KEY_AVAILABLE true'
           npm install --global neon@latest >/dev/null
           neon --version
+
           auth_json="$(neon neon-auth status --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color)"
           data_json="$(neon data-api get --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --database neondb --output json --no-color)"
-          webhook_json="$(neon neon-auth config webhook get --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color)"
-          auth_url_count="$(printf '%s' "$auth_json" | jq '[.. | strings | select(test("^https://.*\\.neonauth\\..*/auth$"))] | length')"
-          data_url_count="$(printf '%s' "$data_json" | jq '[.. | strings | select(test("^https://.*\\.apirest\\..*/rest/v1$"))] | length')"
-          webhook_enabled="$(printf '%s' "$webhook_json" | jq -r '.. | objects | .enabled? // empty' | head -n1)"
-          echo "CALEIDA_AUTH_URL_DISCOVERABLE $([[ "$auth_url_count" -ge 1 ]] && echo true || echo false)"
-          echo "CALEIDA_DATA_API_URL_DISCOVERABLE $([[ "$data_url_count" -ge 1 ]] && echo true || echo false)"
-          echo "CALEIDA_WEBHOOK_ENABLED ${webhook_enabled:-unknown}"
-          test "$auth_url_count" -ge 1
-          test "$data_url_count" -ge 1
+
+          auth_url="$(printf '%s' "$auth_json" | jq -r '[.. | strings | select(test("^https://.*\\.neonauth\\..*/auth$"))][0] // empty')"
+          data_url="$(printf '%s' "$data_json" | jq -r '[.. | strings | select(test("^https://.*\\.apirest\\..*/rest/v1$"))][0] // empty')"
+          test -n "$auth_url"
+          test -n "$data_url"
+          echo "::add-mask::${auth_url}"
+          echo "::add-mask::${data_url}"
+          echo "NEON_AUTH_BASE_URL=${auth_url}" >> "$GITHUB_ENV"
+          echo "NEON_DATA_API_URL=${data_url}" >> "$GITHUB_ENV"
+          echo 'CALEIDA_BRANCH_ENDPOINTS_DISCOVERED true'
+
+          suffix="${GITHUB_RUN_ID}-$(openssl rand -hex 5)"
+          email_a="caleida-uspriv001-a-${suffix}@grabmail.io"
+          email_b="caleida-uspriv001-b-${suffix}@grabmail.io"
+          echo "::add-mask::${email_a}"
+          echo "::add-mask::${email_b}"
+          echo "CALEIDA_PROFILE_EMAIL_A=${email_a}" >> "$GITHUB_ENV"
+          echo "CALEIDA_PROFILE_EMAIL_B=${email_b}" >> "$GITHUB_ENV"
+
+          create_a="$(neon neon-auth user create --email "$email_a" --name 'Caleida US PRIV 001 A' --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color)"
+          user_a="$(printf '%s' "$create_a" | jq -r '[.. | objects | .id? | select(type == "string" and test("^[0-9a-f-]{36}$"; "i"))][0] // empty')"
+          test -n "$user_a"
+          echo "::add-mask::${user_a}"
+          echo "CALEIDA_PROFILE_USER_A=${user_a}" >> "$GITHUB_ENV"
+
+          create_b="$(neon neon-auth user create --email "$email_b" --name 'Caleida US PRIV 001 B' --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color)"
+          user_b="$(printf '%s' "$create_b" | jq -r '[.. | objects | .id? | select(type == "string" and test("^[0-9a-f-]{36}$"; "i"))][0] // empty')"
+          test -n "$user_b"
+          echo "::add-mask::${user_b}"
+          echo "CALEIDA_PROFILE_USER_B=${user_b}" >> "$GITHUB_ENV"
+          echo 'CALEIDA_SYNTHETIC_AUTH_USERS_READY true'
+
+      - name: Execute JWT, Data API and RLS matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/live-us-priv-001-probe.mjs
+
+      - name: Cleanup synthetic fixtures
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [ -z "${NEON_API_KEY:-}" ]; then
+            echo 'CALEIDA_SYNTHETIC_CLEANUP_SKIPPED no_api_key'
+            exit 0
+          fi
+
+          npm install --global neon@latest >/dev/null 2>&1
+
+          ids=()
+          if [[ "${CALEIDA_PROFILE_USER_A:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            ids+=("${CALEIDA_PROFILE_USER_A}")
+          fi
+          if [[ "${CALEIDA_PROFILE_USER_B:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            ids+=("${CALEIDA_PROFILE_USER_B}")
+          fi
+
+          if [ "${#ids[@]}" -gt 0 ]; then
+            quoted=""
+            for id in "${ids[@]}"; do
+              if [ -n "$quoted" ]; then quoted+=","; fi
+              quoted+="'${id}'::uuid"
+            done
+            NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+              --project-id "$NEON_PROJECT_ID" \
+              --database-name neondb \
+              -- -v ON_ERROR_STOP=1 -c "DELETE FROM caleida_profile.profiles WHERE auth_user_id IN (${quoted});" >/dev/null 2>&1
+          fi
+
+          if [[ "${CALEIDA_PROFILE_USER_A:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            neon neon-auth user delete "$CALEIDA_PROFILE_USER_A" --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color >/dev/null 2>&1
+          fi
+          if [[ "${CALEIDA_PROFILE_USER_B:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+            neon neon-auth user delete "$CALEIDA_PROFILE_USER_B" --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color >/dev/null 2>&1
+          fi
+
+          echo 'CALEIDA_SYNTHETIC_CLEANUP_ATTEMPTED true'
