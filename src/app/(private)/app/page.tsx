@@ -11,6 +11,12 @@ export default function PrivateHomePage() {
           <CaleidaLogo className="h-14 max-w-56" />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
+              href="/account/profile"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Meu perfil
+            </Link>
+            <Link
               href="/account/security"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
@@ -30,8 +36,8 @@ export default function PrivateHomePage() {
             Sua sessão está protegida no servidor.
           </h1>
           <p className="max-w-2xl text-base leading-7 text-text-muted sm:text-lg sm:leading-8">
-            O acesso autenticado já inclui recuperação de senha e controle das sessões.
-            Biblioteca, catálogo pessoal e demais domínios entram apenas nas Stories
+            O acesso autenticado já inclui perfil privado, recuperação de senha e controle das
+            sessões. Biblioteca, catálogo pessoal e demais domínios entram apenas nas Stories
             correspondentes.
           </p>
         </section>
