@@ -59,7 +59,24 @@ jobs:
           echo "NEON_DATA_API_URL=${data_url}" >> "$GITHUB_ENV"
           echo 'CALEIDA_BRANCH_ENDPOINTS_DISCOVERED true'
 
-          suffix="${GITHUB_RUN_ID}-$(openssl rand -hex 5)"
+          NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+            --project-id "$NEON_PROJECT_ID" \
+            --database-name neondb \
+            -- -v ON_ERROR_STOP=1 -c "DELETE FROM caleida_profile.profiles WHERE username LIKE 'probe\\_%' ESCAPE '\\';" >/dev/null
+
+          stale_ids="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+            --project-id "$NEON_PROJECT_ID" \
+            --database-name neondb \
+            -- -At -v ON_ERROR_STOP=1 -c "SELECT id FROM neon_auth.\"user\" WHERE email LIKE 'caleida-uspriv001-%@grabmail.io';")"
+          while IFS= read -r stale_id; do
+            if [[ "$stale_id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "::add-mask::${stale_id}"
+              neon neon-auth user delete "$stale_id" --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color >/dev/null
+            fi
+          done <<< "$stale_ids"
+          echo 'CALEIDA_SYNTHETIC_PRE_CLEANUP_VERIFIED true'
+
+          suffix="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-$(openssl rand -hex 5)"
           email_a="caleida-uspriv001-a-${suffix}@grabmail.io"
           email_b="caleida-uspriv001-b-${suffix}@grabmail.io"
           echo "::add-mask::${email_a}"
@@ -81,7 +98,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          set +e
+          set -euo pipefail
           if [ -z "${NEON_API_KEY:-}" ]; then
             echo 'CALEIDA_SYNTHETIC_CLEANUP_SKIPPED no_api_key'
             exit 0
@@ -89,31 +106,31 @@ jobs:
 
           npm install --global neon@latest >/dev/null 2>&1
 
-          ids=()
-          if [[ "${CALEIDA_PROFILE_USER_A:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
-            ids+=("${CALEIDA_PROFILE_USER_A}")
-          fi
-          if [[ "${CALEIDA_PROFILE_USER_B:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
-            ids+=("${CALEIDA_PROFILE_USER_B}")
-          fi
+          NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+            --project-id "$NEON_PROJECT_ID" \
+            --database-name neondb \
+            -- -v ON_ERROR_STOP=1 -c "DELETE FROM caleida_profile.profiles WHERE username LIKE 'probe\\_%' ESCAPE '\\';" >/dev/null
 
-          if [ "${#ids[@]}" -gt 0 ]; then
-            quoted=""
-            for id in "${ids[@]}"; do
-              if [ -n "$quoted" ]; then quoted+=","; fi
-              quoted+="'${id}'::uuid"
-            done
-            NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
-              --project-id "$NEON_PROJECT_ID" \
-              --database-name neondb \
-              -- -v ON_ERROR_STOP=1 -c "DELETE FROM caleida_profile.profiles WHERE auth_user_id IN (${quoted});" >/dev/null 2>&1
-          fi
+          synthetic_ids="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+            --project-id "$NEON_PROJECT_ID" \
+            --database-name neondb \
+            -- -At -v ON_ERROR_STOP=1 -c "SELECT id FROM neon_auth.\"user\" WHERE email LIKE 'caleida-uspriv001-%@grabmail.io';")"
+          while IFS= read -r synthetic_id; do
+            if [[ "$synthetic_id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
+              echo "::add-mask::${synthetic_id}"
+              neon neon-auth user delete "$synthetic_id" --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color >/dev/null
+            fi
+          done <<< "$synthetic_ids"
 
-          if [[ "${CALEIDA_PROFILE_USER_A:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
-            neon neon-auth user delete "$CALEIDA_PROFILE_USER_A" --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color >/dev/null 2>&1
-          fi
-          if [[ "${CALEIDA_PROFILE_USER_B:-}" =~ ^[0-9a-fA-F-]{36}$ ]]; then
-            neon neon-auth user delete "$CALEIDA_PROFILE_USER_B" --project-id "$NEON_PROJECT_ID" --branch "$NEON_BRANCH_ID" --output json --no-color >/dev/null 2>&1
-          fi
+          remaining_profiles="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+            --project-id "$NEON_PROJECT_ID" \
+            --database-name neondb \
+            -- -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM caleida_profile.profiles WHERE username LIKE 'probe\\_%' ESCAPE '\\';" | tr -d '[:space:]')"
+          remaining_users="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+            --project-id "$NEON_PROJECT_ID" \
+            --database-name neondb \
+            -- -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM neon_auth.\"user\" WHERE email LIKE 'caleida-uspriv001-%@grabmail.io';" | tr -d '[:space:]')"
 
-          echo 'CALEIDA_SYNTHETIC_CLEANUP_ATTEMPTED true'
+          test "$remaining_profiles" = "0"
+          test "$remaining_users" = "0"
+          echo 'CALEIDA_SYNTHETIC_CLEANUP_VERIFIED true'
