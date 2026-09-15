@@ -78,7 +78,7 @@ Já concluído em código e gates não-live:
 - Data API ativa somente em `verify-us-priv-001`;
 - boundary normal de aplicação usa JWT server-side + Data API, não owner connection;
 - `/account/profile` oferece setup/edição real de username/display name;
-- CI #263 / run `34981001267` / job `104421003400`: SUCCESS;
+- CI final do head funcional/documental: `#270 / 34981913010 / SUCCESS`;
 - PostgreSQL 18 e `npm run verify:db`: PASS;
 - ledger Neon isolado em `000001-000009`.
 
@@ -92,12 +92,16 @@ O probe está pronto:
 
 ```text
 Branch: probe/us-priv-001-live
+Head: 5c034c42c455a281dbeac10312d87f7cce9eb64
 Workflow: US-PRIV-001 live probe
 Run #4: 34981435532
-Job: 104422466974
+Attempt atual: 2
+Job atual: 104438672632
 Probe syntax: PASS
 Preflight NEON_API_KEY: FAIL-CLOSED / secret ausente
-Cleanup: SUCCESS
+JWT/Data API matrix: SKIPPED
+Fixtures sintéticas: não criadas
+Cleanup: SKIPPED/no_api_key sem resíduo
 ```
 
 A matriz preparada cobre:
@@ -115,13 +119,15 @@ A matriz preparada cobre:
 
 Nenhum endpoint real, JWT, OTP, API key ou connection string é persistido.
 
+O attempt 2 executado em 15/09/2026 confirmou diretamente no log que `NEON_API_KEY` continua vazio no runtime do GitHub Actions. Portanto o bloqueio permanece externo e atual.
+
 ## 6. Intervenção externa mínima
 
 É necessário configurar no repositório GitHub Actions o secret `NEON_API_KEY`, com acesso somente ao necessário no projeto Neon non-production.
 
 A chave não deve ser enviada pelo chat.
 
-Após a configuração, rerodar somente o job `104422466974`. Não recriar recursos já existentes.
+Após a configuração, rerodar somente o job live existente. Não recriar recursos já existentes.
 
 ## 7. Critério para retomar promoção
 
@@ -152,4 +158,4 @@ Bloqueio entra neste incremento porque já possui efeito real sobre leitura de p
 
 ## 9. NEXT_ACTION
 
-> Configurar com segurança `NEON_API_KEY` em GitHub Actions e rerodar somente o live probe existente da US-PRIV-001. Não promover baseline, mergear #62 ou iniciar US-PRIV-002 antes de PASS da matriz JWT/Data API/RLS.
+> Configurar com segurança `NEON_API_KEY` em GitHub Actions e, somente depois, rerodar o live probe existente da US-PRIV-001. Não promover baseline, mergear #62 ou iniciar US-PRIV-002 antes de PASS da matriz JWT/Data API/RLS.
