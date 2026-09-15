@@ -32,13 +32,13 @@ Avatar, banner, catálogo, favoritos, relações sociais, perfil público e cicl
 
 ## 2. Gate portável - PASS
 
-A implementação atual passou no CI:
+O head funcional e documental atual passou no CI:
 
 ```text
-CI #263
-Run: 34981001267
-Job: 104421003400
+CI #270
+Run: 34981913010
 Conclusion: SUCCESS
+Head: aeb8d083f3bd909244599a761e585b2ac94539ef
 ```
 
 Passaram:
@@ -92,24 +92,30 @@ O teste portável foi ajustado para reproduzir esse boundary sem conceder `USAGE
 
 A Story exige evidência com duas identidades sintéticas reais A/B e anônimo atravessando Managed Better Auth, JWT, Data API e RLS. Owner/BYPASSRLS não substitui esse gate.
 
-Foi preparado o probe descartável:
+O probe descartável continua preparado:
 
 ```text
 Branch: probe/us-priv-001-live
+Head: 5c034c42c455a2812cd6e4b1dd1674c66e0733be
 Workflow: US-PRIV-001 live probe
 Run #4: 34981435532
-Job: 104422466974
+Run attempt: 2
+Job: 104438672632
 ```
 
-Resultado atual:
+Resultado do attempt 2 executado em 15/09/2026:
 
 - sintaxe do probe: PASS;
-- preflight de `NEON_API_KEY`: FAIL-CLOSED porque o secret não existe no GitHub Actions;
-- matriz JWT/Data API: SKIPPED pelo preflight;
-- cleanup: SUCCESS;
-- nenhum Auth URL, Data API URL, JWT, OTP, senha ou connection string foi persistido no Git ou emitido como evidência.
+- `NEON_API_KEY` no runtime: vazio;
+- preflight: FAIL-CLOSED com exit code 42;
+- criação de identidades sintéticas: não executada;
+- matriz JWT/Data API/RLS: SKIPPED pelo preflight;
+- cleanup: step concluído com sucesso e registrou `no_api_key`; não havia fixtures a remover;
+- nenhum Auth URL, Data API URL, JWT, OTP, senha, API key ou connection string foi persistido no Git ou emitido como evidência.
 
-O probe já está preparado para, quando autorizado por secret em runtime:
+O rerun confirma que o bloqueio continua atual e não era somente evidência histórica do primeiro attempt.
+
+O probe está preparado para, quando autorizado por secret em runtime:
 
 1. descobrir endpoints branch-scoped sem versioná-los;
 2. criar duas identidades Auth sintéticas;
