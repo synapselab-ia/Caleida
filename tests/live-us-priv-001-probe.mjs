@@ -163,6 +163,15 @@ async function dataRequest(token, path, { method = "GET", body } = {}) {
   });
 }
 
+function safeApiError(result) {
+  if (!result?.data || typeof result.data !== "object") return "none";
+  const code = typeof result.data.code === "string" ? result.data.code : "unknown";
+  const message = typeof result.data.message === "string"
+    ? result.data.message.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, "[uuid]").slice(0, 240)
+    : "unknown";
+  return `${code}:${message}`;
+}
+
 const suffix = process.env.GITHUB_RUN_ID ?? String(Date.now());
 const usernameA = `probe_a_${suffix}`.slice(0, 30).replace(/_$/, "0");
 const usernameB = `probe_b_${suffix}`.slice(0, 30).replace(/_$/, "0");
@@ -181,6 +190,21 @@ console.log("CALEIDA_REAL_JWT_A true");
 console.log("CALEIDA_REAL_JWT_B true");
 console.log("CALEIDA_ANON_JWT true");
 
+const helperA = await dataRequest(a.token, "/rpc/current_auth_user_id", {
+  method: "POST",
+  body: {},
+});
+console.log(`CALEIDA_IDENTITY_HELPER_HTTP ${helperA.response.status}`);
+if (!helperA.response.ok) {
+  console.log(`CALEIDA_IDENTITY_HELPER_ERROR ${safeApiError(helperA)}`);
+}
+const helperValue = typeof helperA.data === "string"
+  ? helperA.data
+  : (Array.isArray(helperA.data) ? helperA.data[0] : helperA.data);
+console.log(`CALEIDA_IDENTITY_HELPER_MATCH ${helperValue === a.userId}`);
+assert.equal(helperA.response.ok, true, `helper identity falhou com ${helperA.response.status}`);
+assert.equal(helperValue, a.userId, "helper identity não corresponde ao JWT real");
+
 const createdA = await dataRequest(
   a.token,
   "/profiles?select=auth_user_id,username,display_name,visibility",
@@ -189,6 +213,9 @@ const createdA = await dataRequest(
     body: { username: usernameA, display_name: "Probe A" },
   },
 );
+if (!createdA.response.ok) {
+  console.log(`CALEIDA_OWNER_INSERT_ERROR ${safeApiError(createdA)}`);
+}
 assert.equal(createdA.response.ok, true, `criação A falhou com ${createdA.response.status}`);
 assert.equal(createdA.data?.length, 1);
 assert.equal(createdA.data[0].auth_user_id, a.userId);
