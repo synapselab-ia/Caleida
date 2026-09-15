@@ -40,7 +40,20 @@ const identityHelperSecurity = runPsql({
     WHERE oid = 'caleida_profile.current_auth_user_id()'::regprocedure;
   `,
 });
-assert.equal(identityHelperSecurity, "true");
+assert.equal(identityHelperSecurity, "false");
+
+const identityHelperSource = runPsql({
+  databaseUrl,
+  tuplesOnly: true,
+  sql: `
+    SELECT
+      (position('request.jwt.claims' in prosrc) > 0)::text || '|' ||
+      (position('auth.uid' in prosrc) = 0)::text
+    FROM pg_proc
+    WHERE oid = 'caleida_profile.current_auth_user_id()'::regprocedure;
+  `,
+});
+assert.equal(identityHelperSource, "true|true");
 
 const policies = runPsql({
   databaseUrl,
@@ -80,14 +93,12 @@ const visibilityDefault = runPsql({
 });
 assert.match(visibilityDefault, /only_me/);
 
-const helperWithoutManagedAuth = runPsql({
+const helperWithoutClaims = runPsql({
   databaseUrl,
   tuplesOnly: true,
   sql: `SELECT caleida_profile.current_auth_user_id() IS NULL;`,
 });
-if (target === "ephemeral") {
-  assert.equal(helperWithoutManagedAuth, "t");
-}
+assert.equal(helperWithoutClaims, "t");
 
 function expectPsqlFailure(sql, messagePattern) {
   assert.throws(
@@ -103,15 +114,6 @@ if (target === "ephemeral") {
   runPsql({
     databaseUrl,
     sql: `
-      CREATE SCHEMA IF NOT EXISTS auth;
-      CREATE OR REPLACE FUNCTION auth.uid()
-      RETURNS uuid
-      LANGUAGE sql
-      STABLE
-      AS $fn$
-        SELECT NULLIF(current_setting('caleida.test.auth_user_id', true), '')::uuid;
-      $fn$;
-
       DO $block$
       BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'caleida_profile_test_authenticated') THEN
@@ -131,11 +133,22 @@ if (target === "ephemeral") {
   });
 
   try {
+    const malformedClaim = runPsql({
+      databaseUrl,
+      tuplesOnly: true,
+      sql: `
+        SET ROLE caleida_profile_test_authenticated;
+        SET request.jwt.claims = '{"sub":"not-a-uuid","role":"authenticated"}';
+        SELECT caleida_profile.current_auth_user_id() IS NULL;
+      `,
+    });
+    assert.equal(malformedClaim, "t");
+
     runPsql({
       databaseUrl,
       sql: `
         SET ROLE caleida_profile_test_authenticated;
-        SET caleida.test.auth_user_id = '${ownerId}';
+        SET request.jwt.claims = '{"sub":"${ownerId}","role":"authenticated"}';
         INSERT INTO caleida_profile.profiles (username, display_name)
         VALUES ('owner_profile', 'Owner Profile');
       `,
@@ -146,7 +159,7 @@ if (target === "ephemeral") {
       tuplesOnly: true,
       sql: `
         SET ROLE caleida_profile_test_authenticated;
-        SET caleida.test.auth_user_id = '${ownerId}';
+        SET request.jwt.claims = '{"sub":"${ownerId}","role":"authenticated"}';
         SELECT auth_user_id::text || '|' || username || '|' || visibility
         FROM caleida_profile.profiles;
       `,
@@ -158,7 +171,7 @@ if (target === "ephemeral") {
       tuplesOnly: true,
       sql: `
         SET ROLE caleida_profile_test_authenticated;
-        SET caleida.test.auth_user_id = '${otherId}';
+        SET request.jwt.claims = '{"sub":"${otherId}","role":"authenticated"}';
         SELECT count(*) FROM caleida_profile.profiles;
       `,
     });
@@ -169,7 +182,7 @@ if (target === "ephemeral") {
       tuplesOnly: true,
       sql: `
         SET ROLE caleida_profile_test_authenticated;
-        SET caleida.test.auth_user_id = '${otherId}';
+        SET request.jwt.claims = '{"sub":"${otherId}","role":"authenticated"}';
         WITH changed AS (
           UPDATE caleida_profile.profiles
           SET display_name = 'Intruder'
@@ -183,7 +196,7 @@ if (target === "ephemeral") {
     expectPsqlFailure(
       `
         SET ROLE caleida_profile_test_authenticated;
-        SET caleida.test.auth_user_id = '${otherId}';
+        SET request.jwt.claims = '{"sub":"${otherId}","role":"authenticated"}';
         INSERT INTO caleida_profile.profiles (auth_user_id, username, display_name)
         VALUES ('${ownerId}', 'forged_owner', 'Forged Owner');
       `,
@@ -193,7 +206,7 @@ if (target === "ephemeral") {
     expectPsqlFailure(
       `
         SET ROLE caleida_profile_test_authenticated;
-        SET caleida.test.auth_user_id = '${ownerId}';
+        SET request.jwt.claims = '{"sub":"${ownerId}","role":"authenticated"}';
         UPDATE caleida_profile.profiles
         SET auth_user_id = '${otherId}';
       `,
@@ -203,7 +216,7 @@ if (target === "ephemeral") {
     expectPsqlFailure(
       `
         SET ROLE caleida_profile_test_authenticated;
-        SET caleida.test.auth_user_id = '${ownerId}';
+        SET request.jwt.claims = '{"sub":"${ownerId}","role":"authenticated"}';
         DELETE FROM caleida_profile.profiles;
       `,
       /permission denied/i,
@@ -233,7 +246,7 @@ if (target === "ephemeral") {
       /profiles_username_reserved_check/i,
     );
 
-    console.log("perfil privado: ownership, RLS, fail-closed e integridade portável em PASS");
+    console.log("perfil privado: ownership, RLS, claims fail-closed e integridade portável em PASS");
   } finally {
     runPsql({
       databaseUrl,
@@ -244,7 +257,6 @@ if (target === "ephemeral") {
         DROP OWNED BY caleida_profile_test_anonymous;
         DROP ROLE IF EXISTS caleida_profile_test_authenticated;
         DROP ROLE IF EXISTS caleida_profile_test_anonymous;
-        DROP SCHEMA IF EXISTS auth CASCADE;
       `,
     });
   }
