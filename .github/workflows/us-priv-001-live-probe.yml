@@ -27,6 +27,10 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
 
+      - name: Validate probe syntax
+        shell: bash
+        run: node --check tests/live-us-priv-001-probe.mjs
+
       - name: Prepare isolated Neon fixtures
         shell: bash
         run: |
