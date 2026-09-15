@@ -32,12 +32,12 @@ ON_HOLD: none
 Issue: #61 - open
 PR: #62 - open / mergeable
 Branch: feat/us-priv-001-profile-data-api-rls
-Head da PR: aeb8d083f3bd909244599a761e585b2ac94539ef
-CI final do head atual:
+Último head completo verificado antes da reconciliação operacional:
+  aeb8d083f3bd909244599a761e585b2ac94539ef
   CI #270 / run 34981913010 - SUCCESS
 ```
 
-A Story já possui migration, contrato adversarial, boundary server-only da Data API e superfície privada `/account/profile`.
+Commits posteriores nessa mesma branch reconciliam somente a evidência operacional do rerun live e devem passar pelo CI normal da PR. A Story já possui migration, contrato adversarial, boundary server-only da Data API e superfície privada `/account/profile`.
 
 ### Neon isolado
 
