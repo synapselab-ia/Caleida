@@ -85,39 +85,82 @@ Concluída:
 - Issue #57 fechada como completed;
 - CI pós-merge #246 / `34850194033` / job `103995893357`: SUCCESS.
 
-### Incremento 3 - Perfis e privacidade - PLANEJADO
+### Incremento 3 - Perfis e privacidade - EM ANDAMENTO
 
-OPS-007 / Issue #59 refinou CAP-03, CAP-05 e CAP-33 sem implementar produto.
+OPS-007 / Issue #59 refinou CAP-03, CAP-05 e CAP-33 e definiu `docs/INCREMENT_3_PLAN.md` com oito Stories ordenadas.
 
-- criado `docs/INCREMENT_3_PLAN.md`;
-- oito Stories ordenadas foram definidas, de `US-PRIV-001` a `US-PRIV-008`;
-- somente `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS` fica PRONTA;
-- a Data API foi revalidada como boundary branch-scoped que delega autorização a PostgreSQL `GRANT` + RLS;
-- o primeiro slice user-scoped deverá usar JWT/ownership real e falhar fechado para outro usuário e anônimo;
-- perfil de produto fica separado da identidade gerenciada do Neon Auth;
-- visibilidade começa em `only_me` e estados sociais sem relação implementada continuam privados para terceiros;
-- bloqueio entra porque já produz efeito real sobre perfil;
-- followers/connections, mute/restrict e privacidade de conteúdos inexistentes não geram fluxos falsos;
-- avatar/banner ficam adiados até EPIC-16/CAP-30 e decisão de Storage;
-- obras favoritas ficam adiadas até catálogo real;
-- CAP-33 foi dividido em desativação reversível, solicitação/cancelamento, export de encerramento e finalização segura;
-- janela inicial planejada para exclusão: 30 dias, sem scheduler destrutivo oculto;
-- Production Neon, Data API, Storage e código funcional não foram provisionados/alterados em OPS-007;
-- branches históricas Git/Neon não foram removidas.
+#### US-PRIV-001 - Perfil básico user-scoped + Data API/RLS (#61/#62)
 
-### Estado operacional de partida do refino
+Estado atual: `BLOCKED / MANUAL_ACTION_REQUIRED` no gate JWT/Data API live.
+
+Implementado:
+
+- migration `000009_profile_core.sql`;
+- schema `caleida_profile` separado de `neon_auth`;
+- perfil básico com ownership UUID Auth, username, display name, timestamps e `only_me`;
+- username normalizado, unique case-insensitively, route-safe e com nomes reservados bloqueados;
+- RLS habilitada e forçada desde a criação;
+- owner com `SELECT/INSERT/UPDATE`, sem `DELETE` normal;
+- grants mínimos para `authenticated`;
+- wrapper mínimo `current_auth_user_id()` para resolver `auth.uid()` sem abrir o schema gerenciado `auth` ao papel de aplicação;
+- teste adversarial portátil em `000010_profile_core_contract.mjs`;
+- boundary server-only da aplicação com JWT da sessão + Data API, sem `DATABASE_URL` no CRUD normal;
+- `/account/profile` com criação/edição de username e nome de exibição;
+- estados de loading, erro, perfil ausente, pending e sucesso;
+- nenhum campo de UI pode definir ownership ou visibilidade;
+- `NEON_DATA_API_URL` documentada apenas como nome de variável server-only;
+- teste de contrato do boundary Data API;
+- acesso à área de perfil publicado dentro de `/app`.
+
+Gates:
 
 ```text
-Git main: 9ea9f9253a0123eb491d8980fd252401b6ea8f10
-CI main: #247 / 34851172467 / SUCCESS
-Neon baseline: caleida-nonprod/main / migrations 000001-000008
-Auth: email/password + OTP obrigatório + shared email
-Session data cache: 1 s
-Data API: não provisionada
-Production Neon: não provisionada
-Deployment: exclusivamente humano/manual
+CI #263 / run 34981001267 / job 104421003400: SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated estrutural: PASS
+Baseline Neon: intacta em 000001-000008 e sem Data API
+Isolated ledger: 000001-000009
 ```
 
-### Próxima ação canônica após OPS-007
+A prova Neon isolada encontrou um defeito real: `authenticated` não conseguia acessar diretamente `auth.uid()` por falta de `USAGE` no schema gerenciado. A correção usa wrapper `SECURITY DEFINER` limitado, sem grant genérico em `auth`, e o teste portátil reproduz essa fronteira.
 
-> Executar somente `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS`, conforme `docs/INCREMENT_3_PLAN.md`.
+Gate live preparado:
+
+```text
+Probe branch: probe/us-priv-001-live
+Run #4: 34981435532
+Job: 104422466974
+Probe syntax: PASS
+NEON_API_KEY preflight: FAIL-CLOSED / secret ausente
+JWT/Data API matrix: SKIPPED
+Cleanup: SUCCESS
+```
+
+O probe está pronto para criar duas identidades sintéticas, obter JWT A/B + token anônimo, provar isolamento/ownership pela Data API e limpar fixtures. Nenhum endpoint real, token, OTP, senha, API key ou connection string é persistido.
+
+Bloqueio externo mínimo:
+
+- configurar no GitHub Actions o secret `NEON_API_KEY` com acesso somente ao necessário no Neon non-production;
+- não enviar a chave pelo chat;
+- rerodar o job live existente;
+- somente depois de PASS promover `000009` + Data API para a baseline e concluir a Story.
+
+Enquanto bloqueada:
+
+- nenhuma promoção à baseline;
+- nenhum merge de #62 como concluída;
+- nenhuma US-PRIV-002;
+- nenhum Storage, Production Neon ou deployment Vercel.
+
+Evidência: `docs/US_PRIV_001_VERIFICATION.md`.
+
+### Limites vigentes do Incremento 3
+
+- avatar/banner ficam adiados até EPIC-16/CAP-30 e decisão de Storage;
+- obras favoritas ficam adiadas até catálogo real;
+- followers/connections não são opções funcionais antes de EPIC-13;
+- mute/restrict ficam para EPIC-13;
+- privacidade de conteúdos inexistentes nasce com cada domínio;
+- CAP-33 segue dividido em desativação reversível, solicitação/cancelamento, export de encerramento e finalização segura;
+- Production Neon permanece não provisionada;
+- deployment continua exclusivamente humano/manual.
