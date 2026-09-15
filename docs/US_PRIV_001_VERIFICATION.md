@@ -32,14 +32,16 @@ Avatar, banner, catálogo, favoritos, relações sociais, perfil público e cicl
 
 ## 2. Gate portável - PASS
 
-O head funcional e documental atual passou no CI:
+O último head completo anterior à reconciliação operacional passou no CI:
 
 ```text
+Head: aeb8d083f3bd909244599a761e585b2ac94539ef
 CI #270
 Run: 34981913010
 Conclusion: SUCCESS
-Head: aeb8d083f3bd909244599a761e585b2ac94539ef
 ```
+
+Commits posteriores nesta branch alteram somente documentação operacional da evidência live e passam pelo CI normal da PR.
 
 Passaram:
 
