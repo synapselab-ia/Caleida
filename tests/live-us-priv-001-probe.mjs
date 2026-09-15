@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { appendFileSync } from "node:fs";
 
 const authBaseUrl = process.env.NEON_AUTH_BASE_URL;
 const dataApiUrl = process.env.NEON_DATA_API_URL;
@@ -14,6 +15,12 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function mask(value) {
   if (value) process.stdout.write(`::add-mask::${value}\n`);
+}
+
+function exportEnv(name, value) {
+  const envFile = process.env.GITHUB_ENV;
+  if (!envFile || !value) return;
+  appendFileSync(envFile, `${name}=${value}\n`, { encoding: "utf8" });
 }
 
 async function jsonFetch(url, options = {}) {
@@ -161,7 +168,13 @@ const usernameA = `probe_a_${suffix}`.slice(0, 30).replace(/_$/, "0");
 const usernameB = `probe_b_${suffix}`.slice(0, 30).replace(/_$/, "0");
 
 const a = await signInAndToken(emailA);
+mask(a.userId);
+exportEnv("CALEIDA_PROFILE_USER_A", a.userId);
+
 const b = await signInAndToken(emailB);
+mask(b.userId);
+exportEnv("CALEIDA_PROFILE_USER_B", b.userId);
+
 const anon = await anonymousToken();
 
 console.log("CALEIDA_REAL_JWT_A true");
