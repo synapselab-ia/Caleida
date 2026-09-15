@@ -1,6 +1,6 @@
 # Product Backlog
 
-**Status:** Incrementos 0, 1 e 2 concluídos. Incremento 3 / EPIC-03 refinado em OPS-007.  
+**Status:** Incrementos 0, 1 e 2 concluídos. Incremento 3 / EPIC-03 em execução.  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
 ## Convenções
@@ -46,25 +46,46 @@ Live matrix #13 / 34636223750: SUCCESS
 
 # Incremento 3 - Perfis e privacidade / EPIC-03
 
-**Estado:** REFINADO  
+**Estado:** EM ANDAMENTO / US-PRIV-001 BLOQUEADA NO GATE LIVE  
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
 **Capacidades:** CAP-03, CAP-05, CAP-33  
 **Refino:** OPS-007 / Issue #59
 
-| Story | Estado | Cobertura principal |
-|---|---|---|
-| US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | PRONTA | CAP-03, fundação CAP-05 |
-| US-PRIV-002 - Personalização segura do perfil | A FAZER | CAP-03 |
-| US-PRIV-003 - Rota pública + visibilidade | A FAZER | CAP-03, CAP-05 |
-| US-PRIV-004 - Bloqueio com efeito real | A FAZER | CAP-05 |
-| US-PRIV-005 - Desativação e reativação | A FAZER | CAP-33 |
-| US-PRIV-006 - Solicitação/cancelamento + export de encerramento | A FAZER | CAP-33 |
-| US-PRIV-007 - Finalização segura da exclusão | A FAZER | CAP-33 |
-| US-PRIV-008 - Validação integrada + fechamento | A FAZER | CAP-03, CAP-05, CAP-33 |
+| Story | Estado | Issue/PR | Cobertura principal | Evidência |
+|---|---|---|---|---|
+| US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | BLOQUEADA | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
+| US-PRIV-002 - Personalização segura do perfil | A FAZER | - | CAP-03 | - |
+| US-PRIV-003 - Rota pública + visibilidade | A FAZER | - | CAP-03, CAP-05 | - |
+| US-PRIV-004 - Bloqueio com efeito real | A FAZER | - | CAP-05 | - |
+| US-PRIV-005 - Desativação e reativação | A FAZER | - | CAP-33 | - |
+| US-PRIV-006 - Solicitação/cancelamento + export de encerramento | A FAZER | - | CAP-33 | - |
+| US-PRIV-007 - Finalização segura da exclusão | A FAZER | - | CAP-33 | - |
+| US-PRIV-008 - Validação integrada + fechamento | A FAZER | - | CAP-03, CAP-05, CAP-33 | - |
+
+## Estado de US-PRIV-001
+
+Implementado e em PASS portátil/estrutural:
+
+- migration `000009_profile_core.sql`;
+- perfil de produto separado de `neon_auth`;
+- ownership UUID, `only_me`, grants mínimos e RLS;
+- Data API somente na branch Neon isolada;
+- boundary server-only com JWT da sessão e Data API;
+- `/account/profile` para setup/edição de username e nome de exibição;
+- CI #263 / run `34981001267`: SUCCESS;
+- PostgreSQL 18 + `verify:db`: PASS;
+- ledger isolado `000001-000009` com checksum canônico.
+
+Bloqueio atual:
+
+- falta o gate obrigatório com JWT real de duas identidades A/B e anônimo pela Data API;
+- o probe está pronto em `probe/us-priv-001-live`;
+- run #4 / `34981435532` validou a sintaxe e falhou fechado porque o secret GitHub Actions `NEON_API_KEY` não existe;
+- nenhuma promoção para a baseline é permitida enquanto esse gate não passar.
 
 ## Limites do Incremento 3
 
-Incluído agora:
+Incluído neste incremento:
 
 - perfil básico e personalização sem arquivos;
 - visibilidade fail-closed;
@@ -86,4 +107,4 @@ Esses adiamentos não contam como funcionalidade entregue e não devem gerar bot
 
 # Próxima ação operacional
 
-> Executar somente `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS`, conforme `docs/INCREMENT_3_PLAN.md`.
+> Configurar com segurança o secret GitHub Actions `NEON_API_KEY` e rerodar somente o gate live preparado para US-PRIV-001. Se o gate passar, promover migration + Data API para a baseline non-production e concluir a Story. Não iniciar US-PRIV-002 antes disso.
