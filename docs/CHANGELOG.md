@@ -128,6 +128,7 @@ Gate live preparado:
 
 ```text
 Probe branch: probe/us-priv-001-live
+Probe head: 5c034c42c455a2812cd6e4b1dd1674c66e0733be
 Run #4: 34981435532
 Job: 104422466974
 Probe syntax: PASS
