@@ -17,9 +17,9 @@ ACTIVE_ISSUE: #61
 ACTIVE_BRANCH: feat/us-priv-001-profile-data-api-rls
 ACTIVE_PR: #62
 
-NEXT_ACTION: Após configurar com segurança o secret GitHub Actions NEON_API_KEY, rerodar somente o job 104422466974 do workflow US-PRIV-001 live probe e executar a matriz JWT/Data API/RLS já preparada. Se e somente se o gate live passar, promover deliberadamente 000009 + Data API para a baseline non-production, fazer readback/CI final, reconciliar a documentação e concluir PR #62. Não iniciar US-PRIV-002.
+NEXT_ACTION: Configurar com segurança o secret GitHub Actions NEON_API_KEY e, depois disso, rerodar somente o job live da US-PRIV-001. Se e somente se a matriz JWT/Data API/RLS passar com A, B e anônimo, promover deliberadamente 000009 + Data API para a baseline non-production, fazer readback/CI final, reconciliar a documentação e concluir PR #62. Não iniciar US-PRIV-002.
 
-BLOCKERS: Gate obrigatório com duas identidades Auth reais A/B + anônimo pela Data API não pode executar porque o repositório não possui NEON_API_KEY em GitHub Actions. Owner/BYPASSRLS não serve como substituto.
+BLOCKERS: O rerun de 15/09/2026 confirmou que NEON_API_KEY continua ausente no runtime do GitHub Actions. O gate obrigatório com duas identidades Auth reais A/B + anônimo não executou. Owner/BYPASSRLS não serve como substituto.
 MANUAL_ACTION_REQUIRED: Configurar no repositório GitHub Actions um secret chamado NEON_API_KEY com acesso somente ao necessário no projeto Neon non-production. Não enviar a chave pelo chat.
 ON_HOLD: none
 ```
@@ -30,10 +30,11 @@ ON_HOLD: none
 
 ```text
 Issue: #61 - open
-PR: #62 - open
+PR: #62 - open / mergeable
 Branch: feat/us-priv-001-profile-data-api-rls
-Último gate funcional antes da reconciliação documental:
-  CI #263 / run 34981001267 / job 104421003400 - SUCCESS
+Head da PR: aeb8d083f3bd909244599a761e585b2ac94539ef
+CI final do head atual:
+  CI #270 / run 34981913010 - SUCCESS
 ```
 
 A Story já possui migration, contrato adversarial, boundary server-only da Data API e superfície privada `/account/profile`.
@@ -91,14 +92,18 @@ Probe branch: probe/us-priv-001-live
 Probe head: 5c034c42c455a2812cd6e4b1dd1674c66e0733be
 Workflow: US-PRIV-001 live probe
 Run #4: 34981435532
-Job: 104422466974
+Attempt atual: 2
+Job atual: 104438672632
 Probe syntax: PASS
 NEON_API_KEY preflight: FAIL-CLOSED / secret ausente
 JWT/Data API matrix: SKIPPED
-Cleanup: SUCCESS
+Fixtures sintéticas: não criadas
+Cleanup: SKIPPED com sucesso porque não havia API key nem fixtures
 ```
 
-O probe pronto cobre duas identidades sintéticas A/B e anônimo, ownership, leitura/alteração cruzada, forged ownership, transferência de ownership e `DELETE`, com cleanup automático de fixtures.
+O attempt 2 foi disparado pela continuidade do projeto em 15/09/2026 e confirmou no log que `NEON_API_KEY` continua vazio no runtime de Actions. Nenhum segredo foi exposto.
+
+O probe pronto cobre duas identidades sintéticas A/B e anônimo, ownership, leitura/alteração cruzada, forged ownership, transferência de ownership e `DELETE`, com cleanup automático de fixtures quando o preflight estiver autorizado.
 
 Nenhum endpoint Auth/Data API real, JWT, OTP, senha, API key ou connection string foi persistido.
 
