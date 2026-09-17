@@ -1,8 +1,8 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `READY`  
-**Fase:** Incremento 3 - Perfis e privacidade / EPIC-03 - REFINADO  
-**Story ativa:** nenhuma
+**Status operacional:** `READY_TO_MERGE`  
+**Fase:** Incremento 3 - Perfis e privacidade / EPIC-03  
+**Story ativa:** `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS`
 
 ## Cursor
 
@@ -12,89 +12,104 @@ LAST_COMPLETED_ISSUE: #59
 LAST_COMPLETED_PR: #60
 LAST_COMPLETED_MERGE: f8424916dc1ecff5276451bab9c636cbcc57dc32
 
-ACTIVE_TASK: none
-ACTIVE_ISSUE: none
-ACTIVE_BRANCH: none
-ACTIVE_PR: none
+ACTIVE_TASK: US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS
+ACTIVE_ISSUE: #61
+ACTIVE_BRANCH: feat/us-priv-001-profile-data-api-rls
+ACTIVE_PR: #62
 
-NEXT_ACTION: Executar somente US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS, conforme docs/INCREMENT_3_PLAN.md. Criar a Issue/branch da Story antes de implementar e não antecipar US-PRIV-002, Storage, catálogo, relações sociais, Production Neon ou deployment Vercel.
+NEXT_ACTION: Executar o CI final do head documental reconciliado. Se e somente se permanecer em PASS, mergear PR #62, fechar Issue #61 como completed e reconciliar o checkpoint em main promovendo US-PRIV-002 como próxima Story. Não iniciar a implementação de US-PRIV-002 antes do merge de #62.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
 ON_HOLD: none
 ```
 
-## Encerramento de OPS-007
+## Estado real da US-PRIV-001
 
-- Issue `#59` fechada como `completed` pelo merge;
-- PR `#60` integrada em `main`;
-- merge SHA `f8424916dc1ecff5276451bab9c636cbcc57dc32`;
-- head final pré-merge `cdce0a3b5c772b21afe7b2cbfe14df9f20863c21`;
-- CI da PR `#249` / run `34865945415` / job `104050019727`: `SUCCESS`;
-- CI pós-merge `#250` / run `34866254670` / job `104050724959`: `SUCCESS`;
-- diff final da PR limitado a seis arquivos em `docs/`;
-- nenhuma migration, dependência, código funcional ou workflow alterado;
-- browser: `SKIPPED`, pois OPS-007 é somente documental;
-- gate Neon-specific: `SKIPPED`, pois nenhum recurso/configuração Neon foi alterado;
-- deployment Vercel: não executado.
-
-## Plano canônico do Incremento 3
-
-Arquivo: `docs/INCREMENT_3_PLAN.md`.
+### Git e CI
 
 ```text
-US-PRIV-001 - perfil básico user-scoped + Data API/RLS       PRONTA
-  ↓
-US-PRIV-002 - personalização segura do perfil                A FAZER
-  ↓
-US-PRIV-003 - rota pública + visibilidade                     A FAZER
-  ↓
-US-PRIV-004 - bloqueio com efeito real                        A FAZER
-  ↓
-US-PRIV-005 - desativação e reativação                        A FAZER
-  ↓
-US-PRIV-006 - solicitação/cancelamento + export               A FAZER
-  ↓
-US-PRIV-007 - finalização segura da exclusão                  A FAZER
-  ↓
-US-PRIV-008 - validação integrada + fechamento                A FAZER
+Issue: #61 - open
+PR: #62 - open / mergeable
+Branch: feat/us-priv-001-profile-data-api-rls
+Head funcional antes desta reconciliação documental: 14c5e5cf28901746c3dd1cc824c0e03d2f36d7b7
+CI #278 / run 35012494049 / job 104527930487: SUCCESS
 ```
 
-Somente `US-PRIV-001` está promovida como próxima unidade executável.
+O CI funcional cobre runtime, manifest de migrations, lint, typecheck, testes, build Next.js, PostgreSQL 18 e `npm run verify:db`.
 
-## Decisões vigentes de EPIC-03
+### Gate live obrigatório
 
-- perfil de produto separado da identidade `neon_auth`;
-- primeiro domínio user-scoped deve provar Data API + JWT + grants mínimos + RLS;
-- visibilidade default `only_me`;
-- `followers` e `connections` não são opções funcionais antes de EPIC-13;
-- bloqueio entra no Incremento 3 porque tem efeito verificável sobre perfil;
-- mute/restrict ficam para EPIC-13 e não recebem UI/state sem efeito;
-- avatar/banner ficam para EPIC-16/CAP-30 e não escolhem Storage antecipadamente;
-- obras favoritas dependem do catálogo de EPIC-04;
-- CAP-33 usa desativação reversível e exclusão em fases com janela inicial de 30 dias, cancelamento, export e finalização explícita;
-- exclusão da identidade deve usar API oficial do provider, nunca DELETE direto no schema `neon_auth`;
-- export de encerramento cobre dados existentes e não substitui CAP-32/EPIC-17.
+O bloqueio por `NEON_API_KEY` deixou de existir. O secret passou a estar disponível no runtime sem exposição do valor e o probe acumulado executou a matriz real:
 
-## Estado Neon verificado em OPS-007
+```text
+Probe branch: probe/us-priv-001-live
+Workflow: US-PRIV-001 live probe
+Run #11: 35013092108
+Job: 104529657936
+Prepare isolated fixtures: SUCCESS
+JWT/Data API/RLS matrix: SUCCESS
+Cleanup synthetic fixtures: SUCCESS
+```
+
+A matriz usa duas identidades Managed Better Auth sintéticas A/B e anônimo e cobre ownership, leitura/alteração cruzada, forged ownership, transferência de ownership, DELETE e cleanup.
+
+### Neon baseline promovida
 
 ```text
 Project: caleida-nonprod / patient-glade-95136440
 PostgreSQL: 18
 Baseline: main / br-restless-cherry-awpcwy6r / ready
+Baseline migrations: 000001-000010
+000009 checksum: 33f33c043c1a94b8ec4d5df3edd2a1fcb6c08d13abb3e128771687a576120de1
+000010 checksum: 4a47f6715566445bcbed2f56fb2a9a15d867c633e85e89375e487aaa3c1ec2be
 Managed Better Auth: enabled
-Migrations baseline: 000001-000008
-Data API: não provisionada
-Production Neon: não provisionada
-Storage: não adotado
+Data API: active
+Schema exposto: caleida_profile
+Default grants amplos: não usados
+OpenAPI: disabled
 ```
 
-Branches Neon históricas de verificação continuam existentes e não bloqueiam o projeto. Sua remoção é destrutiva e exige autorização explícita do usuário.
+Promotion probe:
 
-## Próxima ação técnica
+```text
+Workflow: US-PRIV-001 baseline promotion
+Run #1: 35239947088
+Job: 105265502696
+Migration ledger check: SUCCESS
+Data API create/config readback: SUCCESS
+```
 
-Executar somente:
+Readback direto no Neon confirmou:
 
-> `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS`
+- RLS habilitada e forçada em `caleida_profile.profiles`;
+- somente policies owner `SELECT`, `INSERT` e `UPDATE`;
+- `authenticated` possui somente `SELECT`, `INSERT` e `UPDATE` na tabela;
+- `anonymous` e `PUBLIC` não possuem grants de tabela;
+- nenhum `DELETE` normal;
+- Data API expõe somente `caleida_profile`;
+- diff de schema entre `verify-us-priv-001` e baseline: vazio.
 
-A Story deve começar por revalidar documentação/versões correntes, criar Issue e branch Git, criar branch Neon isolada para a prova específica e falhar fechado se ownership por JWT/RLS não puder ser demonstrado sem credencial privilegiada.
+A Data API cria o papel gerenciado `authenticated`. Como a promoção aplicou as migrations antes de provisionar o serviço, o bloco condicional de grants de `000009` não encontrou esse papel naquele instante. Depois do provisionamento, foram reaplicados exatamente os grants já versionados em `000009`, sem privilégio adicional, e o ACL readback ficou correto. Essa ordem operacional fica registrada em `docs/NEON_PLATFORM.md`.
+
+## Implementação final
+
+- `database/migrations/000009_profile_core.sql` cria schema, perfil, constraints, RLS, policies e grants mínimos;
+- `database/migrations/000010_profile_identity_claim_fix.sql` faz a identidade derivar do `sub` de `request.jwt.claims`, como função `SECURITY INVOKER`, retornando `NULL` em claims ausentes ou inválidos;
+- `database/tests/000010_profile_core_contract.mjs` cobre integridade, ownership, claims fail-closed, não-owner, anônimo e DELETE negado;
+- `src/lib/profile/data-api.ts` usa JWT server-side e Data API, sem conexão owner no CRUD normal;
+- `src/lib/profile/actions.ts` mantém validação server-side;
+- `/account/profile` oferece setup/edição de `username` e `display_name` com estados de loading, erro, pending, sucesso e perfil ausente;
+- `/app` possui acesso a `Meu perfil`;
+- `.env.example` documenta somente o nome `NEON_DATA_API_URL`, sem endpoint real;
+- `tests/profile-data-api-contract.test.mjs` fixa o boundary user-scoped.
+
+O payload normal aceita somente `username` e `display_name`. `auth_user_id` e visibilidade não são campos controláveis pelo usuário nesta Story.
+
+## Restrições vigentes
+
+- não iniciar US-PRIV-002 antes do merge de #62;
+- não criar Storage, catálogo, relações sociais ou Production Neon;
+- deployment Vercel continua exclusivamente humano/manual;
+- nenhum endpoint real, JWT, OTP, senha, API key ou connection string é persistido;
+- branches históricas Git/Neon não são removidas sem autorização destrutiva explícita.
