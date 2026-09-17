@@ -1,9 +1,10 @@
 # US-PRIV-001 - Verificação do perfil básico user-scoped
 
-**Estado:** `PASS / READY_TO_MERGE`  
-**Issue:** `#61` - aberta  
-**PR:** `#62` - aberta / mergeable  
-**Branch Git:** `feat/us-priv-001-profile-data-api-rls`  
+**Estado:** `PASS / CONCLUÍDA`  
+**Issue:** `#61` - closed / completed  
+**PR:** `#62` - merged  
+**Feature head:** `ec644c1495644a74a281f08848224c43cc60daf7`  
+**Merge:** `8aeb90cdc3b9b017aee3cefcd4e60b35f22d2758`  
 **Branch Neon isolada:** `verify-us-priv-001 / br-silent-rain-aw4fqrhg`  
 **Baseline Neon:** `main / br-restless-cherry-awpcwy6r`
 
@@ -28,26 +29,14 @@ Avatar, banner, Storage, catálogo, favoritos, relações sociais, perfil públi
 
 ## 2. Gate portável - PASS
 
-Head funcional validado antes desta reconciliação documental:
-
 ```text
-Head: 14c5e5cf28901746c3dd1cc824c0e03d2f36d7b7
-CI #278
-Run: 35012494049
-Job: 104527930487
-Conclusion: SUCCESS
+Head funcional: 14c5e5cf28901746c3dd1cc824c0e03d2f36d7b7
+CI funcional #278 / 35012494049 / job 104527930487: SUCCESS
+Feature head final documental: ec644c1495644a74a281f08848224c43cc60daf7
+CI final PR #279 / 35241013997 / job 105269156530: SUCCESS
 ```
 
-Passaram:
-
-- runtime contract;
-- migration manifest;
-- lint;
-- typecheck;
-- testes de contrato;
-- build Next.js;
-- PostgreSQL 18;
-- `npm run verify:db`.
+Passaram runtime contract, migration manifest, lint, typecheck, testes de contrato, build Next.js, PostgreSQL 18 e `npm run verify:db`.
 
 O contrato portátil cobre claims ausentes/malformados, owner read/write, outro usuário sem leitura/alteração, forged ownership, transferência de ownership, DELETE negado, anônimo negado e username inválido/reservado.
 
@@ -57,11 +46,9 @@ O contrato portátil cobre claims ausentes/malformados, owner read/write, outro 
 
 A primeira prova estrutural mostrou que `authenticated` não possuía `USAGE` genérico no schema gerenciado `auth`, como desejado. Abrir esse schema seria privilégio excessivo.
 
-A solução transitória isolou a resolução de identidade, mas a prova live posterior mostrou que o boundary correto da Data API já disponibiliza claims validados em `request.jwt.claims`.
-
 ### 3.2 Identidade final por claims validados
 
-A migration `000010_profile_identity_claim_fix.sql` tornou `caleida_profile.current_auth_user_id()` `SECURITY INVOKER` e passou a:
+A prova live mostrou que o boundary correto da Data API disponibiliza claims validados em `request.jwt.claims`. A migration `000010_profile_identity_claim_fix.sql` tornou `caleida_profile.current_auth_user_id()` `SECURITY INVOKER` e passou a:
 
 1. ler `current_setting('request.jwt.claims', true)`;
 2. interpretar JSON de forma fail-closed;
@@ -72,8 +59,6 @@ A migration `000010_profile_identity_claim_fix.sql` tornou `caleida_profile.curr
 Assim, a policy não precisa de `USAGE` no schema gerenciado `auth` nem de função `SECURITY DEFINER` no estado final.
 
 ## 4. Gate JWT/Data API live - PASS
-
-O secret `NEON_API_KEY` ficou disponível no runtime do Actions sem exposição do valor. O probe já existente foi rerodado e concluiu integralmente:
 
 ```text
 Workflow: US-PRIV-001 live probe
@@ -101,16 +86,13 @@ Owner/BYPASSRLS não participou da evidência user-scoped.
 
 Depois do gate live:
 
-- `000009` foi promovida com checksum canônico;
-- `000010` foi promovida com checksum canônico;
+- `000009` e `000010` foram promovidas com checksums canônicos;
 - Data API foi criada na baseline com Managed Better Auth;
 - `add-default-grants` permaneceu falso;
 - somente `caleida_profile` foi exposto;
 - `db_anon_role = anonymous`;
 - `jwt_role_claim_key = .role`;
 - OpenAPI permaneceu desabilitado.
-
-Promotion probe:
 
 ```text
 Workflow: US-PRIV-001 baseline promotion
@@ -142,7 +124,18 @@ Readback direto no Neon confirmou:
 
 A promoção revelou uma dependência de ordem: a Data API cria o papel gerenciado `authenticated`, enquanto `000009` concede privilégios somente se o papel já existir. Como as migrations foram promovidas antes do serviço, o bloco condicional inicialmente não concedeu ACL. Depois da criação da Data API foram reaplicados exatamente os grants já versionados em `000009`, sem privilégio novo, e o readback confirmou o estado esperado.
 
-## 7. Segurança e secrets
+## 7. Merge e CI pós-merge - PASS
+
+```text
+PR #62: merged
+Merge: 8aeb90cdc3b9b017aee3cefcd4e60b35f22d2758
+Issue #61: closed/completed
+CI main #280 / run 35241229260 / job 105269874527: SUCCESS
+```
+
+Após o fechamento não há Issue ou PR aberta no repositório.
+
+## 8. Segurança e secrets
 
 Nenhum endpoint real, JWT, OTP, senha, API key, cookie ou connection string foi persistido em Git, docs ou Issue/PR.
 
@@ -150,10 +143,10 @@ O workflow de promoção suprimiu o JSON de endpoint dos logs e mascarou `NEON_A
 
 Production Neon não foi criada. Nenhum deployment Vercel foi executado.
 
-## 8. Browser
+## 9. Browser
 
 `SKIPPED`: não existe runtime isolado configurado para essa branch e deployment Vercel é exclusivamente humano/manual. Esse skip não substituiu os gates obrigatórios de Data API/RLS, que estão em PASS.
 
-## 9. Resultado
+## 10. Resultado
 
-Todos os critérios de segurança de dados necessários para US-PRIV-001 estão em PASS. Resta somente o CI do head documental reconciliado e, mantendo PASS, merge de PR #62 e fechamento de Issue #61.
+US-PRIV-001 está concluída. Código, CI, PostgreSQL 18, matriz live JWT/Data API/RLS, promoção/readback Neon, merge e CI pós-merge estão em PASS. A próxima Story canônica é US-PRIV-002, ainda não iniciada.

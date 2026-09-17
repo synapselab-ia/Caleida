@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-001 com gates funcionais/live em PASS e baseline non-production promovida, aguardando CI documental final e merge.  
+**Estado:** Incremento 3 em execução; US-PRIV-001 concluída e US-PRIV-002 pronta para promoção como próxima Story.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -40,12 +40,12 @@ Live matrix #13 / 34636223750: SUCCESS
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
 **Estado:** EM ANDAMENTO
 
-Ordem planejada:
+Ordem vigente:
 
 ```text
-US-PRIV-001 - perfil básico user-scoped + Data API/RLS       EM REVISÃO / GATES PASS
+US-PRIV-001 - perfil básico user-scoped + Data API/RLS       CONCLUÍDA
   ↓
-US-PRIV-002 - personalização segura do perfil                A FAZER
+US-PRIV-002 - personalização segura do perfil                PRONTA / próxima ação
   ↓
 US-PRIV-003 - rota pública + visibilidade                     A FAZER
   ↓
@@ -60,11 +60,9 @@ US-PRIV-007 - finalização segura da exclusão                  A FAZER
 US-PRIV-008 - validação integrada + fechamento                A FAZER
 ```
 
-US-PRIV-002 só pode ser promovida após o merge de #62 e fechamento de #61.
+## 4. US-PRIV-001 - fechamento técnico
 
-## 4. US-PRIV-001 - estado técnico final
-
-Implementação:
+Implementação consolidada:
 
 - migrations `000009_profile_core.sql` e `000010_profile_identity_claim_fix.sql`;
 - perfil em `caleida_profile.profiles` com ownership UUID Auth imutável pelo payload;
@@ -74,58 +72,53 @@ Implementação:
 - nenhum `DELETE` normal;
 - identidade derivada do `sub` em `request.jwt.claims`, fail-closed para claims ausentes/malformados;
 - Data API server-only com JWT de sessão no CRUD normal, sem owner connection;
-- `/account/profile` com setup/edição real de username e display name;
-- nenhum avatar, banner, catálogo, favorito, relação social ou perfil público antecipado.
+- `/account/profile` com setup/edição real de username e display name.
 
-Gate portável:
+Evidência final:
 
 ```text
-Head funcional: 14c5e5cf28901746c3dd1cc824c0e03d2f36d7b7
-CI #278 / run 35012494049 / job 104527930487: SUCCESS
+Feature head: ec644c1495644a74a281f08848224c43cc60daf7
+CI final PR #279 / 35241013997 / job 105269156530: SUCCESS
+Merge #62: 8aeb90cdc3b9b017aee3cefcd4e60b35f22d2758
+Issue #61: closed/completed
+CI pós-merge main #280 / 35241229260 / job 105269874527: SUCCESS
 PostgreSQL 18 + verify:db: PASS
-```
-
-Gate live Neon isolado:
-
-```text
-Branch: verify-us-priv-001 / br-silent-rain-aw4fqrhg
-Live probe run #11 / 35013092108 / job 104529657936: SUCCESS
-A/B/anônimo via JWT + Data API + RLS: PASS
-Cleanup sintético: PASS
-```
-
-Promoção baseline non-production:
-
-```text
-Baseline: main / br-restless-cherry-awpcwy6r
-Ledger: 000001-000010
-Data API: active
-Schema exposto: caleida_profile
-Promotion run #1 / 35239947088 / job 105265502696: SUCCESS
+Live JWT/Data API/RLS #11 / 35013092108 / job 104529657936: SUCCESS
+Baseline promotion #1 / 35239947088 / job 105265502696: SUCCESS
+Baseline ledger: 000001-000010
+Baseline Data API: active / somente caleida_profile
 Schema diff isolated vs baseline: vazio
 ```
 
-Readback confirmou RLS forçada, policies owner, `authenticated` somente com `SELECT/INSERT/UPDATE`, nenhum grant de tabela a `anonymous`/`PUBLIC` e nenhum `DELETE` normal.
-
 ## 5. Observação operacional de grants
 
-A Data API cria o papel gerenciado `authenticated`. Na promoção desta Story, `000009` e `000010` já estavam aplicadas quando a Data API foi criada, então o bloco condicional de grants de `000009` não encontrou o papel durante a migration.
+A Data API cria o papel gerenciado `authenticated`. Na promoção da US-PRIV-001, `000009` e `000010` já estavam aplicadas quando a Data API foi criada, então o bloco condicional de grants de `000009` não encontrou o papel durante a migration.
 
 Depois do provisionamento foram reaplicados exatamente os grants codificados em `000009` e o readback ACL foi validado. Nenhum privilégio adicional foi introduzido.
 
 Para ambientes novos, o serviço Data API deve existir antes da migration user-scoped que concede privilégios a seus papéis gerenciados, ou a promoção deve reaplicar exatamente os grants versionados após o provisionamento e obrigatoriamente fazer readback. Não usar grants ad hoc.
 
-## 6. Limites deliberados
+## 6. Escopo da próxima Story
 
-O Incremento 3 não antecipa dependências sem superfície real:
+US-PRIV-002 adiciona personalização segura ao perfil privado existente, sem abrir perfil público e sem introduzir dependências futuras.
 
-- avatar/banner ficam para EPIC-16/CAP-30, quando Storage for decidido;
-- obras favoritas ficam após EPIC-04/CAP-06;
-- followers/connections não são oferecidos como visibilidade funcional antes de EPIC-13;
-- mute e restrição de interação ficam para EPIC-13;
-- privacidade de biblioteca, avaliações, resenhas, coleções, metas e demais conteúdos nasce junto de cada domínio;
-- exportação de encerramento de CAP-33 é limitada aos dados existentes; CAP-32/EPIC-17 continuará responsável pela portabilidade completa.
+Escopo permitido:
+
+- biografia com limites de tamanho/formato;
+- cor de destaque baseada em tokens aprovados e compatível com acessibilidade/contraste;
+- links HTTPS permitidos com validação server-side e neutralização de URLs perigosas;
+- categorias culturais favoritas da taxonomia canônica;
+- preservação de ownership e autorização já estabelecidos.
+
+Continuam fora do escopo:
+
+- avatar/banner/upload/Storage;
+- obras favoritas dependentes de catálogo;
+- rota pública de perfil;
+- followers/connections;
+- bloqueio/mute/restrict;
+- ciclo de desativação/exclusão.
 
 ## 7. NEXT_ACTION
 
-> Executar o CI final do head documental reconciliado da PR #62. Se permanecer em PASS, mergear #62 e fechar #61. Só depois reconciliar `main` promovendo US-PRIV-002 como próxima Story, sem iniciar sua implementação nesta execução.
+> Promover US-PRIV-002 como próxima Story limitada: criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md`, implementar somente a personalização segura definida acima e executar os gates aplicáveis. Não antecipar US-PRIV-003 nem dependências futuras.

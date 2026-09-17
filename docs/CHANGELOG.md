@@ -89,9 +89,7 @@ Concluída:
 
 OPS-007 / Issue #59 refinou CAP-03, CAP-05 e CAP-33 e definiu `docs/INCREMENT_3_PLAN.md` com oito Stories ordenadas.
 
-#### US-PRIV-001 - Perfil básico user-scoped + Data API/RLS (#61/#62)
-
-Estado atual: `EM REVISÃO / GATES PASS / BASELINE PROMOVIDA`.
+#### US-PRIV-001 - Perfil básico user-scoped + Data API/RLS (#61/#62) - CONCLUÍDA
 
 Implementado:
 
@@ -109,14 +107,18 @@ Implementado:
 - teste de contrato do boundary Data API;
 - acesso à área de perfil publicado dentro de `/app`.
 
-Gates:
+Gates e fechamento:
 
 ```text
-Head funcional: 14c5e5cf28901746c3dd1cc824c0e03d2f36d7b7
-CI #278 / run 35012494049 / job 104527930487: SUCCESS
+Feature head: ec644c1495644a74a281f08848224c43cc60daf7
+CI final PR #279 / 35241013997 / job 105269156530: SUCCESS
+PR #62: merged
+Merge: 8aeb90cdc3b9b017aee3cefcd4e60b35f22d2758
+Issue #61: closed/completed
+CI pós-merge main #280 / 35241229260 / job 105269874527: SUCCESS
 PostgreSQL 18 + verify:db: PASS
-Live JWT/Data API/RLS #11 / run 35013092108 / job 104529657936: SUCCESS
-Baseline promotion #1 / run 35239947088 / job 105265502696: SUCCESS
+Live JWT/Data API/RLS #11 / 35013092108 / job 104529657936: SUCCESS
+Baseline promotion #1 / 35239947088 / job 105265502696: SUCCESS
 Baseline ledger: 000001-000010
 Baseline Data API: active / somente caleida_profile
 Schema diff verify-us-priv-001 vs baseline: vazio
@@ -129,11 +131,15 @@ A prova Neon encontrou dois pontos reais e os fechou sem ampliar privilégios:
 
 A promoção também revelou uma dependência de ordem: a Data API cria o papel `authenticated`, enquanto `000009` concede privilégios somente se ele já existir. Como as migrations entraram antes do serviço, o readback detectou ACL ausente. Depois do provisionamento foram reaplicados exatamente os grants versionados em `000009`, sem privilégio novo, e o readback confirmou somente `SELECT`, `INSERT` e `UPDATE`, sem `DELETE`.
 
-A matriz live usa duas identidades sintéticas A/B e anônimo e prova ownership, isolamento de leitura/alteração, forged ownership, transferência negada, DELETE negado e cleanup completo.
+A matriz live usou duas identidades sintéticas A/B e anônimo e provou ownership, isolamento de leitura/alteração, forged ownership, transferência negada, DELETE negado e cleanup completo.
 
 Nenhum endpoint real, JWT, OTP, senha, API key, cookie ou connection string foi persistido. Production Neon não foi criada e nenhum deployment Vercel foi executado.
 
 Evidência: `docs/US_PRIV_001_VERIFICATION.md`.
+
+### Próxima Story
+
+`US-PRIV-002 - Personalização segura do perfil` está pronta para promoção. Seu escopo não inclui avatar/banner/Storage, obras favoritas, perfil público ou relações sociais.
 
 ### Limites vigentes do Incremento 3
 

@@ -46,15 +46,15 @@ Live matrix #13 / 34636223750: SUCCESS
 
 # Incremento 3 - Perfis e privacidade / EPIC-03
 
-**Estado:** EM ANDAMENTO / US-PRIV-001 EM REVISÃO COM GATES PASS  
+**Estado:** EM ANDAMENTO / US-PRIV-002 PRONTA  
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
 **Capacidades:** CAP-03, CAP-05, CAP-33  
 **Refino:** OPS-007 / Issue #59
 
 | Story | Estado | Issue/PR | Cobertura principal | Evidência |
 |---|---|---|---|---|
-| US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | EM REVISÃO | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
-| US-PRIV-002 - Personalização segura do perfil | A FAZER | - | CAP-03 | - |
+| US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | CONCLUÍDA | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
+| US-PRIV-002 - Personalização segura do perfil | PRONTA | - | CAP-03 | - |
 | US-PRIV-003 - Rota pública + visibilidade | A FAZER | - | CAP-03, CAP-05 | - |
 | US-PRIV-004 - Bloqueio com efeito real | A FAZER | - | CAP-05 | - |
 | US-PRIV-005 - Desativação e reativação | A FAZER | - | CAP-33 | - |
@@ -62,32 +62,24 @@ Live matrix #13 / 34636223750: SUCCESS
 | US-PRIV-007 - Finalização segura da exclusão | A FAZER | - | CAP-33 | - |
 | US-PRIV-008 - Validação integrada + fechamento | A FAZER | - | CAP-03, CAP-05, CAP-33 | - |
 
-## Estado de US-PRIV-001
-
-Implementado:
-
-- migrations `000009_profile_core.sql` e `000010_profile_identity_claim_fix.sql`;
-- perfil de produto separado de `neon_auth`;
-- ownership UUID, `only_me`, grants mínimos e RLS forçada;
-- identidade fail-closed derivada de `request.jwt.claims.sub`;
-- boundary server-only com JWT da sessão e Data API;
-- `/account/profile` para setup/edição de username e nome de exibição.
-
-Gates:
+## Fechamento de US-PRIV-001
 
 ```text
-CI funcional #278 / run 35012494049: SUCCESS
+Issue #61: closed/completed
+PR #62: merged
+Feature head: ec644c1495644a74a281f08848224c43cc60daf7
+Merge: 8aeb90cdc3b9b017aee3cefcd4e60b35f22d2758
+CI final PR #279 / 35241013997: SUCCESS
+CI pós-merge main #280 / 35241229260: SUCCESS
 PostgreSQL 18 + verify:db: PASS
-Live JWT/Data API/RLS #11 / run 35013092108: SUCCESS
+Live JWT/Data API/RLS #11 / 35013092108: SUCCESS
+Baseline promotion #1 / 35239947088: SUCCESS
 Baseline migrations: 000001-000010
 Baseline Data API: active / somente caleida_profile
-Promotion run #1 / 35239947088: SUCCESS
 Schema diff isolated vs baseline: vazio
 ```
 
-A matriz live provou duas identidades A/B e anônimo, ownership, leitura/alteração cruzada, forged ownership, transferência de ownership, DELETE negado e cleanup.
-
-A baseline possui somente `SELECT`, `INSERT` e `UPDATE` para `authenticated` na tabela de perfil, sem grants de tabela para `anonymous`/`PUBLIC` e sem policy/grant de `DELETE`.
+A matriz live provou duas identidades A/B e anônimo, ownership, leitura/alteração cruzada, forged ownership, transferência de ownership, DELETE negado e cleanup. A baseline possui somente `SELECT`, `INSERT` e `UPDATE` para `authenticated` na tabela de perfil, sem grants de tabela para `anonymous`/`PUBLIC` e sem policy/grant de `DELETE`.
 
 ## Limites do Incremento 3
 
@@ -113,4 +105,4 @@ Esses adiamentos não contam como funcionalidade entregue e não devem gerar bot
 
 # Próxima ação operacional
 
-> Executar o CI final da reconciliação documental. Em PASS, mergear PR #62 e fechar Issue #61. Somente depois promover US-PRIV-002 como próxima Story.
+> Promover US-PRIV-002 como próxima Story limitada: criar Issue e branch próprias, implementar somente biografia, cor de destaque por tokens aprovados, links HTTPS permitidos e categorias culturais favoritas, preservando ownership. Não antecipar avatar/banner/Storage, obras favoritas, perfil público ou relações sociais.
