@@ -1,0 +1,30 @@
+name: US-PRIV-001 Data API CLI contract
+
+on:
+  push:
+    branches:
+      - probe/us-priv-001-live
+    paths:
+      - .github/workflows/us-priv-001-data-api-cli-contract.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Inspect current Neon Data API CLI contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global neon@latest >/dev/null
+          neon --version
+          neon data-api create --help
+          neon data-api update --help
+          neon data-api get --help
