@@ -46,14 +46,14 @@ Live matrix #13 / 34636223750: SUCCESS
 
 # Incremento 3 - Perfis e privacidade / EPIC-03
 
-**Estado:** EM ANDAMENTO / US-PRIV-001 BLOQUEADA NO GATE LIVE  
+**Estado:** EM ANDAMENTO / US-PRIV-001 EM REVISÃO COM GATES PASS  
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
 **Capacidades:** CAP-03, CAP-05, CAP-33  
 **Refino:** OPS-007 / Issue #59
 
 | Story | Estado | Issue/PR | Cobertura principal | Evidência |
 |---|---|---|---|---|
-| US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | BLOQUEADA | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
+| US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | EM REVISÃO | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
 | US-PRIV-002 - Personalização segura do perfil | A FAZER | - | CAP-03 | - |
 | US-PRIV-003 - Rota pública + visibilidade | A FAZER | - | CAP-03, CAP-05 | - |
 | US-PRIV-004 - Bloqueio com efeito real | A FAZER | - | CAP-05 | - |
@@ -64,24 +64,30 @@ Live matrix #13 / 34636223750: SUCCESS
 
 ## Estado de US-PRIV-001
 
-Implementado e em PASS portátil/estrutural:
+Implementado:
 
-- migration `000009_profile_core.sql`;
+- migrations `000009_profile_core.sql` e `000010_profile_identity_claim_fix.sql`;
 - perfil de produto separado de `neon_auth`;
-- ownership UUID, `only_me`, grants mínimos e RLS;
-- Data API somente na branch Neon isolada;
+- ownership UUID, `only_me`, grants mínimos e RLS forçada;
+- identidade fail-closed derivada de `request.jwt.claims.sub`;
 - boundary server-only com JWT da sessão e Data API;
-- `/account/profile` para setup/edição de username e nome de exibição;
-- CI #263 / run `34981001267`: SUCCESS;
-- PostgreSQL 18 + `verify:db`: PASS;
-- ledger isolado `000001-000009` com checksum canônico.
+- `/account/profile` para setup/edição de username e nome de exibição.
 
-Bloqueio atual:
+Gates:
 
-- falta o gate obrigatório com JWT real de duas identidades A/B e anônimo pela Data API;
-- o probe está pronto em `probe/us-priv-001-live`;
-- run #4 / `34981435532` validou a sintaxe e falhou fechado porque o secret GitHub Actions `NEON_API_KEY` não existe;
-- nenhuma promoção para a baseline é permitida enquanto esse gate não passar.
+```text
+CI funcional #278 / run 35012494049: SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Live JWT/Data API/RLS #11 / run 35013092108: SUCCESS
+Baseline migrations: 000001-000010
+Baseline Data API: active / somente caleida_profile
+Promotion run #1 / 35239947088: SUCCESS
+Schema diff isolated vs baseline: vazio
+```
+
+A matriz live provou duas identidades A/B e anônimo, ownership, leitura/alteração cruzada, forged ownership, transferência de ownership, DELETE negado e cleanup.
+
+A baseline possui somente `SELECT`, `INSERT` e `UPDATE` para `authenticated` na tabela de perfil, sem grants de tabela para `anonymous`/`PUBLIC` e sem policy/grant de `DELETE`.
 
 ## Limites do Incremento 3
 
@@ -107,4 +113,4 @@ Esses adiamentos não contam como funcionalidade entregue e não devem gerar bot
 
 # Próxima ação operacional
 
-> Configurar com segurança o secret GitHub Actions `NEON_API_KEY` e rerodar somente o gate live preparado para US-PRIV-001. Se o gate passar, promover migration + Data API para a baseline non-production e concluir a Story. Não iniciar US-PRIV-002 antes disso.
+> Executar o CI final da reconciliação documental. Em PASS, mergear PR #62 e fechar Issue #61. Somente depois promover US-PRIV-002 como próxima Story.

@@ -91,19 +91,16 @@ OPS-007 / Issue #59 refinou CAP-03, CAP-05 e CAP-33 e definiu `docs/INCREMENT_3_
 
 #### US-PRIV-001 - Perfil básico user-scoped + Data API/RLS (#61/#62)
 
-Estado atual: `BLOCKED / MANUAL_ACTION_REQUIRED` no gate JWT/Data API live.
+Estado atual: `EM REVISÃO / GATES PASS / BASELINE PROMOVIDA`.
 
 Implementado:
 
-- migration `000009_profile_core.sql`;
-- schema `caleida_profile` separado de `neon_auth`;
+- migration `000009_profile_core.sql` para schema `caleida_profile`, tabela de perfil, constraints, RLS, policies e grants mínimos;
+- migration `000010_profile_identity_claim_fix.sql` para resolver ownership pelo `sub` de `request.jwt.claims` de forma fail-closed;
 - perfil básico com ownership UUID Auth, username, display name, timestamps e `only_me`;
 - username normalizado, unique case-insensitively, route-safe e com nomes reservados bloqueados;
 - RLS habilitada e forçada desde a criação;
 - owner com `SELECT/INSERT/UPDATE`, sem `DELETE` normal;
-- grants mínimos para `authenticated`;
-- wrapper mínimo `current_auth_user_id()` para resolver `auth.uid()` sem abrir o schema gerenciado `auth` ao papel de aplicação;
-- teste adversarial portátil em `000010_profile_core_contract.mjs`;
 - boundary server-only da aplicação com JWT da sessão + Data API, sem `DATABASE_URL` no CRUD normal;
 - `/account/profile` com criação/edição de username e nome de exibição;
 - estados de loading, erro, perfil ausente, pending e sucesso;
@@ -115,43 +112,26 @@ Implementado:
 Gates:
 
 ```text
-CI #263 / run 34981001267 / job 104421003400: SUCCESS
+Head funcional: 14c5e5cf28901746c3dd1cc824c0e03d2f36d7b7
+CI #278 / run 35012494049 / job 104527930487: SUCCESS
 PostgreSQL 18 + verify:db: PASS
-Neon isolated estrutural: PASS
-Baseline Neon: intacta em 000001-000008 e sem Data API
-Isolated ledger: 000001-000009
+Live JWT/Data API/RLS #11 / run 35013092108 / job 104529657936: SUCCESS
+Baseline promotion #1 / run 35239947088 / job 105265502696: SUCCESS
+Baseline ledger: 000001-000010
+Baseline Data API: active / somente caleida_profile
+Schema diff verify-us-priv-001 vs baseline: vazio
 ```
 
-A prova Neon isolada encontrou um defeito real: `authenticated` não conseguia acessar diretamente `auth.uid()` por falta de `USAGE` no schema gerenciado. A correção usa wrapper `SECURITY DEFINER` limitado, sem grant genérico em `auth`, e o teste portátil reproduz essa fronteira.
+A prova Neon encontrou dois pontos reais e os fechou sem ampliar privilégios:
 
-Gate live preparado:
+1. acesso direto a `auth.uid()` pelo papel `authenticated` exigiria abrir o schema gerenciado `auth`, o que foi rejeitado;
+2. a prova live confirmou que a Data API disponibiliza claims validados em `request.jwt.claims`, levando à migration `000010` com `SECURITY INVOKER` e extração apenas do `sub` UUID.
 
-```text
-Probe branch: probe/us-priv-001-live
-Probe head: 5c034c42c455a2812cd6e4b1dd1674c66e0733be
-Run #4: 34981435532
-Job: 104422466974
-Probe syntax: PASS
-NEON_API_KEY preflight: FAIL-CLOSED / secret ausente
-JWT/Data API matrix: SKIPPED
-Cleanup: SUCCESS
-```
+A promoção também revelou uma dependência de ordem: a Data API cria o papel `authenticated`, enquanto `000009` concede privilégios somente se ele já existir. Como as migrations entraram antes do serviço, o readback detectou ACL ausente. Depois do provisionamento foram reaplicados exatamente os grants versionados em `000009`, sem privilégio novo, e o readback confirmou somente `SELECT`, `INSERT` e `UPDATE`, sem `DELETE`.
 
-O probe está pronto para criar duas identidades sintéticas, obter JWT A/B + token anônimo, provar isolamento/ownership pela Data API e limpar fixtures. Nenhum endpoint real, token, OTP, senha, API key ou connection string é persistido.
+A matriz live usa duas identidades sintéticas A/B e anônimo e prova ownership, isolamento de leitura/alteração, forged ownership, transferência negada, DELETE negado e cleanup completo.
 
-Bloqueio externo mínimo:
-
-- configurar no GitHub Actions o secret `NEON_API_KEY` com acesso somente ao necessário no Neon non-production;
-- não enviar a chave pelo chat;
-- rerodar o job live existente;
-- somente depois de PASS promover `000009` + Data API para a baseline e concluir a Story.
-
-Enquanto bloqueada:
-
-- nenhuma promoção à baseline;
-- nenhum merge de #62 como concluída;
-- nenhuma US-PRIV-002;
-- nenhum Storage, Production Neon ou deployment Vercel.
+Nenhum endpoint real, JWT, OTP, senha, API key, cookie ou connection string foi persistido. Production Neon não foi criada e nenhum deployment Vercel foi executado.
 
 Evidência: `docs/US_PRIV_001_VERIFICATION.md`.
 

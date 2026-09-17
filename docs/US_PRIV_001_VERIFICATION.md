@@ -1,51 +1,46 @@
 # US-PRIV-001 - Verificação do perfil básico user-scoped
 
-**Estado:** `BLOCKED / MANUAL_ACTION_REQUIRED`  
+**Estado:** `PASS / READY_TO_MERGE`  
 **Issue:** `#61` - aberta  
-**PR:** `#62` - aberta  
+**PR:** `#62` - aberta / mergeable  
 **Branch Git:** `feat/us-priv-001-profile-data-api-rls`  
 **Branch Neon isolada:** `verify-us-priv-001 / br-silent-rain-aw4fqrhg`  
 **Baseline Neon:** `main / br-restless-cherry-awpcwy6r`
 
 ## 1. Escopo implementado
 
-A Story já materializa, sem antecipar Stories posteriores:
+A Story materializa somente o primeiro domínio privado user-scoped:
 
-- migration `000009_profile_core.sql`;
-- schema de produto `caleida_profile`, separado de `neon_auth`;
-- tabela `caleida_profile.profiles` com ownership por UUID Auth;
-- username normalizado, route-safe, case-insensitive unique e com nomes reservados bloqueados;
-- `display_name` básico;
-- visibilidade fixa/default `only_me` nesta Story;
-- RLS habilitada e forçada desde a criação;
-- policies somente para `SELECT`, `INSERT` e `UPDATE` do owner;
-- nenhum grant/policy de `DELETE` para o caminho normal;
-- wrapper `current_auth_user_id()` limitado à resolução de `auth.uid()`;
-- grants mínimos ao papel `authenticated` sem abrir genericamente o schema `auth`;
-- boundary server-only de Data API usando JWT da sessão, sem `DATABASE_URL` no CRUD normal;
-- rota privada `/account/profile` para criar/editar username e nome de exibição;
-- estados de perfil ausente, loading, erro, pending e sucesso;
-- nenhum campo de formulário capaz de definir `auth_user_id` ou visibilidade;
-- link de acesso à área de perfil em `/app`.
+- `000009_profile_core.sql` cria `caleida_profile.profiles`, constraints, RLS, policies e grants mínimos;
+- `000010_profile_identity_claim_fix.sql` substitui a dependência de `auth.uid()` por leitura fail-closed do `sub` em `request.jwt.claims`;
+- ownership é UUID Auth e não pode ser forjado ou transferido por payload;
+- username é normalizado, route-safe, case-insensitive unique e possui nomes reservados bloqueados;
+- `display_name` é o único outro campo editável nesta Story;
+- perfil novo nasce `only_me`;
+- RLS está habilitada e forçada;
+- owner possui somente `SELECT`, `INSERT` e `UPDATE` no caminho normal;
+- não existe policy/grant normal de `DELETE`;
+- Data API usa JWT de sessão e RLS, sem `DATABASE_URL`/owner no CRUD normal;
+- `/account/profile` oferece criação/edição real com estados de perfil ausente, loading, erro, pending e sucesso;
+- nenhum campo de formulário controla `auth_user_id` ou visibilidade.
 
-Avatar, banner, catálogo, favoritos, relações sociais, perfil público e ciclo de exclusão continuam fora do escopo.
+Avatar, banner, Storage, catálogo, favoritos, relações sociais, perfil público e ciclo de exclusão permanecem fora do escopo.
 
 ## 2. Gate portável - PASS
 
-O último head completo anterior à reconciliação operacional passou no CI:
+Head funcional validado antes desta reconciliação documental:
 
 ```text
-Head: aeb8d083f3bd909244599a761e585b2ac94539ef
-CI #270
-Run: 34981913010
+Head: 14c5e5cf28901746c3dd1cc824c0e03d2f36d7b7
+CI #278
+Run: 35012494049
+Job: 104527930487
 Conclusion: SUCCESS
 ```
 
-Commits posteriores nesta branch alteram somente documentação operacional da evidência live e passam pelo CI normal da PR.
-
 Passaram:
 
-- runtime Node/npm;
+- runtime contract;
 - migration manifest;
 - lint;
 - typecheck;
@@ -54,103 +49,111 @@ Passaram:
 - PostgreSQL 18;
 - `npm run verify:db`.
 
-O contrato adversarial cobre:
+O contrato portátil cobre claims ausentes/malformados, owner read/write, outro usuário sem leitura/alteração, forged ownership, transferência de ownership, DELETE negado, anônimo negado e username inválido/reservado.
 
-- `only_me` default;
-- owner read/write;
-- outro usuário sem leitura/alteração;
-- tentativa de forged ownership negada;
-- tentativa de transferência de ownership negada;
-- `DELETE` negado;
-- anônimo negado;
-- username inválido/reservado negado.
+## 3. Correções encontradas durante a prova Neon
 
-## 3. Gate Neon isolado estrutural - PASS
+### 3.1 Acesso direto a `auth.uid()`
 
-Na branch `verify-us-priv-001`:
+A primeira prova estrutural mostrou que `authenticated` não possuía `USAGE` genérico no schema gerenciado `auth`, como desejado. Abrir esse schema seria privilégio excessivo.
 
-- Managed Better Auth está habilitado;
-- Data API está ativa somente na branch isolada;
-- somente `caleida_profile` foi exposto pela Data API;
-- default grants amplos não foram utilizados;
-- migration `000009_profile_core.sql` está aplicada e registrada no ledger com checksum canônico;
-- sem JWT, `auth.uid()` resolve `NULL`;
-- sem JWT, o papel `authenticated` enxerga zero perfis;
-- `anonymous` não possui `SELECT` no perfil;
-- `authenticated` não possui `DELETE`;
-- não existe policy de `DELETE`.
+A solução transitória isolou a resolução de identidade, mas a prova live posterior mostrou que o boundary correto da Data API já disponibiliza claims validados em `request.jwt.claims`.
 
-A baseline non-production continua em `000001-000008` e sem Data API. Nenhuma promoção ocorreu.
+### 3.2 Identidade final por claims validados
 
-## 4. Defeito encontrado no Neon real e correção - PASS
+A migration `000010_profile_identity_claim_fix.sql` tornou `caleida_profile.current_auth_user_id()` `SECURITY INVOKER` e passou a:
 
-A primeira execução isolada mostrou que chamar `auth.uid()` diretamente sob `authenticated` falhava porque o papel não possui `USAGE` no schema gerenciado `auth`.
+1. ler `current_setting('request.jwt.claims', true)`;
+2. interpretar JSON de forma fail-closed;
+3. extrair somente `sub`;
+4. aceitar somente UUID válido;
+5. retornar `NULL` quando claims faltam ou são inválidos.
 
-A correção não abriu o schema gerenciado. O Caleida passou a usar `caleida_profile.current_auth_user_id()` como wrapper `SECURITY DEFINER`, com superfície limitada a retornar o UUID de `auth.uid()` e `search_path` fixado em `pg_catalog`.
+Assim, a policy não precisa de `USAGE` no schema gerenciado `auth` nem de função `SECURITY DEFINER` no estado final.
 
-O teste portável foi ajustado para reproduzir esse boundary sem conceder `USAGE` em `auth` ao papel de aplicação.
+## 4. Gate JWT/Data API live - PASS
 
-## 5. Gate JWT/Data API live - BLOCKED
-
-A Story exige evidência com duas identidades sintéticas reais A/B e anônimo atravessando Managed Better Auth, JWT, Data API e RLS. Owner/BYPASSRLS não substitui esse gate.
-
-O probe descartável continua preparado:
+O secret `NEON_API_KEY` ficou disponível no runtime do Actions sem exposição do valor. O probe já existente foi rerodado e concluiu integralmente:
 
 ```text
-Branch: probe/us-priv-001-live
-Head: 5c034c42c455a2812cd6e4b1dd1674c66e0733be
 Workflow: US-PRIV-001 live probe
-Run #4: 34981435532
-Run attempt: 2
-Job: 104438672632
+Run #11: 35013092108
+Job: 104529657936
+Prepare isolated Neon fixtures: SUCCESS
+Execute JWT, Data API and RLS matrix: SUCCESS
+Cleanup synthetic fixtures: SUCCESS
 ```
 
-Resultado do attempt 2 executado em 15/09/2026:
+A matriz atravessou Managed Better Auth, JWT, Data API e RLS com duas identidades sintéticas A/B e anônimo e cobriu:
 
-- sintaxe do probe: PASS;
-- `NEON_API_KEY` no runtime: vazio;
-- preflight: FAIL-CLOSED com exit code 42;
-- criação de identidades sintéticas: não executada;
-- matriz JWT/Data API/RLS: SKIPPED pelo preflight;
-- cleanup: step concluído com sucesso e registrou `no_api_key`; não havia fixtures a remover;
-- nenhum Auth URL, Data API URL, JWT, OTP, senha, API key ou connection string foi persistido no Git ou emitido como evidência.
+- A cria/lê o próprio perfil;
+- B não lê A;
+- B não altera A;
+- forged ownership é negado;
+- transferência de ownership é negada;
+- DELETE normal é negado;
+- anônimo não lê perfil privado;
+- fixtures de perfis e identidades são removidas ao final.
 
-O rerun confirma que o bloqueio continua atual e não era somente evidência histórica do primeiro attempt.
+Owner/BYPASSRLS não participou da evidência user-scoped.
 
-O probe está preparado para, quando autorizado por secret em runtime:
+## 5. Promoção baseline non-production - PASS
 
-1. descobrir endpoints branch-scoped sem versioná-los;
-2. criar duas identidades Auth sintéticas;
-3. obter OTPs e JWTs reais;
-4. provar A vs B vs anônimo pela Data API;
-5. provar ownership, leitura/alteração cruzada, forged ownership, transferência e `DELETE`;
-6. limpar perfis e identidades sintéticas ao final.
+Depois do gate live:
 
-## 6. Ação manual necessária
+- `000009` foi promovida com checksum canônico;
+- `000010` foi promovida com checksum canônico;
+- Data API foi criada na baseline com Managed Better Auth;
+- `add-default-grants` permaneceu falso;
+- somente `caleida_profile` foi exposto;
+- `db_anon_role = anonymous`;
+- `jwt_role_claim_key = .role`;
+- OpenAPI permaneceu desabilitado.
 
-Configurar no repositório GitHub Actions um secret chamado:
+Promotion probe:
 
 ```text
-NEON_API_KEY
+Workflow: US-PRIV-001 baseline promotion
+Run #1: 35239947088
+Job: 105265502696
+Canonical migration ledger: SUCCESS
+Data API create/config readback: SUCCESS
 ```
 
-O valor deve ser uma chave Neon com acesso somente ao necessário no projeto non-production para o probe. A chave não deve ser enviada pelo chat nem versionada.
+Checksums na baseline:
 
-Depois da configuração, a próxima execução deve apenas rerodar o job live existente. Não é necessário recriar Issue, PR, branch Git, branch Neon, migration ou Data API isolada.
+```text
+000009_profile_core.sql: 33f33c043c1a94b8ec4d5df3edd2a1fcb6c08d13abb3e128771687a576120de1
+000010_profile_identity_claim_fix.sql: 4a47f6715566445bcbed2f56fb2a9a15d867c633e85e89375e487aaa3c1ec2be
+```
 
-## 7. Promoção permanece proibida neste estado
+## 6. Readback baseline - PASS
 
-Enquanto o gate live estiver bloqueado:
+Readback direto no Neon confirmou:
 
-- não promover `000009` para a baseline Neon;
-- não provisionar Data API na baseline;
-- não mergear PR #62 como concluída;
-- não iniciar US-PRIV-002;
-- não criar Production Neon;
-- não executar deployment Vercel.
+- Data API `active`;
+- somente `caleida_profile` em `db_schemas`;
+- RLS habilitada e forçada em `caleida_profile.profiles`;
+- policies somente `profiles_owner_insert`, `profiles_owner_select` e `profiles_owner_update`;
+- `authenticated` com `INSERT`, `SELECT` e `UPDATE` na tabela;
+- nenhum grant de tabela para `anonymous` ou `PUBLIC`;
+- nenhum `DELETE` normal;
+- diff de schema `verify-us-priv-001` versus baseline vazio.
 
-Se o gate live passar, a sequência seguinte será promoção deliberada da migration/configuração para a baseline non-production, readback, CI final, reconciliação documental e merge da Story.
+A promoção revelou uma dependência de ordem: a Data API cria o papel gerenciado `authenticated`, enquanto `000009` concede privilégios somente se o papel já existir. Como as migrations foram promovidas antes do serviço, o bloco condicional inicialmente não concedeu ACL. Depois da criação da Data API foram reaplicados exatamente os grants já versionados em `000009`, sem privilégio novo, e o readback confirmou o estado esperado.
+
+## 7. Segurança e secrets
+
+Nenhum endpoint real, JWT, OTP, senha, API key, cookie ou connection string foi persistido em Git, docs ou Issue/PR.
+
+O workflow de promoção suprimiu o JSON de endpoint dos logs e mascarou `NEON_API_KEY`.
+
+Production Neon não foi criada. Nenhum deployment Vercel foi executado.
 
 ## 8. Browser
 
-`SKIPPED` nesta etapa: não existe runtime isolado configurado para esta branch Neon e deployment Vercel é exclusivamente humano/manual. Esse skip não substitui nem reduz o gate obrigatório JWT/Data API/RLS.
+`SKIPPED`: não existe runtime isolado configurado para essa branch e deployment Vercel é exclusivamente humano/manual. Esse skip não substituiu os gates obrigatórios de Data API/RLS, que estão em PASS.
+
+## 9. Resultado
+
+Todos os critérios de segurança de dados necessários para US-PRIV-001 estão em PASS. Resta somente o CI do head documental reconciliado e, mantendo PASS, merge de PR #62 e fechamento de Issue #61.
