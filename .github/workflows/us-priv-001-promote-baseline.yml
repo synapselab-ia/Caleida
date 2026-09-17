@@ -1,0 +1,102 @@
+name: US-PRIV-001 baseline promotion
+
+on:
+  push:
+    branches:
+      - probe/us-priv-001-live
+    paths:
+      - .github/workflows/us-priv-001-promote-baseline.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: us-priv-001-baseline-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      NEON_PROJECT_ID: patient-glade-95136440
+      NEON_BRANCH_ID: br-restless-cherry-awpcwy6r
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Verify canonical migrations on non-production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${NEON_API_KEY:-}"
+          echo "::add-mask::${NEON_API_KEY}"
+          npm install --global neon@latest >/dev/null
+
+          ledger="$(NEONCTL_PSQL_FALLBACK=1 neon psql "$NEON_BRANCH_ID" \
+            --project-id "$NEON_PROJECT_ID" \
+            --database-name neondb \
+            --role-name neondb_owner \
+            -- -At -v ON_ERROR_STOP=1 -c "SELECT filename || ':' || checksum FROM caleida_internal.schema_migrations WHERE filename IN ('000009_profile_core.sql','000010_profile_identity_claim_fix.sql') ORDER BY filename;")"
+
+          expected=$'000009_profile_core.sql:33f33c043c1a94b8ec4d5df3edd2a1fcb6c08d13abb3e128771687a576120de1\n000010_profile_identity_claim_fix.sql:4a47f6715566445bcbed2f56fb2a9a15d867c633e85e89375e487aaa3c1ec2be'
+          test "$ledger" = "$expected"
+          echo 'CALEIDA_BASELINE_MIGRATIONS_VERIFIED true'
+
+      - name: Provision least-privilege Data API on non-production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${NEON_API_KEY}"
+
+          if neon data-api get \
+            --project-id "$NEON_PROJECT_ID" \
+            --branch "$NEON_BRANCH_ID" \
+            --database neondb \
+            --output json --no-color >/tmp/data-api-before.json 2>/dev/null; then
+            echo 'CALEIDA_BASELINE_DATA_API_ALREADY_PRESENT true'
+            neon data-api update \
+              --project-id "$NEON_PROJECT_ID" \
+              --branch "$NEON_BRANCH_ID" \
+              --database neondb \
+              --db-aggregates-enabled=true \
+              --db-anon-role anonymous \
+              --db-extra-search-path public \
+              --db-max-rows 1000 \
+              --db-schemas caleida_profile \
+              --jwt-role-claim-key .role \
+              --openapi-mode disabled \
+              --output json --no-color >/tmp/data-api-write.json
+          else
+            neon data-api create \
+              --project-id "$NEON_PROJECT_ID" \
+              --branch "$NEON_BRANCH_ID" \
+              --database neondb \
+              --auth-provider neon_auth \
+              --add-default-grants=false \
+              --db-aggregates-enabled=true \
+              --db-anon-role anonymous \
+              --db-extra-search-path public \
+              --db-max-rows 1000 \
+              --db-schemas caleida_profile \
+              --jwt-role-claim-key .role \
+              --openapi-mode disabled \
+              --output json --no-color >/tmp/data-api-write.json
+            echo 'CALEIDA_BASELINE_DATA_API_CREATED true'
+          fi
+
+          neon data-api get \
+            --project-id "$NEON_PROJECT_ID" \
+            --branch "$NEON_BRANCH_ID" \
+            --database neondb \
+            --output json --no-color >/tmp/data-api-after.json
+
+          jq -e '.status == "active"' /tmp/data-api-after.json >/dev/null
+          jq -e '.settings.db_schemas == ["caleida_profile"]' /tmp/data-api-after.json >/dev/null
+          jq -e '.settings.db_anon_role == "anonymous"' /tmp/data-api-after.json >/dev/null
+          jq -e '.settings.jwt_role_claim_key == ".role"' /tmp/data-api-after.json >/dev/null
+          jq -e '.settings.openapi_mode == "disabled"' /tmp/data-api-after.json >/dev/null
+          echo 'CALEIDA_BASELINE_DATA_API_VERIFIED true'
