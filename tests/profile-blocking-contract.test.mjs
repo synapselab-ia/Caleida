@@ -68,7 +68,7 @@ test("blocking by username only resolves profiles already visible under the auth
   assert.match(blocksDataApi, /target\.authUserId === context\.authUserId/);
   assert.match(actions, /Informe um nome de usuário válido/);
   assert.match(actions, /Você não pode bloquear o próprio perfil/);
-  assert.match(actions, /já participa de um bloqueio/);
+  assert.match(actions, /já participar de um bloqueio/);
 });
 
 test("public profile read continues through the same RLS-backed visible-profile boundary", () => {
