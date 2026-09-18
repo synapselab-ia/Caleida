@@ -75,6 +75,7 @@ if (target === "ephemeral") {
       GRANT EXECUTE ON FUNCTION caleida_profile.touch_profile_updated_at() TO caleida_profile_test_authenticated;
       GRANT EXECUTE ON FUNCTION caleida_profile.profile_links_are_valid(text[]) TO caleida_profile_test_authenticated;
       GRANT EXECUTE ON FUNCTION caleida_profile.favorite_categories_are_valid(text[]) TO caleida_profile_test_authenticated;
+      GRANT EXECUTE ON FUNCTION caleida_profile.has_block_relationship_with(uuid) TO caleida_profile_test_authenticated;
     `,
   });
 
