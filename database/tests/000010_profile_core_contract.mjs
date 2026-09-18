@@ -59,7 +59,7 @@ const policies = runPsql({
   databaseUrl,
   tuplesOnly: true,
   sql: `
-    SELECT string_agg(cmd, ',' ORDER BY cmd)
+    SELECT string_agg(DISTINCT cmd, ',' ORDER BY cmd)
     FROM pg_policies
     WHERE schemaname = 'caleida_profile'
       AND tablename = 'profiles';
