@@ -162,9 +162,30 @@ Implementado e verificado:
 
 Evidência: `docs/US_PRIV_002_VERIFICATION.md`.
 
+#### US-PRIV-003 - Perfil público + visibilidade fail-closed (#65/#66) - EM REVISÃO
+
+Implementado e verificado:
+
+- migration `000012_profile_public_visibility.sql`;
+- rota pública `/<username>`;
+- seleção funcional somente entre `public` e `only_me`;
+- `followers` e `connections` continuam fail-closed e fora da UI;
+- policy pública somente para SELECT de linhas `public`;
+- `anonymous` limitado às seis colunas públicas, sem INSERT/UPDATE/DELETE;
+- perfil privado e inexistente usam a mesma ausência de conteúdo na rota pública;
+- CI #292 / `35354823796` / job `105631496653`: SUCCESS;
+- Neon isolated `verify-us-priv-003 / br-noisy-firefly-aw06x1br`: PASS;
+- migration `000012` promovida à baseline non-production;
+- Data API permanece ativa somente para `caleida_profile`;
+- diff de schema isolated versus baseline: vazio;
+- browser/live intermediário: SKIPPED/deferred conforme protocolo;
+- nenhum bloqueio, Storage ou relação social funcional foi antecipado.
+
+Evidência: `docs/US_PRIV_003_VERIFICATION.md`.
+
 ### Próxima Story
 
-`US-PRIV-003 - Rota pública + visibilidade` está pronta para promoção. Seu escopo é somente rota pública por username e enforcement de visibilidade fail-closed. Bloqueio permanece em US-PRIV-004, e relações sociais funcionais, Storage e Production Neon continuam fora de escopo.
+Após merge, CI pós-merge e fechamento da Issue #65, a próxima Story é `US-PRIV-004 - Implementar bloqueio com efeito real`.
 
 ### Limites vigentes do Incremento 3
 
