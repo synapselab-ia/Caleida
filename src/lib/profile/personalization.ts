@@ -32,3 +32,24 @@ export function isProfileAccentToken(value: string): value is ProfileAccentToken
 export function isProfileCategory(value: string): value is ProfileCategory {
   return (PROFILE_CATEGORIES as readonly string[]).includes(value);
 }
+
+
+export const PROFILE_VISIBILITIES = [
+  "public",
+  "followers",
+  "connections",
+  "only_me",
+] as const;
+
+export type ProfileVisibility = (typeof PROFILE_VISIBILITIES)[number];
+
+export const PROFILE_EDITABLE_VISIBILITIES = ["public", "only_me"] as const;
+export type EditableProfileVisibility = (typeof PROFILE_EDITABLE_VISIBILITIES)[number];
+
+export function isProfileVisibility(value: string): value is ProfileVisibility {
+  return (PROFILE_VISIBILITIES as readonly string[]).includes(value);
+}
+
+export function isEditableProfileVisibility(value: string): value is EditableProfileVisibility {
+  return (PROFILE_EDITABLE_VISIBILITIES as readonly string[]).includes(value);
+}
