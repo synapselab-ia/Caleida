@@ -8,8 +8,10 @@ import {
   PROFILE_CATEGORY_MAX_COUNT,
   PROFILE_LINK_MAX_COUNT,
   PROFILE_LINK_MAX_LENGTH,
+  isEditableProfileVisibility,
   isProfileAccentToken,
   isProfileCategory,
+  type EditableProfileVisibility,
   type ProfileAccentToken,
   type ProfileCategory,
 } from "@/lib/profile/personalization";
@@ -24,6 +26,7 @@ export type ProfileActionState = {
     accentToken?: string;
     links?: string;
     favoriteCategories?: string;
+    visibility?: string;
   };
 };
 
@@ -125,6 +128,7 @@ function validateProfileInput(formData: FormData) {
   const favoriteCategories = formData
     .getAll("favoriteCategories")
     .filter((value): value is string => typeof value === "string");
+  const visibility = readText(formData.get("visibility"));
 
   const fieldErrors: ProfileActionState["fieldErrors"] = {};
 
@@ -160,6 +164,10 @@ function validateProfileInput(formData: FormData) {
       `Escolha até ${PROFILE_CATEGORY_MAX_COUNT} categorias culturais diferentes.`;
   }
 
+  if (!isEditableProfileVisibility(visibility)) {
+    fieldErrors.visibility = "Escolha entre Público e Somente eu.";
+  }
+
   if (Object.keys(fieldErrors).length > 0 || linksResult.error) {
     return { ok: false as const, fieldErrors };
   }
@@ -173,6 +181,7 @@ function validateProfileInput(formData: FormData) {
       accentToken: accentToken as ProfileAccentToken,
       links: linksResult.links,
       favoriteCategories: favoriteCategories as ProfileCategory[],
+      visibility: visibility as EditableProfileVisibility,
     },
   };
 }
@@ -217,8 +226,9 @@ export async function saveProfileAction(
   }
 
   revalidatePath("/account/profile");
+  revalidatePath(`/${validation.input.username}`);
   return {
     status: "success",
-    message: "Perfil salvo. Essas informações continuam privadas para outras pessoas.",
+    message: "Perfil salvo. A visibilidade escolhida foi aplicada.",
   };
 }
