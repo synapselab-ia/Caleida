@@ -10,7 +10,6 @@ import {
   PROFILE_BIO_MAX_LENGTH,
   PROFILE_CATEGORY_MAX_COUNT,
   PROFILE_LINK_MAX_COUNT,
-  PROFILE_ACCENT_TOKENS,
   PROFILE_CATEGORIES,
   type ProfileAccentToken,
   type ProfileCategory,
@@ -236,5 +235,3 @@ export function ProfileForm({
     </form>
   );
 }
-
-void PROFILE_ACCENT_TOKENS;
