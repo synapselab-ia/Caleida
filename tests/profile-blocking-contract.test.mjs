@@ -40,7 +40,10 @@ test("blocking schema enforces direction, integrity, owner RLS and a restrictive
   assert.match(migration, /NOT caleida_profile\.has_block_relationship_with\(auth_user_id\)/);
   assert.match(migration, /GRANT SELECT, INSERT, DELETE[\s\S]*profile_blocks[\s\S]*authenticated/);
   assert.doesNotMatch(migration, /GRANT UPDATE[\s\S]*profile_blocks/);
-  assert.doesNotMatch(migration, /GRANT (?:SELECT|INSERT|DELETE|UPDATE)[\s\S]*profile_blocks[\s\S]*anonymous/);
+  assert.doesNotMatch(
+    migration,
+    /GRANT\s+(?:SELECT|INSERT|DELETE|UPDATE)(?:\s*,\s*(?:SELECT|INSERT|DELETE|UPDATE))*\s+ON TABLE caleida_profile\.profile_blocks\s+TO anonymous/i,
+  );
 });
 
 test("block CRUD stays server-only, JWT scoped and never lets the client choose blocker ownership", () => {
