@@ -13,6 +13,7 @@ import {
   PROFILE_CATEGORIES,
   type ProfileAccentToken,
   type ProfileCategory,
+  type ProfileVisibility,
 } from "@/lib/profile/personalization";
 
 const initialState: ProfileActionState = { status: "idle" };
@@ -56,6 +57,7 @@ export function ProfileForm({
   accentToken = "violet",
   links = [],
   favoriteCategories = [],
+  visibility = "only_me",
 }: {
   username?: string;
   displayName?: string;
@@ -63,12 +65,15 @@ export function ProfileForm({
   accentToken?: ProfileAccentToken;
   links?: string[];
   favoriteCategories?: ProfileCategory[];
+  visibility?: ProfileVisibility;
 }) {
   const [state, action, isPending] = useActionState(saveProfileAction, initialState);
   const biographyErrorId = "profile-biography-error";
   const linksErrorId = "profile-links-error";
   const accentErrorId = "profile-accent-error";
   const categoriesErrorId = "profile-categories-error";
+  const visibilityErrorId = "profile-visibility-error";
+  const editableVisibility = visibility === "public" ? "public" : "only_me";
 
   return (
     <form action={action} className="grid gap-7" aria-busy={isPending}>
@@ -215,6 +220,51 @@ export function ProfileForm({
           ))}
         </div>
         <FieldError id={categoriesErrorId} message={state.fieldErrors?.favoriteCategories} />
+      </fieldset>
+
+      <fieldset
+        className="grid gap-3"
+        aria-describedby={state.fieldErrors?.visibility ? visibilityErrorId : undefined}
+      >
+        <legend className="text-sm font-semibold text-text-primary">Visibilidade do perfil</legend>
+        <p className="text-sm text-text-muted">
+          Seguidores e conexões continuam privados nesta etapa porque essas relações ainda não existem.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface px-3 py-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
+            <input
+              type="radio"
+              name="visibility"
+              value="public"
+              defaultChecked={editableVisibility === "public"}
+              disabled={isPending}
+              className="mt-1 h-4 w-4"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-text-primary">Público</span>
+              <span className="mt-1 block text-sm leading-6 text-text-muted">
+                Visitantes e usuários podem abrir seu perfil pelo nome de usuário.
+              </span>
+            </span>
+          </label>
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface px-3 py-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
+            <input
+              type="radio"
+              name="visibility"
+              value="only_me"
+              defaultChecked={editableVisibility === "only_me"}
+              disabled={isPending}
+              className="mt-1 h-4 w-4"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-text-primary">Somente eu</span>
+              <span className="mt-1 block text-sm leading-6 text-text-muted">
+                Terceiros recebem a mesma ausência de perfil usada para um username inexistente.
+              </span>
+            </span>
+          </label>
+        </div>
+        <FieldError id={visibilityErrorId} message={state.fieldErrors?.visibility} />
       </fieldset>
 
       {state.status === "error" && state.message ? (
