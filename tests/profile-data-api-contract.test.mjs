@@ -29,16 +29,18 @@ test("profile normal CRUD uses server-side JWT plus Data API, never database own
   assert.doesNotMatch(dataApi, /NEXT_PUBLIC_/);
 });
 
-test("profile payload includes only editable profile fields and never ownership or visibility", () => {
+test("profile payload includes editable fields and visibility, but never ownership", () => {
   assert.match(dataApi, /username:\s*input\.username/);
   assert.match(dataApi, /display_name:\s*input\.displayName/);
   assert.match(dataApi, /biography:\s*input\.biography/);
   assert.match(dataApi, /accent_token:\s*input\.accentToken/);
   assert.match(dataApi, /links:\s*input\.links/);
   assert.match(dataApi, /favorite_categories:\s*input\.favoriteCategories/);
+  assert.match(dataApi, /visibility:\s*input\.visibility/);
+  assert.match(actions, /formData\.get\(["']visibility["']\)/);
+  assert.match(profileForm, /name="visibility"/);
   assert.doesNotMatch(actions, /formData\.get\(["']authUserId["']\)/);
-  assert.doesNotMatch(actions, /formData\.get\(["']visibility["']\)/);
-  assert.doesNotMatch(profileForm, /name=["'](?:authUserId|visibility)["']/);
+  assert.doesNotMatch(profileForm, /name=["']authUserId["']/);
 });
 
 test("personalization validates biography, accent token, HTTPS links and canonical categories", () => {
@@ -62,7 +64,7 @@ test("personalization validates biography, accent token, HTTPS links and canonic
 test("private profile surface covers personalization without public or storage controls", () => {
   assert.match(profilePage, /href=["']\/account\/security["']/);
   assert.match(profilePage, /Perfil ainda não criado/);
-  assert.match(profilePage, /Visibilidade atual: somente você/);
+  assert.match(profilePage, /Visibilidade atual:/);
   assert.match(profileForm, /name="biography"/);
   assert.match(profileForm, /name="accentToken"/);
   assert.match(profileForm, /name="links"/);
