@@ -137,9 +137,30 @@ Nenhum endpoint real, JWT, OTP, senha, API key, cookie ou connection string foi 
 
 Evidência: `docs/US_PRIV_001_VERIFICATION.md`.
 
+#### US-PRIV-002 - Personalização segura do perfil (#63/#64) - EM REVISÃO
+
+Implementado e verificado:
+
+- migration `000011_profile_personalization.sql`;
+- biografia opcional limitada a 280 caracteres;
+- tokens de destaque aprovados: violet, magenta, blue, green e amber;
+- até 5 links HTTPS sem credenciais embutidas;
+- até 3 categorias culturais favoritas da taxonomia canônica;
+- validação server-side e constraints persistentes;
+- RLS, ownership e grants de tabela preservados;
+- CI #283 encontrou divergência no papel sintético do teste legado e a correção passou no CI #284;
+- CI #284 / `35350619301` / job `105617610955`: SUCCESS;
+- Neon isolated `verify-us-priv-002 / br-proud-wind-awycp0sd`: PASS;
+- migration `000011` promovida à baseline non-production com checksum `4773504fe2296e7ce141e8efcb027efd2218f2fd5c5598585bd97f5a4f55f95f`;
+- Data API permanece ativa somente para `caleida_profile`;
+- diff de schema isolated versus baseline: vazio;
+- nenhum avatar/banner/Storage, perfil público, obra favorita ou relação social foi antecipado.
+
+Evidência: `docs/US_PRIV_002_VERIFICATION.md`.
+
 ### Próxima Story
 
-`US-PRIV-002 - Personalização segura do perfil` está pronta para promoção. Seu escopo não inclui avatar/banner/Storage, obras favoritas, perfil público ou relações sociais.
+Após merge, CI pós-merge e fechamento da Issue #63, a próxima Story é `US-PRIV-003 - Rota pública + visibilidade`.
 
 ### Limites vigentes do Incremento 3
 
