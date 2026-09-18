@@ -10,6 +10,8 @@ const dataApi = read("src/lib/profile/data-api.ts");
 const actions = read("src/lib/profile/actions.ts");
 const profilePage = read("src/app/(private)/account/profile/page.tsx");
 const profileForm = read("src/components/profile/ProfileForm.tsx");
+const personalization = read("src/lib/profile/personalization.ts");
+const migration = read("database/migrations/000011_profile_personalization.sql");
 const loading = read("src/app/(private)/account/profile/loading.tsx");
 const errorBoundary = read("src/app/(private)/account/profile/error.tsx");
 const envExample = read(".env.example");
@@ -27,17 +29,47 @@ test("profile normal CRUD uses server-side JWT plus Data API, never database own
   assert.doesNotMatch(dataApi, /NEXT_PUBLIC_/);
 });
 
-test("profile payload never accepts ownership or visibility from the form", () => {
-  assert.match(dataApi, /const body = \{\s*username: input\.username,\s*display_name: input\.displayName,\s*\}/s);
+test("profile payload includes only editable profile fields and never ownership or visibility", () => {
+  assert.match(dataApi, /username:\s*input\.username/);
+  assert.match(dataApi, /display_name:\s*input\.displayName/);
+  assert.match(dataApi, /biography:\s*input\.biography/);
+  assert.match(dataApi, /accent_token:\s*input\.accentToken/);
+  assert.match(dataApi, /links:\s*input\.links/);
+  assert.match(dataApi, /favorite_categories:\s*input\.favoriteCategories/);
   assert.doesNotMatch(actions, /formData\.get\(["']authUserId["']\)/);
   assert.doesNotMatch(actions, /formData\.get\(["']visibility["']\)/);
   assert.doesNotMatch(profileForm, /name=["'](?:authUserId|visibility)["']/);
 });
 
-test("private profile surface covers setup, edit, pending, error and success states", () => {
+test("personalization validates biography, accent token, HTTPS links and canonical categories", () => {
+  assert.match(personalization, /PROFILE_BIO_MAX_LENGTH = 280/);
+  assert.match(personalization, /PROFILE_LINK_MAX_COUNT = 5/);
+  assert.match(personalization, /PROFILE_CATEGORY_MAX_COUNT = 3/);
+  assert.match(actions, /parsed\.protocol !== "https:"/);
+  assert.match(actions, /parsed\.username/);
+  assert.match(actions, /parsed\.password/);
+  assert.match(actions, /new Set\(normalizedLinks\)/);
+  assert.match(actions, /new Set\(favoriteCategories\)/);
+  for (const category of ["book", "manga", "manhwa", "manhua", "movie", "series", "anime"]) {
+    assert.match(personalization, new RegExp(`"${category}"`));
+  }
+  assert.match(migration, /profiles_biography_length_check/);
+  assert.match(migration, /profiles_accent_token_check/);
+  assert.match(migration, /profiles_links_check/);
+  assert.match(migration, /profiles_favorite_categories_check/);
+});
+
+test("private profile surface covers personalization without public or storage controls", () => {
   assert.match(profilePage, /href=["']\/account\/security["']/);
   assert.match(profilePage, /Perfil ainda não criado/);
   assert.match(profilePage, /Visibilidade atual: somente você/);
+  assert.match(profileForm, /name="biography"/);
+  assert.match(profileForm, /name="accentToken"/);
+  assert.match(profileForm, /name="links"/);
+  assert.match(profileForm, /name="favoriteCategories"/);
+  assert.match(profileForm, /type="radio"/);
+  assert.match(profileForm, /type="checkbox"/);
+  assert.doesNotMatch(profileForm, /avatar|banner|upload|storage/i);
   assert.match(profileForm, /useActionState/);
   assert.match(profileForm, /isPending/);
   assert.match(profileForm, /Perfil não salvo/);
