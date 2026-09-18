@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-001 concluída e US-PRIV-002 pronta para promoção como próxima Story.  
+**Estado:** Incremento 3 em execução; US-PRIV-002 verificada e em revisão na Issue #63 / PR #64.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -45,7 +45,7 @@ Ordem vigente:
 ```text
 US-PRIV-001 - perfil básico user-scoped + Data API/RLS       CONCLUÍDA
   ↓
-US-PRIV-002 - personalização segura do perfil                PRONTA / próxima ação
+US-PRIV-002 - personalização segura do perfil                EM REVISÃO
   ↓
 US-PRIV-003 - rota pública + visibilidade                     A FAZER
   ↓
@@ -121,4 +121,19 @@ Continuam fora do escopo:
 
 ## 7. NEXT_ACTION
 
-> Promover US-PRIV-002 como próxima Story limitada: criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md`, implementar somente a personalização segura definida acima e executar os gates aplicáveis. Não antecipar US-PRIV-003 nem dependências futuras.
+> Executar o CI final documental da PR #64. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #63 e promover somente US-PRIV-003 como próxima Story.
+
+
+## 8. Evidência atual de US-PRIV-002
+
+```text
+Issue: #63
+PR: #64
+CI corrigido: #284 / 35350619301 / job 105617610955 / SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-002 / br-proud-wind-awycp0sd / PASS
+Baseline ledger: 000001-000011
+000011 checksum: 4773504fe2296e7ce141e8efcb027efd2218f2fd5c5598585bd97f5a4f55f95f
+Schema diff isolated vs baseline: vazio
+Browser/live intermediário: SKIPPED/deferred conforme Verification Protocol
+```

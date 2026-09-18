@@ -1,11 +1,21 @@
 import "server-only";
 
 import { createServerAuth, getServerSession } from "@/lib/auth/server";
+import {
+  isProfileAccentToken,
+  isProfileCategory,
+  type ProfileAccentToken,
+  type ProfileCategory,
+} from "@/lib/profile/personalization";
 
 export type BasicProfile = {
   authUserId: string;
   username: string;
   displayName: string;
+  biography: string;
+  accentToken: ProfileAccentToken;
+  links: string[];
+  favoriteCategories: ProfileCategory[];
   visibility: "only_me";
   createdAt: string;
   updatedAt: string;
@@ -15,6 +25,10 @@ type ProfileRow = {
   auth_user_id: string;
   username: string;
   display_name: string;
+  biography: string;
+  accent_token: string;
+  links: unknown;
+  favorite_categories: unknown;
   visibility: string;
   created_at: string;
   updated_at: string;
@@ -24,6 +38,15 @@ type ProfileRequestContext = {
   authUserId: string;
   token: string;
   dataApiUrl: string;
+};
+
+type ProfileWriteBody = {
+  username: string;
+  display_name: string;
+  biography: string;
+  accent_token: ProfileAccentToken;
+  links: string[];
+  favorite_categories: ProfileCategory[];
 };
 
 export type ProfileDataApiErrorCode =
@@ -41,7 +64,7 @@ export class ProfileDataApiError extends Error {
 
 const PROFILE_SCHEMA = "caleida_profile";
 const PROFILE_SELECT =
-  "auth_user_id,username,display_name,visibility,created_at,updated_at";
+  "auth_user_id,username,display_name,biography,accent_token,links,favorite_categories,visibility,created_at,updated_at";
 
 function readDataApiUrl(environment: NodeJS.ProcessEnv = process.env) {
   const rawUrl = environment.NEON_DATA_API_URL?.trim();
@@ -105,7 +128,7 @@ async function requestProfiles(
   options: {
     method: "GET" | "POST" | "PATCH";
     query?: string;
-    body?: { username: string; display_name: string };
+    body?: ProfileWriteBody;
   },
 ) {
   const headers = new Headers({
@@ -145,14 +168,28 @@ async function requestProfiles(
   return payload;
 }
 
+function parseStringArray(value: unknown) {
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string")) {
+    throw new ProfileDataApiError("upstream");
+  }
+  return value;
+}
+
 function parseProfileRow(value: unknown, expectedAuthUserId: string): BasicProfile {
   if (!value || typeof value !== "object") throw new ProfileDataApiError("upstream");
 
   const row = value as Partial<ProfileRow>;
+  const links = parseStringArray(row.links);
+  const favoriteCategories = parseStringArray(row.favorite_categories);
+
   if (
     row.auth_user_id !== expectedAuthUserId ||
     typeof row.username !== "string" ||
     typeof row.display_name !== "string" ||
+    typeof row.biography !== "string" ||
+    typeof row.accent_token !== "string" ||
+    !isProfileAccentToken(row.accent_token) ||
+    !favoriteCategories.every(isProfileCategory) ||
     row.visibility !== "only_me" ||
     typeof row.created_at !== "string" ||
     typeof row.updated_at !== "string"
@@ -164,6 +201,10 @@ function parseProfileRow(value: unknown, expectedAuthUserId: string): BasicProfi
     authUserId: row.auth_user_id,
     username: row.username,
     displayName: row.display_name,
+    biography: row.biography,
+    accentToken: row.accent_token,
+    links,
+    favoriteCategories,
     visibility: row.visibility,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -189,12 +230,20 @@ export async function getOwnProfile() {
 export async function saveOwnProfile(input: {
   username: string;
   displayName: string;
+  biography: string;
+  accentToken: ProfileAccentToken;
+  links: string[];
+  favoriteCategories: ProfileCategory[];
 }) {
   const context = await getProfileRequestContext();
   const current = await fetchOwnProfile(context);
-  const body = {
+  const body: ProfileWriteBody = {
     username: input.username,
     display_name: input.displayName,
+    biography: input.biography,
+    accent_token: input.accentToken,
+    links: input.links,
+    favorite_categories: input.favoriteCategories,
   };
 
   const payload = current

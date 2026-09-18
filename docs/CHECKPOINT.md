@@ -1,8 +1,8 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `READY`  
+**Status operacional:** `IN_REVIEW`  
 **Fase:** Incremento 3 - Perfis e privacidade / EPIC-03  
-**Story ativa:** nenhuma
+**Story ativa:** `US-PRIV-002 - Personalização segura do perfil`
 
 ## Cursor
 
@@ -12,12 +12,12 @@ LAST_COMPLETED_ISSUE: #61
 LAST_COMPLETED_PR: #62
 LAST_COMPLETED_MERGE: 8aeb90cdc3b9b017aee3cefcd4e60b35f22d2758
 
-ACTIVE_TASK: none
-ACTIVE_ISSUE: none
-ACTIVE_BRANCH: none
-ACTIVE_PR: none
+ACTIVE_TASK: US-PRIV-002 - Personalização segura do perfil
+ACTIVE_ISSUE: #63
+ACTIVE_BRANCH: feat/us-priv-002-profile-personalization
+ACTIVE_PR: #64
 
-NEXT_ACTION: Promover US-PRIV-002 - Personalização segura do perfil como próxima Story limitada. Criar a Issue e branch próprias a partir da main atual, reler o escopo canônico em docs/INCREMENT_3_PLAN.md e implementar somente biografia, cor de destaque por tokens aprovados, links HTTPS permitidos e categorias culturais favoritas, preservando ownership e validação server-side/banco. Não antecipar avatar, banner, Storage, obras favoritas, perfil público ou relações sociais.
+NEXT_ACTION: Executar o CI final documental da PR #64. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #63 e promover somente US-PRIV-003. Não antecipar US-PRIV-004.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
@@ -110,3 +110,44 @@ O payload normal aceita somente `username` e `display_name`. `auth_user_id` e vi
 - deployment Vercel continua exclusivamente humano/manual;
 - nenhum endpoint real, JWT, OTP, senha, API key ou connection string é persistido;
 - branches históricas Git/Neon não são removidas sem autorização destrutiva explícita.
+
+
+## US-PRIV-002 em andamento
+
+```text
+Issue: #63 - open
+Branch: feat/us-priv-002-profile-personalization
+PR: #64 - open
+Base Git: main @ 23ab71a37b191146209e3f90ace5b729918267de
+Migration nova: database/migrations/000011_profile_personalization.sql
+```
+
+Escopo implementado na branch até este checkpoint:
+
+- biografia opcional limitada a 280 caracteres;
+- cor de destaque restrita a tokens aprovados do design system;
+- até 5 links HTTPS, sem credenciais embutidas e com normalização server-side;
+- até 3 categorias culturais favoritas da taxonomia canônica;
+- novos campos no mesmo perfil user-scoped já protegido por RLS;
+- `auth_user_id` e `visibility` continuam fora do payload editável;
+- nenhum avatar, banner, upload, Storage, obra favorita, rota pública ou relação social foi introduzido.
+
+Gates concluídos até este checkpoint:
+
+```text
+CI inicial #283 / 35350388259 / job 105616855060: FAILURE no teste DB sintético
+Correção: papel sintético passou a reproduzir EXECUTE dos validadores
+CI corrigido #284 / 35350619301 / job 105617610955: SUCCESS
+PostgreSQL 18 + npm run verify:db: PASS
+Neon isolated verify-us-priv-002 / br-proud-wind-awycp0sd: PASS
+Baseline migration 000011: promovida
+Baseline ledger: 000001-000011
+000011 checksum: 4773504fe2296e7ce141e8efcb027efd2218f2fd5c5598585bd97f5a4f55f95f
+Schema diff isolated vs baseline: vazio
+Data API baseline: active / somente caleida_profile
+Browser/live intermediário: SKIPPED/deferred
+```
+
+Readback baseline preservou RLS forçada, somente policies owner SELECT/INSERT/UPDATE, `authenticated` somente com INSERT/SELECT/UPDATE na tabela e `anonymous` sem grant de tabela.
+
+Nenhum deployment Vercel foi executado.

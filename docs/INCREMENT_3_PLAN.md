@@ -261,7 +261,7 @@ A ordem cria primeiro um domínio privado com ownership real, só então abre le
 # US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS
 
 **Prioridade:** P0  
-**Estado:** PRONTA / próxima ação  
+**Estado:** CONCLUÍDA  
 **Dependências:** Incremento 2 concluído; ADR-004, ADR-005 e ADR-008; branch Neon isolada disponível  
 **Capacidades:** CAP-03, fundação de CAP-05
 
@@ -353,7 +353,7 @@ Se a Data API não puder ser provisionada/testada em branch Neon isolada, se JWT
 # US-PRIV-002 - Adicionar personalização segura do perfil
 
 **Prioridade:** P1  
-**Estado:** A FAZER  
+**Estado:** EM REVISÃO / PR #64  
 **Dependência:** US-PRIV-001  
 **Capacidade:** CAP-03
 
@@ -526,10 +526,14 @@ O Incremento 3 pode ser encerrado quando:
 
 CAP-03 e CAP-05 permanecerão com extensões futuras deliberadas onde suas dependências ainda não existem. Isso não autoriza marcar avatar/banner, obras favoritas, followers/connections, mute/restrict ou privacidade de domínios futuros como implementados.
 
-## 9. Próxima ação após OPS-007
+## 9. Estado operacional após US-PRIV-002
 
-Executar somente:
+US-PRIV-001 está concluída.
 
-> `US-PRIV-001 - Materializar perfil básico user-scoped com Data API e RLS`
+US-PRIV-002 está implementada e verificada na PR #64, com PostgreSQL 18, Neon isolated e promoção da migration `000011` para a baseline non-production em PASS. O fechamento ainda depende do CI final documental, merge, CI pós-merge e fechamento da Issue #63.
 
-Não iniciar US-PRIV-002 nem provisionar Production/Storage por antecipação.
+Após esse fechamento, promover somente:
+
+> `US-PRIV-003 - Publicar perfil com visibilidade fail-closed`
+
+Não iniciar US-PRIV-004 nem antecipar Storage, relações sociais ou Production Neon.

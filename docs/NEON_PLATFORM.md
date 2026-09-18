@@ -1,6 +1,6 @@
 # Neon Platform - Caleida
 
-**Status:** arquitetura canônica de plataforma durante o Incremento 3, após promoção da US-PRIV-001 para a baseline non-production  
+**Status:** arquitetura canônica de plataforma durante o Incremento 3, após promoção da US-PRIV-002 para a baseline non-production  
 **Decisões:** ADR-004, ADR-005, ADR-008 e ADR-009
 
 ## 1. Topologia vigente
@@ -40,7 +40,7 @@ A branch Neon `main` é staging/non-production e não é a branch Git `main`.
 
 ## 3. Baseline de migrations
 
-A baseline integrada contém migrations `000001`-`000010`.
+A baseline integrada contém migrations `000001`-`000011`.
 
 Checksums mais recentes:
 
@@ -53,9 +53,12 @@ Checksums mais recentes:
 
 000010_profile_identity_claim_fix.sql
 4a47f6715566445bcbed2f56fb2a9a15d867c633e85e89375e487aaa3c1ec2be
+
+000011_profile_personalization.sql
+4773504fe2296e7ce141e8efcb027efd2218f2fd5c5598585bd97f5a4f55f95f
 ```
 
-`000009` cria o núcleo de perfil/RLS. `000010` faz a identidade user-scoped derivar do `sub` validado disponível em `request.jwt.claims`, sem depender de acesso direto ao schema gerenciado `auth`.
+`000009` cria o núcleo de perfil/RLS. `000010` faz a identidade user-scoped derivar do `sub` validado disponível em `request.jwt.claims`. `000011` adiciona biografia, token de destaque, links HTTPS validados e categorias culturais favoritas sem alterar ownership ou policies.
 
 ## 4. Perfil user-scoped e Data API
 
@@ -68,7 +71,7 @@ caleida_profile.profiles
 Contrato atual:
 
 - `auth_user_id` UUID é a chave de ownership;
-- `username` e `display_name` são os únicos campos editáveis nesta Story;
+- campos editáveis atuais: `username`, `display_name`, `biography`, `accent_token`, `links` e `favorite_categories`;
 - visibilidade nasce `only_me`;
 - RLS está habilitada e forçada;
 - policies normais existem somente para `SELECT`, `INSERT` e `UPDATE` do owner;
@@ -126,6 +129,7 @@ verify-us-auth-006 / br-cold-block-aww00k4o
 verify-us-auth-007 / br-wandering-mountain-awjnqqps
 verify-us-auth-008 / br-delicate-meadow-aw1u62kn
 verify-us-priv-001 / br-silent-rain-aw4fqrhg
+verify-us-priv-002 / br-proud-wind-awycp0sd
 ```
 
 Branches temporárias não são fonte de verdade de schema. Exclusão exige autorização explícita porque é destrutiva.
@@ -147,8 +151,20 @@ Detalhes: `docs/US_PRIV_001_VERIFICATION.md`.
 
 Nunca versionar DATABASE_URLs, Neon API keys, Auth URLs reais, Data API URLs reais, cookie secrets, rate-limit secrets, recovery/session tokens, OAuth/client secrets ou credenciais de e-mail/Storage.
 
-## 11. Próximo gate de plataforma
+## 11. Evidência de US-PRIV-002
 
-US-PRIV-002 só inicia depois do merge e fechamento de US-PRIV-001.
+```text
+CI #284 / 35350619301 / job 105617610955: SUCCESS
+Neon isolated: verify-us-priv-002 / br-proud-wind-awycp0sd
+Baseline ledger: 000001-000011
+Schema diff isolated vs baseline: vazio
+Data API: active / somente caleida_profile
+```
 
-A Data API baseline já existe e não deve ser recriada. Qualquer mudança de schema/configuração deve seguir Story própria, migration versionada, PostgreSQL 18, branch Neon isolada quando houver semântica gerenciada e readback antes de promoção.
+Readback após a promoção confirmou RLS habilitada e forçada, somente as policies owner existentes, `authenticated` com `INSERT/SELECT/UPDATE` na tabela, `anonymous` sem grant de tabela e validadores novos sem `EXECUTE` para `PUBLIC`.
+
+Detalhes: `docs/US_PRIV_002_VERIFICATION.md`.
+
+## 12. Próximo gate de plataforma
+
+Após merge e fechamento da US-PRIV-002, US-PRIV-003 poderá introduzir a leitura pública fail-closed. A Data API baseline não deve ser recriada e nenhuma policy/grant público deve ser criado fora dessa Story.

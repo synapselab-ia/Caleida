@@ -46,7 +46,7 @@ Live matrix #13 / 34636223750: SUCCESS
 
 # Incremento 3 - Perfis e privacidade / EPIC-03
 
-**Estado:** EM ANDAMENTO / US-PRIV-002 PRONTA  
+**Estado:** EM ANDAMENTO / US-PRIV-002 EM REVISÃO  
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
 **Capacidades:** CAP-03, CAP-05, CAP-33  
 **Refino:** OPS-007 / Issue #59
@@ -54,7 +54,7 @@ Live matrix #13 / 34636223750: SUCCESS
 | Story | Estado | Issue/PR | Cobertura principal | Evidência |
 |---|---|---|---|---|
 | US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | CONCLUÍDA | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
-| US-PRIV-002 - Personalização segura do perfil | PRONTA | - | CAP-03 | - |
+| US-PRIV-002 - Personalização segura do perfil | EM REVISÃO | #63/#64 | CAP-03 | `US_PRIV_002_VERIFICATION.md` |
 | US-PRIV-003 - Rota pública + visibilidade | A FAZER | - | CAP-03, CAP-05 | - |
 | US-PRIV-004 - Bloqueio com efeito real | A FAZER | - | CAP-05 | - |
 | US-PRIV-005 - Desativação e reativação | A FAZER | - | CAP-33 | - |
@@ -103,6 +103,20 @@ Explicitamente adiado:
 
 Esses adiamentos não contam como funcionalidade entregue e não devem gerar botões, opções ou estados falsos na interface.
 
+## Estado de US-PRIV-002
+
+```text
+Issue #63: open
+PR #64: open
+CI #284 / 35350619301 / job 105617610955: SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-002 / br-proud-wind-awycp0sd: PASS
+Baseline migrations: 000001-000011
+Schema diff isolated vs baseline: vazio
+```
+
+A Story adiciona somente biografia, token de destaque, links HTTPS e categorias culturais favoritas, preservando RLS, ownership e grants mínimos.
+
 # Próxima ação operacional
 
-> Promover US-PRIV-002 como próxima Story limitada: criar Issue e branch próprias, implementar somente biografia, cor de destaque por tokens aprovados, links HTTPS permitidos e categorias culturais favoritas, preservando ownership. Não antecipar avatar/banner/Storage, obras favoritas, perfil público ou relações sociais.
+> Concluir o CI final documental da PR #64, integrar US-PRIV-002, validar o CI pós-merge e fechar a Issue #63. Depois, promover somente US-PRIV-003.

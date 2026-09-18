@@ -3,6 +3,16 @@
 import { revalidatePath } from "next/cache";
 
 import { ProfileDataApiError, saveOwnProfile } from "@/lib/profile/data-api";
+import {
+  PROFILE_BIO_MAX_LENGTH,
+  PROFILE_CATEGORY_MAX_COUNT,
+  PROFILE_LINK_MAX_COUNT,
+  PROFILE_LINK_MAX_LENGTH,
+  isProfileAccentToken,
+  isProfileCategory,
+  type ProfileAccentToken,
+  type ProfileCategory,
+} from "@/lib/profile/personalization";
 
 export type ProfileActionState = {
   status: "idle" | "error" | "success";
@@ -10,6 +20,10 @@ export type ProfileActionState = {
   fieldErrors?: {
     username?: string;
     displayName?: string;
+    biography?: string;
+    accentToken?: string;
+    links?: string;
+    favoriteCategories?: string;
   };
 };
 
@@ -37,9 +51,81 @@ function readText(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value : "";
 }
 
+function normalizeLinks(rawValue: string) {
+  const rawLinks = rawValue
+    .split(/\r?\n/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  if (rawLinks.length > PROFILE_LINK_MAX_COUNT) {
+    return {
+      error: `Adicione no máximo ${PROFILE_LINK_MAX_COUNT} links.`,
+      links: [] as string[],
+    };
+  }
+
+  const normalizedLinks: string[] = [];
+  for (const rawLink of rawLinks) {
+    if (/\s/.test(rawLink)) {
+      return {
+        error: "Cada link deve ser uma URL HTTPS sem espaços.",
+        links: [] as string[],
+      };
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(rawLink);
+    } catch {
+      return {
+        error: "Use URLs HTTPS válidas, uma por linha.",
+        links: [] as string[],
+      };
+    }
+
+    if (
+      parsed.protocol !== "https:" ||
+      parsed.username ||
+      parsed.password ||
+      !parsed.hostname
+    ) {
+      return {
+        error: "Somente links HTTPS sem usuário ou senha na URL são permitidos.",
+        links: [] as string[],
+      };
+    }
+
+    const normalized = parsed.toString();
+    if (normalized.length > PROFILE_LINK_MAX_LENGTH) {
+      return {
+        error: `Cada link pode ter no máximo ${PROFILE_LINK_MAX_LENGTH} caracteres.`,
+        links: [] as string[],
+      };
+    }
+
+    normalizedLinks.push(normalized);
+  }
+
+  if (new Set(normalizedLinks).size !== normalizedLinks.length) {
+    return {
+      error: "Remova links duplicados.",
+      links: [] as string[],
+    };
+  }
+
+  return { links: normalizedLinks };
+}
+
 function validateProfileInput(formData: FormData) {
   const username = readText(formData.get("username")).trim().toLowerCase();
   const displayName = readText(formData.get("displayName")).trim();
+  const biography = readText(formData.get("biography")).trim();
+  const accentToken = readText(formData.get("accentToken"));
+  const linksResult = normalizeLinks(readText(formData.get("links")));
+  const favoriteCategories = formData
+    .getAll("favoriteCategories")
+    .filter((value): value is string => typeof value === "string");
+
   const fieldErrors: ProfileActionState["fieldErrors"] = {};
 
   if (!USERNAME_PATTERN.test(username)) {
@@ -53,13 +139,41 @@ function validateProfileInput(formData: FormData) {
     fieldErrors.displayName = "Use um nome de exibição com 1 a 80 caracteres.";
   }
 
-  if (fieldErrors.username || fieldErrors.displayName) {
+  if (biography.length > PROFILE_BIO_MAX_LENGTH) {
+    fieldErrors.biography = `A biografia pode ter no máximo ${PROFILE_BIO_MAX_LENGTH} caracteres.`;
+  }
+
+  if (!isProfileAccentToken(accentToken)) {
+    fieldErrors.accentToken = "Escolha uma cor de destaque disponível.";
+  }
+
+  if (linksResult.error) {
+    fieldErrors.links = linksResult.error;
+  }
+
+  if (
+    favoriteCategories.length > PROFILE_CATEGORY_MAX_COUNT ||
+    new Set(favoriteCategories).size !== favoriteCategories.length ||
+    !favoriteCategories.every(isProfileCategory)
+  ) {
+    fieldErrors.favoriteCategories =
+      `Escolha até ${PROFILE_CATEGORY_MAX_COUNT} categorias culturais diferentes.`;
+  }
+
+  if (Object.keys(fieldErrors).length > 0 || linksResult.error) {
     return { ok: false as const, fieldErrors };
   }
 
   return {
     ok: true as const,
-    input: { username, displayName },
+    input: {
+      username,
+      displayName,
+      biography,
+      accentToken: accentToken as ProfileAccentToken,
+      links: linksResult.links,
+      favoriteCategories: favoriteCategories as ProfileCategory[],
+    },
   };
 }
 
@@ -105,6 +219,6 @@ export async function saveProfileAction(
   revalidatePath("/account/profile");
   return {
     status: "success",
-    message: "Perfil salvo. A visibilidade continua privada para outras pessoas.",
+    message: "Perfil salvo. Essas informações continuam privadas para outras pessoas.",
   };
 }
