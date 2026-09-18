@@ -12,6 +12,9 @@ export default async function AccountProfilePage() {
     .then((profile) => ({ profile, error: false as const }))
     .catch(() => ({ profile: null, error: true as const }));
 
+  const publicProfileHref = result.profile ? `/${result.profile.username}` : null;
+  const isPublic = result.profile?.visibility === "public";
+
   return (
     <main className="min-h-dvh bg-background px-5 py-8 text-text-primary sm:px-8 lg:px-12">
       <div className="mx-auto grid w-full max-w-4xl gap-10">
@@ -41,14 +44,14 @@ export default async function AccountProfilePage() {
 
         <section className="grid gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            Perfil privado
+            Perfil
           </p>
           <h1 className="font-editorial text-5xl tracking-[-0.03em] sm:text-6xl">
             Sua identidade no Caleida.
           </h1>
           <p className="max-w-3xl text-base leading-7 text-text-muted">
-            Defina seu nome, biografia, cor de destaque, links e categorias culturais favoritas.
-            Nesta etapa, todo o perfil continua visível somente para você.
+            Defina seu nome, biografia, cor de destaque, links, categorias culturais favoritas e
+            escolha se o perfil pode ser visto por outras pessoas.
           </p>
         </section>
 
@@ -71,12 +74,24 @@ export default async function AccountProfilePage() {
 
             {!result.profile ? (
               <Feedback kind="note" title="Perfil ainda não criado">
-                Salve os campos abaixo para materializar seu perfil privado pela primeira vez.
+                Salve os campos abaixo para materializar seu perfil pela primeira vez. Ele nasce
+                como Somente eu.
+              </Feedback>
+            ) : isPublic && publicProfileHref ? (
+              <Feedback kind="note" title="Visibilidade atual: pública">
+                Seu perfil está disponível para visitantes e usuários em{" "}
+                <Link
+                  href={publicProfileHref}
+                  className="font-semibold underline decoration-border underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                >
+                  {publicProfileHref}
+                </Link>
+                .
               </Feedback>
             ) : (
               <Feedback kind="note" title="Visibilidade atual: somente você">
-                A publicação para outras pessoas pertence à próxima Story. Esta tela não oferece
-                visibilidade pública antecipadamente.
+                Terceiros não recebem os dados do perfil. Seguidores e conexões ainda não são
+                opções funcionais nesta etapa.
               </Feedback>
             )}
 
@@ -87,6 +102,7 @@ export default async function AccountProfilePage() {
               accentToken={result.profile?.accentToken}
               links={result.profile?.links}
               favoriteCategories={result.profile?.favoriteCategories}
+              visibility={result.profile?.visibility}
             />
           </section>
         )}

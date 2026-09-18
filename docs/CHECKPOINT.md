@@ -1,8 +1,8 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `READY`  
+**Status operacional:** `IN_REVIEW`  
 **Fase:** Incremento 3 - Perfis e privacidade / EPIC-03  
-**Story ativa:** nenhuma
+**Story ativa:** `US-PRIV-003 - Publicar perfil com visibilidade fail-closed`
 
 ## Cursor
 
@@ -12,12 +12,12 @@ LAST_COMPLETED_ISSUE: #63
 LAST_COMPLETED_PR: #64
 LAST_COMPLETED_MERGE: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
 
-ACTIVE_TASK: none
-ACTIVE_ISSUE: none
-ACTIVE_BRANCH: none
-ACTIVE_PR: none
+ACTIVE_TASK: US-PRIV-003 - Publicar perfil com visibilidade fail-closed
+ACTIVE_ISSUE: #65
+ACTIVE_BRANCH: feat/us-priv-003-public-profile-visibility
+ACTIVE_PR: #66
 
-NEXT_ACTION: Promover US-PRIV-003 - Publicar perfil com visibilidade fail-closed como próxima Story limitada. Criar a Issue e branch próprias a partir da main atual, reler docs/INCREMENT_3_PLAN.md e implementar somente rota pública por username e enforcement de visibilidade no servidor e no banco. Preservar acesso do owner, manter followers/connections fail-closed e fora da UI funcional enquanto essas relações não existem, e não antecipar bloqueio da US-PRIV-004, Storage, Production Neon ou deployment Vercel.
+NEXT_ACTION: Executar o CI final documental da PR #66. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #65 e promover somente US-PRIV-004. Não antecipar US-PRIV-005, relações sociais funcionais, Storage, Production Neon ou deployment Vercel.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
@@ -156,3 +156,43 @@ Readback preservou RLS habilitada e forçada, somente as policies owner `SELECT`
 - nenhum avatar, banner, upload, Storage, obra favorita, rota pública ou relação social foi introduzido.
 
 Browser/live intermediário permaneceu `SKIPPED/deferred` conforme o Verification Protocol e ADR-007. Nenhum deployment Vercel foi executado.
+
+
+## US-PRIV-003 em revisão
+
+```text
+Issue: #65 - open
+PR: #66 - open
+Branch: feat/us-priv-003-public-profile-visibility
+Base Git: main @ b613d19bdf726b53f575a69db4a37452cb383259
+Migration: database/migrations/000012_profile_public_visibility.sql
+Checksum: d8a1f4f7f973e12490cf205bd8ec96ce50c55e4dbc5dd09bb978f16dcfdf3713
+```
+
+Escopo implementado:
+
+- rota pública `/<username>`;
+- UI funcional somente para `public` e `only_me`;
+- `followers` e `connections` permanecem fail-closed;
+- policy pública somente de SELECT para linhas `visibility = 'public'`;
+- `anonymous` recebe SELECT somente nas seis colunas públicas;
+- projeção Data API pública exclui ownership, visibility e timestamps;
+- loading, erro e not-found fail-closed na rota pública;
+- nenhum bloqueio, relação social funcional, Storage ou dependência futura foi antecipado.
+
+Gates concluídos:
+
+```text
+CI #292 / 35354823796 / job 105631496653: SUCCESS
+PostgreSQL 18 + npm run verify:db: PASS
+Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br: PASS
+Managed role anonymous: public SELECT permitido / auth_user_id negado
+Baseline migration 000012: promovida
+Baseline ledger: 000001-000012
+Schema diff isolated vs baseline: vazio
+Data API baseline: active / somente caleida_profile
+Browser/live intermediário: SKIPPED/deferred
+Probe HTTP externo direto: SKIPPED por indisponibilidade de DNS no ambiente; não contado como PASS
+```
+
+Nenhum deployment Vercel foi executado.

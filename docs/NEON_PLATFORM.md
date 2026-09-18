@@ -1,6 +1,6 @@
 # Neon Platform - Caleida
 
-**Status:** arquitetura canônica de plataforma durante o Incremento 3, após promoção da US-PRIV-002 para a baseline non-production  
+**Status:** arquitetura canônica de plataforma durante o Incremento 3, após promoção da US-PRIV-003 para a baseline non-production  
 **Decisões:** ADR-004, ADR-005, ADR-008 e ADR-009
 
 ## 1. Topologia vigente
@@ -40,7 +40,7 @@ A branch Neon `main` é staging/non-production e não é a branch Git `main`.
 
 ## 3. Baseline de migrations
 
-A baseline integrada contém migrations `000001`-`000011`.
+A baseline integrada contém migrations `000001`-`000012`.
 
 Checksums mais recentes:
 
@@ -56,9 +56,12 @@ Checksums mais recentes:
 
 000011_profile_personalization.sql
 4773504fe2296e7ce141e8efcb027efd2218f2fd5c5598585bd97f5a4f55f95f
+
+000012_profile_public_visibility.sql
+d8a1f4f7f973e12490cf205bd8ec96ce50c55e4dbc5dd09bb978f16dcfdf3713
 ```
 
-`000009` cria o núcleo de perfil/RLS. `000010` faz a identidade user-scoped derivar do `sub` validado disponível em `request.jwt.claims`. `000011` adiciona biografia, token de destaque, links HTTPS validados e categorias culturais favoritas sem alterar ownership ou policies.
+`000009` cria o núcleo de perfil/RLS. `000010` deriva identidade do `sub` validado em `request.jwt.claims`. `000011` adiciona personalização segura. `000012` adiciona leitura pública fail-closed e grants anônimos somente por coluna.
 
 ## 4. Perfil user-scoped e Data API
 
@@ -72,11 +75,13 @@ Contrato atual:
 
 - `auth_user_id` UUID é a chave de ownership;
 - campos editáveis atuais: `username`, `display_name`, `biography`, `accent_token`, `links` e `favorite_categories`;
-- visibilidade nasce `only_me`;
+- visibilidade nasce `only_me` e a UI atual oferece somente `public` ou `only_me`;
+- `followers` e `connections` permanecem fail-closed para terceiros;
 - RLS está habilitada e forçada;
-- policies normais existem somente para `SELECT`, `INSERT` e `UPDATE` do owner;
+- policies owner continuam em `SELECT`, `INSERT` e `UPDATE`;
+- `profiles_public_select` permite somente SELECT de linhas `visibility = 'public'`;
 - `authenticated` recebe somente `SELECT`, `INSERT` e `UPDATE` na tabela;
-- `anonymous` e `PUBLIC` não recebem grants de tabela;
+- `anonymous` não recebe grant amplo de tabela e possui SELECT somente em `username`, `display_name`, `biography`, `accent_token`, `links` e `favorite_categories`;
 - DELETE permanece fora do CRUD normal;
 - Data API expõe somente `caleida_profile`;
 - fluxo normal usa JWT + Data API + RLS, nunca owner/BYPASSRLS.
@@ -130,6 +135,7 @@ verify-us-auth-007 / br-wandering-mountain-awjnqqps
 verify-us-auth-008 / br-delicate-meadow-aw1u62kn
 verify-us-priv-001 / br-silent-rain-aw4fqrhg
 verify-us-priv-002 / br-proud-wind-awycp0sd
+verify-us-priv-003 / br-noisy-firefly-aw06x1br
 ```
 
 Branches temporárias não são fonte de verdade de schema. Exclusão exige autorização explícita porque é destrutiva.
@@ -168,6 +174,21 @@ Readback após a promoção confirmou RLS habilitada e forçada, somente as poli
 
 Detalhes: `docs/US_PRIV_002_VERIFICATION.md`.
 
-## 12. Próximo gate de plataforma
+## 12. Evidência de US-PRIV-003
 
-US-PRIV-002 está concluída. US-PRIV-003 é a próxima Story e poderá introduzir leitura pública fail-closed. A Data API baseline não deve ser recriada; qualquer policy/grant público deve existir somente dentro do escopo e dos gates da US-PRIV-003.
+```text
+CI #292 / 35354823796 / job 105631496653: SUCCESS
+Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br
+Baseline ledger: 000001-000012
+Schema diff isolated vs baseline: vazio
+Data API: active / somente caleida_profile
+anonymous: somente seis colunas públicas / sem table-level grant
+```
+
+Readback confirmou policy pública somente de SELECT, estados sociais reservados fail-closed, papel `anonymous` sem escrita e coluna `auth_user_id` negada ao papel gerenciado.
+
+Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.
+
+## 13. Próximo gate de plataforma
+
+Após merge e fechamento da US-PRIV-003, US-PRIV-004 poderá introduzir bloqueio com efeito real. Não ampliar grants públicos nem relações sociais fora dessa Story.
