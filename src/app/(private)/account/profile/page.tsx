@@ -47,8 +47,8 @@ export default async function AccountProfilePage() {
             Sua identidade no Caleida.
           </h1>
           <p className="max-w-3xl text-base leading-7 text-text-muted">
-            Defina o nome de usuário e o nome de exibição do seu perfil. Nesta etapa, o perfil
-            permanece visível somente para você.
+            Defina seu nome, biografia, cor de destaque, links e categorias culturais favoritas.
+            Nesta etapa, todo o perfil continua visível somente para você.
           </p>
         </section>
 
@@ -75,14 +75,18 @@ export default async function AccountProfilePage() {
               </Feedback>
             ) : (
               <Feedback kind="note" title="Visibilidade atual: somente você">
-                A publicação para outras pessoas pertence a uma etapa posterior. Esta tela não
-                oferece visibilidade pública antecipadamente.
+                A publicação para outras pessoas pertence à próxima Story. Esta tela não oferece
+                visibilidade pública antecipadamente.
               </Feedback>
             )}
 
             <ProfileForm
               username={result.profile?.username}
               displayName={result.profile?.displayName}
+              biography={result.profile?.biography}
+              accentToken={result.profile?.accentToken}
+              links={result.profile?.links}
+              favoriteCategories={result.profile?.favoriteCategories}
             />
           </section>
         )}
