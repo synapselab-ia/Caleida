@@ -46,7 +46,7 @@ Live matrix #13 / 34636223750: SUCCESS
 
 # Incremento 3 - Perfis e privacidade / EPIC-03
 
-**Estado:** EM ANDAMENTO / US-PRIV-003 PRONTA  
+**Estado:** EM ANDAMENTO / US-PRIV-003 EM REVISÃO  
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
 **Capacidades:** CAP-03, CAP-05, CAP-33  
 **Refino:** OPS-007 / Issue #59
@@ -55,7 +55,7 @@ Live matrix #13 / 34636223750: SUCCESS
 |---|---|---|---|---|
 | US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | CONCLUÍDA | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
 | US-PRIV-002 - Personalização segura do perfil | CONCLUÍDA | #63/#64 | CAP-03 | `US_PRIV_002_VERIFICATION.md` |
-| US-PRIV-003 - Rota pública + visibilidade | PRONTA | - | CAP-03, CAP-05 | - |
+| US-PRIV-003 - Rota pública + visibilidade | EM REVISÃO | #65/#66 | CAP-03, CAP-05 | `US_PRIV_003_VERIFICATION.md` |
 | US-PRIV-004 - Bloqueio com efeito real | A FAZER | - | CAP-05 | - |
 | US-PRIV-005 - Desativação e reativação | A FAZER | - | CAP-33 | - |
 | US-PRIV-006 - Solicitação/cancelamento + export de encerramento | A FAZER | - | CAP-33 | - |
@@ -123,4 +123,19 @@ A Story adicionou somente biografia, token de destaque, links HTTPS e categorias
 
 # Próxima ação operacional
 
-> Promover US-PRIV-003 como próxima Story limitada: criar Issue e branch próprias, implementar somente rota pública por username e enforcement de visibilidade fail-closed, preservando acesso do owner e mantendo followers/connections privados enquanto as relações não existirem. Não antecipar US-PRIV-004.
+> Concluir o CI final documental da PR #66, integrar US-PRIV-003, validar o CI pós-merge e fechar a Issue #65. Depois, promover somente US-PRIV-004.
+
+
+## Estado de US-PRIV-003
+
+```text
+Issue #65: open
+PR #66: open
+CI #292 / 35354823796 / job 105631496653: SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br: PASS
+Baseline migrations: 000001-000012
+Schema diff isolated vs baseline: vazio
+```
+
+A Story publica somente perfis `public`, mantém `only_me` e estados sociais reservados privados para terceiros e limita o papel `anonymous` às seis colunas deliberadamente públicas.
