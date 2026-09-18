@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-001 concluída e US-PRIV-002 pronta para promoção como próxima Story.  
+**Estado:** Incremento 3 em execução; US-PRIV-002 em andamento na Issue #63 / PR #64.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -45,7 +45,7 @@ Ordem vigente:
 ```text
 US-PRIV-001 - perfil básico user-scoped + Data API/RLS       CONCLUÍDA
   ↓
-US-PRIV-002 - personalização segura do perfil                PRONTA / próxima ação
+US-PRIV-002 - personalização segura do perfil                EM ANDAMENTO
   ↓
 US-PRIV-003 - rota pública + visibilidade                     A FAZER
   ↓
@@ -121,4 +121,4 @@ Continuam fora do escopo:
 
 ## 7. NEXT_ACTION
 
-> Promover US-PRIV-002 como próxima Story limitada: criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md`, implementar somente a personalização segura definida acima e executar os gates aplicáveis. Não antecipar US-PRIV-003 nem dependências futuras.
+> Executar e corrigir os gates da PR #64 da US-PRIV-002, promover a migration somente após PASS dos gates aplicáveis, fazer readback da baseline non-production, reconciliar a documentação e fechar a Story sem antecipar US-PRIV-003.
