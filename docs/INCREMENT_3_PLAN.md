@@ -366,7 +366,7 @@ Deve validar tamanho/formato no servidor e no banco quando aplicável, neutraliz
 # US-PRIV-003 - Publicar perfil com visibilidade fail-closed
 
 **Prioridade:** P0  
-**Estado:** PRONTA / próxima ação  
+**Estado:** EM REVISÃO / PR #66  
 **Dependência:** US-PRIV-002  
 **Capacidades:** CAP-03, CAP-05
 
@@ -526,9 +526,9 @@ O Incremento 3 pode ser encerrado quando:
 
 CAP-03 e CAP-05 permanecerão com extensões futuras deliberadas onde suas dependências ainda não existem. Isso não autoriza marcar avatar/banner, obras favoritas, followers/connections, mute/restrict ou privacidade de domínios futuros como implementados.
 
-## 9. Estado operacional após US-PRIV-002
+## 9. Estado operacional após US-PRIV-003
 
-US-PRIV-001 e US-PRIV-002 estão concluídas.
+US-PRIV-001 e US-PRIV-002 estão concluídas. US-PRIV-003 está implementada e verificada na PR #66.
 
 Fechamento de US-PRIV-002:
 
@@ -545,8 +545,19 @@ Baseline ledger: 000001-000011
 Schema diff isolated vs baseline: vazio
 ```
 
-Promover somente:
+Fechamento técnico atual de US-PRIV-003:
 
-> `US-PRIV-003 - Publicar perfil com visibilidade fail-closed`
+```text
+Issue #65: open
+PR #66: open
+CI #292 / 35354823796 / job 105631496653: SUCCESS
+Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br: PASS
+Baseline ledger: 000001-000012
+Schema diff isolated vs baseline: vazio
+```
 
-Não iniciar US-PRIV-004 nem antecipar Storage, relações sociais funcionais, Production Neon ou deployment Vercel.
+Após CI final, merge e CI pós-merge, promover somente:
+
+> `US-PRIV-004 - Implementar bloqueio com efeito real`
+
+Não iniciar US-PRIV-005 nem antecipar Storage, relações sociais funcionais, Production Neon ou deployment Vercel.
