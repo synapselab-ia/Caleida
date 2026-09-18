@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-002 concluída e US-PRIV-003 pronta para promoção como próxima Story.  
+**Estado:** Incremento 3 em execução; US-PRIV-003 verificada e em revisão na Issue #65 / PR #66.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -47,7 +47,7 @@ US-PRIV-001 - perfil básico user-scoped + Data API/RLS       CONCLUÍDA
   ↓
 US-PRIV-002 - personalização segura do perfil                CONCLUÍDA
   ↓
-US-PRIV-003 - rota pública + visibilidade                     PRONTA / próxima ação
+US-PRIV-003 - rota pública + visibilidade                     EM REVISÃO
   ↓
 US-PRIV-004 - bloqueio e contrato de exclusão social          A FAZER
   ↓
@@ -127,7 +127,7 @@ Continuam fora do escopo:
 
 ## 7. NEXT_ACTION
 
-> Promover US-PRIV-003 - Publicar perfil com visibilidade fail-closed como próxima Story limitada. Criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md` e implementar somente rota pública por username e enforcement de visibilidade no servidor e no banco. Não antecipar US-PRIV-004.
+> Executar o CI final documental da PR #66. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #65 e promover somente US-PRIV-004 como próxima Story.
 
 ## 8. Fechamento de US-PRIV-002
 
@@ -145,3 +145,21 @@ Baseline ledger: 000001-000011
 Schema diff isolated vs baseline: vazio
 Browser/live intermediário: SKIPPED/deferred conforme Verification Protocol
 ```
+
+
+## 9. Evidência atual de US-PRIV-003
+
+```text
+Issue: #65
+PR: #66
+CI funcional: #292 / 35354823796 / job 105631496653 / SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br / PASS
+Managed anonymous: SELECT público permitido / coluna auth_user_id negada
+Baseline ledger: 000001-000012
+000012 checksum: d8a1f4f7f973e12490cf205bd8ec96ce50c55e4dbc5dd09bb978f16dcfdf3713
+Schema diff isolated vs baseline: vazio
+Browser/live intermediário: SKIPPED/deferred
+```
+
+Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.
