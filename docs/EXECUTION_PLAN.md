@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-004 verificada e em revisão na Issue #67 / PR #68.  
+**Estado:** Incremento 3 em execução; US-PRIV-004 concluída e US-PRIV-005 pronta para promoção como próxima Story.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -49,9 +49,9 @@ US-PRIV-002 - personalização segura do perfil                CONCLUÍDA
   ↓
 US-PRIV-003 - rota pública + visibilidade                     CONCLUÍDA
   ↓
-US-PRIV-004 - bloqueio e contrato de exclusão social          EM REVISÃO
+US-PRIV-004 - bloqueio e contrato de exclusão social          CONCLUÍDA
   ↓
-US-PRIV-005 - desativação e reativação da conta              A FAZER
+US-PRIV-005 - desativação e reativação da conta              PRONTA / próxima ação
   ↓
 US-PRIV-006 - solicitação/cancelamento + export de encerramento A FAZER
   ↓
@@ -100,33 +100,30 @@ Para ambientes novos, o serviço Data API deve existir antes da migration user-s
 
 ## 6. Escopo da próxima Story
 
-US-PRIV-004 adiciona bloqueio direcional com efeito real sobre leitura de perfil autenticada.
+US-PRIV-005 introduz estado de conta de produto separado do Auth gerenciado.
 
 Escopo permitido:
 
-- relação persistente blocker -> blocked;
-- blocker e blocked devem ser identidades distintas;
-- impedir duplicidade do mesmo par;
-- usuário autenticado cria, lista e remove somente os próprios bloqueios;
-- se A bloqueia B ou B bloqueia A, a leitura de perfil entre essas identidades autenticadas é negada mesmo quando o perfil é público;
-- acesso direto por username/ID deve obedecer ao mesmo predicado;
-- leitura pública anônima de perfis públicos permanece conforme US-PRIV-003, sem inferir identidade do visitante;
-- o predicado de bloqueio deve ficar reutilizável por consultas sociais futuras;
-- RLS, grants e testes adversariais devem cobrir IDOR e os dois sentidos do bloqueio.
+- desativação autenticada com confirmação explícita;
+- ocultar perfil de terceiros imediatamente;
+- impedir uso normal das áreas privadas até reativação;
+- revogar sessões conforme contrato seguro da aplicação;
+- preservar dados pessoais;
+- permitir novo login somente para superfície restrita de reativação/encerramento;
+- registrar auditoria sem payload sensível;
+- reativação restaura acesso sem recriar dados ou identidade.
 
 Continuam fora do escopo:
 
-- mute/restrict;
-- followers/connections funcionais;
-- desativação e reativação;
-- exclusão de conta;
-- avatar/banner/Storage;
+- solicitação/cancelamento de exclusão e export de encerramento;
+- finalização de exclusão;
+- Storage;
 - Production Neon;
 - deployment Vercel pela IA.
 
 ## 7. NEXT_ACTION
 
-> Executar o CI final documental da PR #68. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #67 e promover somente US-PRIV-005 como próxima Story.
+> Promover US-PRIV-005 - Implementar desativação e reativação reversíveis como próxima Story limitada. Criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md` e implementar somente o estado reversível de conta e seus efeitos. Não antecipar US-PRIV-006.
 
 ## 8. Fechamento de US-PRIV-002
 
@@ -166,18 +163,20 @@ Browser/live intermediário: SKIPPED/deferred conforme Verification Protocol
 Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.
 
 
-## 10. Evidência atual de US-PRIV-004
+## 10. Fechamento de US-PRIV-004
 
 ```text
-Issue: #67
-PR: #68
-CI portável válido: #302 / 35360488983 / job 105650247432 / SUCCESS
+Issue #67: closed/completed
+PR #68: merged
+Feature head final: 874cb989aec13848c48901ac351980d870f0f935
+Merge: 4eaa0b44dbe76354ea86f590b22a3acab157353d
+CI final PR #303 / 35361184117 / job 105652550427: SUCCESS
+CI pós-merge main #304 / 35361379171 / job 105653192533: SUCCESS
 PostgreSQL 18 + verify:db: PASS
-Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo / PASS
+Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo: PASS
 Baseline ledger: 000001-000013
-000013 checksum: 3a0b5d0548deef10e1fa2bda0c7c143400210288f681d51dbcdffa58c419e105
 Schema diff isolated vs baseline: vazio
 Browser/live intermediário: SKIPPED/deferred
 ```
 
-Os CI #299 e #301 falharam somente por falsas expectativas nos testes de contrato novos e foram corrigidos sem mudança no comportamento funcional.
+Detalhes: `docs/US_PRIV_004_VERIFICATION.md`.

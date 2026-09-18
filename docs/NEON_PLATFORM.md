@@ -200,16 +200,19 @@ Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.
 
 ```text
 CI portável #302 / 35360488983 / job 105650247432: SUCCESS
+CI final PR #303 / 35361184117 / job 105652550427: SUCCESS
+Merge PR #68: 4eaa0b44dbe76354ea86f590b22a3acab157353d
+CI pós-merge main #304 / 35361379171 / job 105653192533: SUCCESS
 Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo
 Baseline ledger: 000001-000013
 Schema diff isolated vs baseline: vazio
 Data API: active / somente caleida_profile
 ```
 
-`caleida_profile.profile_blocks` possui RLS owner para SELECT/INSERT/DELETE, sem UPDATE. O helper `has_block_relationship_with(uuid)` é `SECURITY DEFINER` e o guard `profiles_block_guard` é RESTRICTIVE, preservando acesso do owner e leitura anônima pública enquanto nega o par bloqueado em ambos os sentidos para identidades autenticadas.
+A matriz Neon real confirmou bloqueio bilateral autenticado, leitura anônima pública preservada, ACL/RLS de bloqueios e cleanup das fixtures.
 
-A matriz Neon real confirmou auto-bloqueio e duplicidade negados, blocker forjado negado por RLS, UPDATE negado, tabela de bloqueios inacessível a anonymous e desbloqueio restaurando a leitura.
+Detalhes: `docs/US_PRIV_004_VERIFICATION.md`.
 
 ## 14. Próximo gate de plataforma
 
-Após merge e fechamento da US-PRIV-004, US-PRIV-005 poderá introduzir estado de desativação reversível. Não antecipar exclusão, Storage ou relações sociais.
+US-PRIV-004 está concluída. US-PRIV-005 é a próxima Story e poderá introduzir estado reversível de desativação de conta separado do Auth gerenciado. Não antecipar exclusão definitiva, Storage ou Production Neon.

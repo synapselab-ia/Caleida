@@ -1,8 +1,10 @@
 # US-PRIV-004 - Verificação do bloqueio com efeito real
 
-**Estado:** `PASS / PRONTA PARA INTEGRAÇÃO`  
-**Issue:** `#67` - open até o merge  
-**PR:** `#68` - open  
+**Estado:** `PASS / CONCLUÍDA`  
+**Issue:** `#67` - closed / completed  
+**PR:** `#68` - merged  
+**Feature head final:** `874cb989aec13848c48901ac351980d870f0f935`  
+**Merge:** `4eaa0b44dbe76354ea86f590b22a3acab157353d`  
 **Branch Git:** `feat/us-priv-004-profile-blocking`  
 **Neon isolated:** `verify-us-priv-004 / br-curly-fog-aw1c1hpo`
 
@@ -105,4 +107,17 @@ Nenhum deployment Vercel foi executado. Production Neon e Storage não foram cri
 
 ## Resultado
 
-US-PRIV-004 possui implementação, gate PostgreSQL 18, matriz Neon-specific e promoção da baseline em PASS. Falta somente CI final documental, merge, CI pós-merge e fechamento canônico.
+US-PRIV-004 está concluída.
+
+```text
+Issue #67: closed/completed
+PR #68: merged
+Feature head final: 874cb989aec13848c48901ac351980d870f0f935
+Merge: 4eaa0b44dbe76354ea86f590b22a3acab157353d
+CI final PR #303 / 35361184117 / job 105652550427: SUCCESS
+CI pós-merge main #304 / 35361379171 / job 105653192533: SUCCESS
+Baseline ledger: 000001-000013
+Schema diff isolated vs baseline: vazio
+```
+
+Browser/live intermediário permanece corretamente `SKIPPED/deferred`. A próxima ação é promover somente US-PRIV-005.

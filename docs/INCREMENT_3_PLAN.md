@@ -390,7 +390,7 @@ Gate Neon-specific é obrigatório se a leitura pública usar papel `anonymous`/
 # US-PRIV-004 - Implementar bloqueio com efeito real
 
 **Prioridade:** P0  
-**Estado:** EM REVISÃO / PR #68  
+**Estado:** CONCLUÍDA  
 **Dependência:** US-PRIV-003  
 **Capacidade:** CAP-05
 
@@ -411,7 +411,7 @@ Critérios centrais:
 # US-PRIV-005 - Implementar desativação e reativação reversíveis
 
 **Prioridade:** P0  
-**Estado:** A FAZER  
+**Estado:** PRONTA / próxima ação  
 **Dependência:** US-PRIV-004  
 **Capacidade:** CAP-33
 
@@ -526,22 +526,25 @@ O Incremento 3 pode ser encerrado quando:
 
 CAP-03 e CAP-05 permanecerão com extensões futuras deliberadas onde suas dependências ainda não existem. Isso não autoriza marcar avatar/banner, obras favoritas, followers/connections, mute/restrict ou privacidade de domínios futuros como implementados.
 
-## 9. Estado operacional durante US-PRIV-004
+## 9. Estado operacional após US-PRIV-004
 
-US-PRIV-001 a US-PRIV-003 estão concluídas. US-PRIV-004 está implementada e verificada na PR #68.
+US-PRIV-001 a US-PRIV-004 estão concluídas.
 
 ```text
-Issue #67: open
-PR #68: open
-CI #302 / 35360488983 / job 105650247432: SUCCESS
+Issue #67: closed/completed
+PR #68: merged
+Feature head final: 874cb989aec13848c48901ac351980d870f0f935
+Merge: 4eaa0b44dbe76354ea86f590b22a3acab157353d
+CI final PR #303 / 35361184117 / job 105652550427: SUCCESS
+CI pós-merge main #304 / 35361379171 / job 105653192533: SUCCESS
 PostgreSQL 18 + verify:db: PASS
 Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo: PASS
 Baseline ledger: 000001-000013
 Schema diff isolated vs baseline: vazio
 ```
 
-Após CI final, merge e CI pós-merge, promover somente:
+Promover somente:
 
 > `US-PRIV-005 - Implementar desativação e reativação reversíveis`
 
-Não iniciar US-PRIV-006 nem antecipar mute/restrict, relações sociais funcionais, Storage, Production Neon ou deployment Vercel.
+Não iniciar US-PRIV-006 nem antecipar Storage, Production Neon ou deployment Vercel.

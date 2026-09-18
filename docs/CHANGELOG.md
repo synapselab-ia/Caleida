@@ -187,7 +187,7 @@ Implementado e verificado:
 
 Evidência: `docs/US_PRIV_003_VERIFICATION.md`.
 
-#### US-PRIV-004 - Bloqueio com efeito real (#67/#68) - EM REVISÃO
+#### US-PRIV-004 - Bloqueio com efeito real (#67/#68) - CONCLUÍDA
 
 Implementado e verificado:
 
@@ -200,6 +200,10 @@ Implementado e verificado:
 - gestão privada em `/account/privacy`;
 - CI #299 e #301 detectaram falsas expectativas dos testes novos, corrigidas sem mudança funcional;
 - CI #302 / `35360488983` / job `105650247432`: SUCCESS;
+- CI final da PR #303 / `35361184117` / job `105652550427`: SUCCESS;
+- PR #68 integrada no merge `4eaa0b44dbe76354ea86f590b22a3acab157353d`;
+- Issue #67 fechada como completed;
+- CI pós-merge main #304 / `35361379171` / job `105653192533`: SUCCESS;
 - Neon isolated `verify-us-priv-004 / br-curly-fog-aw1c1hpo`: PASS;
 - migration `000013` promovida à baseline non-production;
 - Data API permanece ativa somente para `caleida_profile`;
@@ -210,7 +214,7 @@ Evidência: `docs/US_PRIV_004_VERIFICATION.md`.
 
 ### Próxima Story
 
-Após merge, CI pós-merge e fechamento da Issue #67, a próxima Story é `US-PRIV-005 - Implementar desativação e reativação reversíveis`.
+`US-PRIV-005 - Implementar desativação e reativação reversíveis` está pronta para promoção. Solicitação/export/finalização de exclusão permanecem nas Stories seguintes.
 
 ### Limites vigentes do Incremento 3
 
