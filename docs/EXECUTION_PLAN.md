@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-003 concluída e US-PRIV-004 pronta para promoção como próxima Story.  
+**Estado:** Incremento 3 em execução; US-PRIV-004 verificada e em revisão na Issue #67 / PR #68.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -49,7 +49,7 @@ US-PRIV-002 - personalização segura do perfil                CONCLUÍDA
   ↓
 US-PRIV-003 - rota pública + visibilidade                     CONCLUÍDA
   ↓
-US-PRIV-004 - bloqueio e contrato de exclusão social          PRONTA / próxima ação
+US-PRIV-004 - bloqueio e contrato de exclusão social          EM REVISÃO
   ↓
 US-PRIV-005 - desativação e reativação da conta              A FAZER
   ↓
@@ -126,7 +126,7 @@ Continuam fora do escopo:
 
 ## 7. NEXT_ACTION
 
-> Promover US-PRIV-004 - Implementar bloqueio com efeito real como próxima Story limitada. Criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md` e implementar somente bloqueio direcional + enforcement sobre leitura de perfil autenticada. Não antecipar US-PRIV-005.
+> Executar o CI final documental da PR #68. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #67 e promover somente US-PRIV-005 como próxima Story.
 
 ## 8. Fechamento de US-PRIV-002
 
@@ -164,3 +164,20 @@ Browser/live intermediário: SKIPPED/deferred conforme Verification Protocol
 ```
 
 Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.
+
+
+## 10. Evidência atual de US-PRIV-004
+
+```text
+Issue: #67
+PR: #68
+CI portável válido: #302 / 35360488983 / job 105650247432 / SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo / PASS
+Baseline ledger: 000001-000013
+000013 checksum: 3a0b5d0548deef10e1fa2bda0c7c143400210288f681d51dbcdffa58c419e105
+Schema diff isolated vs baseline: vazio
+Browser/live intermediário: SKIPPED/deferred
+```
+
+Os CI #299 e #301 falharam somente por falsas expectativas nos testes de contrato novos e foram corrigidos sem mudança no comportamento funcional.

@@ -187,9 +187,30 @@ Implementado e verificado:
 
 Evidência: `docs/US_PRIV_003_VERIFICATION.md`.
 
+#### US-PRIV-004 - Bloqueio com efeito real (#67/#68) - EM REVISÃO
+
+Implementado e verificado:
+
+- migration `000013_profile_blocking.sql`;
+- relação direcional blocker -> blocked com auto-bloqueio e duplicidade impedidos;
+- RLS owner em SELECT/INSERT/DELETE, sem UPDATE;
+- helper reutilizável e guard RESTRICTIVE de leitura de perfil;
+- bloqueio bilateral entre contas autenticadas mesmo com perfil público;
+- leitura pública anônima preservada;
+- gestão privada em `/account/privacy`;
+- CI #299 e #301 detectaram falsas expectativas dos testes novos, corrigidas sem mudança funcional;
+- CI #302 / `35360488983` / job `105650247432`: SUCCESS;
+- Neon isolated `verify-us-priv-004 / br-curly-fog-aw1c1hpo`: PASS;
+- migration `000013` promovida à baseline non-production;
+- Data API permanece ativa somente para `caleida_profile`;
+- diff de schema isolated versus baseline: vazio;
+- nenhum mute/restrict, relação social funcional, Storage ou ciclo de conta foi antecipado.
+
+Evidência: `docs/US_PRIV_004_VERIFICATION.md`.
+
 ### Próxima Story
 
-`US-PRIV-004 - Implementar bloqueio com efeito real` está pronta para promoção. Seu escopo é bloqueio direcional e enforcement sobre leitura autenticada. Mute/restrict, relações sociais funcionais, Storage e ciclo de conta continuam fora de escopo.
+Após merge, CI pós-merge e fechamento da Issue #67, a próxima Story é `US-PRIV-005 - Implementar desativação e reativação reversíveis`.
 
 ### Limites vigentes do Incremento 3
 
