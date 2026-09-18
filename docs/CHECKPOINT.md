@@ -1,6 +1,6 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `IN_PROGRESS`  
+**Status operacional:** `IN_REVIEW`  
 **Fase:** Incremento 3 - Perfis e privacidade / EPIC-03  
 **Story ativa:** `US-PRIV-002 - Personalização segura do perfil`
 
@@ -17,7 +17,7 @@ ACTIVE_ISSUE: #63
 ACTIVE_BRANCH: feat/us-priv-002-profile-personalization
 ACTIVE_PR: #64
 
-NEXT_ACTION: Executar e corrigir os gates da PR #64 para a US-PRIV-002. Validar migration 000011, testes de banco PostgreSQL 18, lint, typecheck, testes e build. Executar gate Neon adicional somente se a mudança depender de comportamento específico do serviço; não usar a baseline Neon main como laboratório. Após todos os gates aplicáveis, promover a migration para a baseline non-production com readback, reconciliar documentação, mergear a PR e fechar a Issue. Não antecipar US-PRIV-003.
+NEXT_ACTION: Executar o CI final documental da PR #64. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #63 e promover somente US-PRIV-003. Não antecipar US-PRIV-004.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
@@ -132,4 +132,22 @@ Escopo implementado na branch até este checkpoint:
 - `auth_user_id` e `visibility` continuam fora do payload editável;
 - nenhum avatar, banner, upload, Storage, obra favorita, rota pública ou relação social foi introduzido.
 
-Gates ainda não devem ser tratados como PASS até o CI e as verificações aplicáveis concluírem.
+Gates concluídos até este checkpoint:
+
+```text
+CI inicial #283 / 35350388259 / job 105616855060: FAILURE no teste DB sintético
+Correção: papel sintético passou a reproduzir EXECUTE dos validadores
+CI corrigido #284 / 35350619301 / job 105617610955: SUCCESS
+PostgreSQL 18 + npm run verify:db: PASS
+Neon isolated verify-us-priv-002 / br-proud-wind-awycp0sd: PASS
+Baseline migration 000011: promovida
+Baseline ledger: 000001-000011
+000011 checksum: 4773504fe2296e7ce141e8efcb027efd2218f2fd5c5598585bd97f5a4f55f95f
+Schema diff isolated vs baseline: vazio
+Data API baseline: active / somente caleida_profile
+Browser/live intermediário: SKIPPED/deferred
+```
+
+Readback baseline preservou RLS forçada, somente policies owner SELECT/INSERT/UPDATE, `authenticated` somente com INSERT/SELECT/UPDATE na tabela e `anonymous` sem grant de tabela.
+
+Nenhum deployment Vercel foi executado.
