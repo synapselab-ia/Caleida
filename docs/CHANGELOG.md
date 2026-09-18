@@ -137,7 +137,7 @@ Nenhum endpoint real, JWT, OTP, senha, API key, cookie ou connection string foi 
 
 Evidência: `docs/US_PRIV_001_VERIFICATION.md`.
 
-#### US-PRIV-002 - Personalização segura do perfil (#63/#64) - EM REVISÃO
+#### US-PRIV-002 - Personalização segura do perfil (#63/#64) - CONCLUÍDA
 
 Implementado e verificado:
 
@@ -150,6 +150,10 @@ Implementado e verificado:
 - RLS, ownership e grants de tabela preservados;
 - CI #283 encontrou divergência no papel sintético do teste legado e a correção passou no CI #284;
 - CI #284 / `35350619301` / job `105617610955`: SUCCESS;
+- CI final da PR #289 / `35351088749` / job `105619133550`: SUCCESS;
+- PR #64 integrada no merge `d19be4e881da6f8e3ba54a50ecef1c67fb1160e3`;
+- Issue #63 fechada como completed;
+- CI pós-merge main #290 / `35351301592` / job `105619831900`: SUCCESS;
 - Neon isolated `verify-us-priv-002 / br-proud-wind-awycp0sd`: PASS;
 - migration `000011` promovida à baseline non-production com checksum `4773504fe2296e7ce141e8efcb027efd2218f2fd5c5598585bd97f5a4f55f95f`;
 - Data API permanece ativa somente para `caleida_profile`;
@@ -160,7 +164,7 @@ Evidência: `docs/US_PRIV_002_VERIFICATION.md`.
 
 ### Próxima Story
 
-Após merge, CI pós-merge e fechamento da Issue #63, a próxima Story é `US-PRIV-003 - Rota pública + visibilidade`.
+`US-PRIV-003 - Rota pública + visibilidade` está pronta para promoção. Seu escopo é somente rota pública por username e enforcement de visibilidade fail-closed. Bloqueio permanece em US-PRIV-004, e relações sociais funcionais, Storage e Production Neon continuam fora de escopo.
 
 ### Limites vigentes do Incremento 3
 

@@ -353,7 +353,7 @@ Se a Data API não puder ser provisionada/testada em branch Neon isolada, se JWT
 # US-PRIV-002 - Adicionar personalização segura do perfil
 
 **Prioridade:** P1  
-**Estado:** EM REVISÃO / PR #64  
+**Estado:** CONCLUÍDA  
 **Dependência:** US-PRIV-001  
 **Capacidade:** CAP-03
 
@@ -366,7 +366,7 @@ Deve validar tamanho/formato no servidor e no banco quando aplicável, neutraliz
 # US-PRIV-003 - Publicar perfil com visibilidade fail-closed
 
 **Prioridade:** P0  
-**Estado:** A FAZER  
+**Estado:** PRONTA / próxima ação  
 **Dependência:** US-PRIV-002  
 **Capacidades:** CAP-03, CAP-05
 
@@ -528,12 +528,25 @@ CAP-03 e CAP-05 permanecerão com extensões futuras deliberadas onde suas depen
 
 ## 9. Estado operacional após US-PRIV-002
 
-US-PRIV-001 está concluída.
+US-PRIV-001 e US-PRIV-002 estão concluídas.
 
-US-PRIV-002 está implementada e verificada na PR #64, com PostgreSQL 18, Neon isolated e promoção da migration `000011` para a baseline non-production em PASS. O fechamento ainda depende do CI final documental, merge, CI pós-merge e fechamento da Issue #63.
+Fechamento de US-PRIV-002:
 
-Após esse fechamento, promover somente:
+```text
+Issue #63: closed/completed
+PR #64: merged
+Feature head final: 510f4ee461b9976d8f8311dbe3d9a9557c46cdd8
+Merge: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
+CI final PR #289 / 35351088749 / job 105619133550: SUCCESS
+CI pós-merge main #290 / 35351301592 / job 105619831900: SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-002 / br-proud-wind-awycp0sd: PASS
+Baseline ledger: 000001-000011
+Schema diff isolated vs baseline: vazio
+```
+
+Promover somente:
 
 > `US-PRIV-003 - Publicar perfil com visibilidade fail-closed`
 
-Não iniciar US-PRIV-004 nem antecipar Storage, relações sociais ou Production Neon.
+Não iniciar US-PRIV-004 nem antecipar Storage, relações sociais funcionais, Production Neon ou deployment Vercel.

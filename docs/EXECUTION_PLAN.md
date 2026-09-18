@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-002 verificada e em revisão na Issue #63 / PR #64.  
+**Estado:** Incremento 3 em execução; US-PRIV-002 concluída e US-PRIV-003 pronta para promoção como próxima Story.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -45,9 +45,9 @@ Ordem vigente:
 ```text
 US-PRIV-001 - perfil básico user-scoped + Data API/RLS       CONCLUÍDA
   ↓
-US-PRIV-002 - personalização segura do perfil                EM REVISÃO
+US-PRIV-002 - personalização segura do perfil                CONCLUÍDA
   ↓
-US-PRIV-003 - rota pública + visibilidade                     A FAZER
+US-PRIV-003 - rota pública + visibilidade                     PRONTA / próxima ação
   ↓
 US-PRIV-004 - bloqueio e contrato de exclusão social          A FAZER
   ↓
@@ -100,36 +100,44 @@ Para ambientes novos, o serviço Data API deve existir antes da migration user-s
 
 ## 6. Escopo da próxima Story
 
-US-PRIV-002 adiciona personalização segura ao perfil privado existente, sem abrir perfil público e sem introduzir dependências futuras.
+US-PRIV-003 publica o perfil por username com visibilidade fail-closed, sem antecipar bloqueio ou relações sociais inexistentes.
 
 Escopo permitido:
 
-- biografia com limites de tamanho/formato;
-- cor de destaque baseada em tokens aprovados e compatível com acessibilidade/contraste;
-- links HTTPS permitidos com validação server-side e neutralização de URLs perigosas;
-- categorias culturais favoritas da taxonomia canônica;
-- preservação de ownership e autorização já estabelecidos.
+- criar rota pública por username;
+- aplicar visibilidade no servidor e no banco;
+- owner continua autorizado a consultar o próprio perfil;
+- `public` pode ser lido conforme política;
+- `only_me` não pode vazar para terceiros;
+- `followers` e `connections` continuam estados canônicos fail-closed e não aparecem como opções funcionais enquanto as relações não existirem;
+- acesso direto por UUID ou username obedece à mesma política;
+- anônimo recebe somente colunas deliberadamente públicas;
+- nenhuma policy concede `UPDATE` ou `DELETE` a anônimo;
+- executar gate Neon-specific se a leitura pública usar `anonymous`/Data API.
 
 Continuam fora do escopo:
 
+- bloqueio, mute ou restrict;
+- followers/connections funcionais;
 - avatar/banner/upload/Storage;
 - obras favoritas dependentes de catálogo;
-- rota pública de perfil;
-- followers/connections;
-- bloqueio/mute/restrict;
-- ciclo de desativação/exclusão.
+- ciclo de desativação/exclusão;
+- Production Neon;
+- deployment Vercel pela IA.
 
 ## 7. NEXT_ACTION
 
-> Executar o CI final documental da PR #64. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #63 e promover somente US-PRIV-003 como próxima Story.
+> Promover US-PRIV-003 - Publicar perfil com visibilidade fail-closed como próxima Story limitada. Criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md` e implementar somente rota pública por username e enforcement de visibilidade no servidor e no banco. Não antecipar US-PRIV-004.
 
-
-## 8. Evidência atual de US-PRIV-002
+## 8. Fechamento de US-PRIV-002
 
 ```text
-Issue: #63
-PR: #64
-CI corrigido: #284 / 35350619301 / job 105617610955 / SUCCESS
+Issue #63: closed/completed
+PR #64: merged
+Feature head final: 510f4ee461b9976d8f8311dbe3d9a9557c46cdd8
+Merge: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
+CI final PR #289 / 35351088749 / job 105619133550: SUCCESS
+CI pós-merge main #290 / 35351301592 / job 105619831900: SUCCESS
 PostgreSQL 18 + verify:db: PASS
 Neon isolated: verify-us-priv-002 / br-proud-wind-awycp0sd / PASS
 Baseline ledger: 000001-000011

@@ -1,8 +1,10 @@
 # US-PRIV-002 - Verificação da personalização segura do perfil
 
-**Estado:** `PASS / PRONTA PARA INTEGRAÇÃO`  
-**Issue:** `#63` - open até o merge  
-**PR:** `#64` - open  
+**Estado:** `PASS / CONCLUÍDA`  
+**Issue:** `#63` - closed / completed  
+**PR:** `#64` - merged  
+**Feature head final:** `510f4ee461b9976d8f8311dbe3d9a9557c46cdd8`  
+**Merge:** `d19be4e881da6f8e3ba54a50ecef1c67fb1160e3`  
 **Branch Git:** `feat/us-priv-002-profile-personalization`  
 **Branch Neon isolada:** `verify-us-priv-002 / br-proud-wind-awycp0sd`  
 **Baseline Neon:** `main / br-restless-cherry-awpcwy6r`
@@ -55,6 +57,16 @@ Install dependencies: SUCCESS
 Verify application: SUCCESS
 PostgreSQL 18 server check: SUCCESS
 Verify database / npm run verify:db: SUCCESS
+```
+
+Fechamento da PR e da main:
+
+```text
+CI final da PR #289 / run 35351088749 / job 105619133550: SUCCESS
+PR #64: merged
+Merge: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
+Issue #63: closed/completed
+CI pós-merge main #290 / run 35351301592 / job 105619831900: SUCCESS
 ```
 
 O gate portável cobre:
@@ -140,6 +152,16 @@ Nenhum deployment Vercel foi executado.
 
 ## 9. Resultado
 
-US-PRIV-002 possui implementação, CI, PostgreSQL 18, Neon isolated e promoção/readback da baseline em PASS. A PR #64 pode ser integrada após o CI final do conjunto documental.
+US-PRIV-002 está concluída. Implementação, CI, PostgreSQL 18, Neon isolated, promoção/readback da baseline, CI final da PR e CI pós-merge estão em PASS.
 
-Após o merge, o fechamento operacional deve registrar merge, CI pós-merge, fechar a Issue #63 e promover somente US-PRIV-003 como próxima ação.
+```text
+Issue #63: closed/completed
+PR #64: merged
+Merge: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
+CI final PR #289 / 35351088749 / job 105619133550: SUCCESS
+CI pós-merge main #290 / 35351301592 / job 105619831900: SUCCESS
+Baseline ledger: 000001-000011
+Schema diff isolated vs baseline: vazio
+```
+
+A próxima ação operacional é promover somente US-PRIV-003 - Publicar perfil com visibilidade fail-closed. US-PRIV-004 e dependências futuras não devem ser antecipadas.

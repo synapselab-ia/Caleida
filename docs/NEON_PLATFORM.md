@@ -154,7 +154,10 @@ Nunca versionar DATABASE_URLs, Neon API keys, Auth URLs reais, Data API URLs rea
 ## 11. Evidência de US-PRIV-002
 
 ```text
-CI #284 / 35350619301 / job 105617610955: SUCCESS
+CI funcional #284 / 35350619301 / job 105617610955: SUCCESS
+CI final PR #289 / 35351088749 / job 105619133550: SUCCESS
+Merge PR #64: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
+CI pós-merge main #290 / 35351301592 / job 105619831900: SUCCESS
 Neon isolated: verify-us-priv-002 / br-proud-wind-awycp0sd
 Baseline ledger: 000001-000011
 Schema diff isolated vs baseline: vazio
@@ -167,4 +170,4 @@ Detalhes: `docs/US_PRIV_002_VERIFICATION.md`.
 
 ## 12. Próximo gate de plataforma
 
-Após merge e fechamento da US-PRIV-002, US-PRIV-003 poderá introduzir a leitura pública fail-closed. A Data API baseline não deve ser recriada e nenhuma policy/grant público deve ser criado fora dessa Story.
+US-PRIV-002 está concluída. US-PRIV-003 é a próxima Story e poderá introduzir leitura pública fail-closed. A Data API baseline não deve ser recriada; qualquer policy/grant público deve existir somente dentro do escopo e dos gates da US-PRIV-003.
