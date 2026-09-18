@@ -4,8 +4,11 @@ import { createServerAuth, getServerSession } from "@/lib/auth/server";
 import {
   isProfileAccentToken,
   isProfileCategory,
+  isProfileVisibility,
+  type EditableProfileVisibility,
   type ProfileAccentToken,
   type ProfileCategory,
+  type ProfileVisibility,
 } from "@/lib/profile/personalization";
 
 export type BasicProfile = {
@@ -16,9 +19,18 @@ export type BasicProfile = {
   accentToken: ProfileAccentToken;
   links: string[];
   favoriteCategories: ProfileCategory[];
-  visibility: "only_me";
+  visibility: ProfileVisibility;
   createdAt: string;
   updatedAt: string;
+};
+
+export type VisibleProfile = {
+  username: string;
+  displayName: string;
+  biography: string;
+  accentToken: ProfileAccentToken;
+  links: string[];
+  favoriteCategories: ProfileCategory[];
 };
 
 type ProfileRow = {
@@ -34,6 +46,15 @@ type ProfileRow = {
   updated_at: string;
 };
 
+type VisibleProfileRow = {
+  username: string;
+  display_name: string;
+  biography: string;
+  accent_token: string;
+  links: unknown;
+  favorite_categories: unknown;
+};
+
 type ProfileRequestContext = {
   authUserId: string;
   token: string;
@@ -47,6 +68,7 @@ type ProfileWriteBody = {
   accent_token: ProfileAccentToken;
   links: string[];
   favorite_categories: ProfileCategory[];
+  visibility: EditableProfileVisibility;
 };
 
 export type ProfileDataApiErrorCode =
@@ -65,6 +87,9 @@ export class ProfileDataApiError extends Error {
 const PROFILE_SCHEMA = "caleida_profile";
 const PROFILE_SELECT =
   "auth_user_id,username,display_name,biography,accent_token,links,favorite_categories,visibility,created_at,updated_at";
+const PUBLIC_PROFILE_SELECT =
+  "username,display_name,biography,accent_token,links,favorite_categories";
+const PUBLIC_USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9_]{1,28}[a-z0-9])$/;
 
 function readDataApiUrl(environment: NodeJS.ProcessEnv = process.env) {
   const rawUrl = environment.NEON_DATA_API_URL?.trim();
@@ -118,9 +143,21 @@ async function getProfileRequestContext(): Promise<ProfileRequestContext> {
   };
 }
 
-function profileEndpoint(context: ProfileRequestContext, query = "") {
+async function getOptionalProfileToken() {
+  const session = await getServerSession().catch(() => null);
+  if (typeof session?.user?.id !== "string") return null;
+
+  try {
+    const tokenResult = await createServerAuth().token();
+    return tokenResult.error ? null : extractToken(tokenResult.data);
+  } catch {
+    return null;
+  }
+}
+
+function profileEndpoint(dataApiUrl: string, query = "") {
   const suffix = query ? `?${query}` : "";
-  return `${context.dataApiUrl}/profiles${suffix}`;
+  return `${dataApiUrl}/profiles${suffix}`;
 }
 
 async function requestProfiles(
@@ -145,7 +182,7 @@ async function requestProfiles(
 
   let response: Response;
   try {
-    response = await fetch(profileEndpoint(context, options.query), {
+    response = await fetch(profileEndpoint(context.dataApiUrl, options.query), {
       method: options.method,
       headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
@@ -162,6 +199,37 @@ async function requestProfiles(
     }
     throw new ProfileDataApiError("upstream");
   }
+
+  const payload: unknown = await response.json().catch(() => null);
+  if (!Array.isArray(payload)) throw new ProfileDataApiError("upstream");
+  return payload;
+}
+
+async function requestVisibleProfiles(dataApiUrl: string, query: string, token: string | null) {
+  const request = async (bearer: string | null) => {
+    const headers = new Headers({
+      accept: "application/json",
+      "accept-profile": PROFILE_SCHEMA,
+    });
+    if (bearer) headers.set("authorization", `Bearer ${bearer}`);
+
+    try {
+      return await fetch(profileEndpoint(dataApiUrl, query), {
+        method: "GET",
+        headers,
+        cache: "no-store",
+      });
+    } catch {
+      throw new ProfileDataApiError("upstream");
+    }
+  };
+
+  let response = await request(token);
+  if (token && (response.status === 401 || response.status === 403)) {
+    response = await request(null);
+  }
+
+  if (!response.ok) throw new ProfileDataApiError("upstream");
 
   const payload: unknown = await response.json().catch(() => null);
   if (!Array.isArray(payload)) throw new ProfileDataApiError("upstream");
@@ -190,7 +258,8 @@ function parseProfileRow(value: unknown, expectedAuthUserId: string): BasicProfi
     typeof row.accent_token !== "string" ||
     !isProfileAccentToken(row.accent_token) ||
     !favoriteCategories.every(isProfileCategory) ||
-    row.visibility !== "only_me" ||
+    typeof row.visibility !== "string" ||
+    !isProfileVisibility(row.visibility) ||
     typeof row.created_at !== "string" ||
     typeof row.updated_at !== "string"
   ) {
@@ -211,6 +280,34 @@ function parseProfileRow(value: unknown, expectedAuthUserId: string): BasicProfi
   };
 }
 
+function parseVisibleProfileRow(value: unknown): VisibleProfile {
+  if (!value || typeof value !== "object") throw new ProfileDataApiError("upstream");
+
+  const row = value as Partial<VisibleProfileRow>;
+  const links = parseStringArray(row.links);
+  const favoriteCategories = parseStringArray(row.favorite_categories);
+
+  if (
+    typeof row.username !== "string" ||
+    typeof row.display_name !== "string" ||
+    typeof row.biography !== "string" ||
+    typeof row.accent_token !== "string" ||
+    !isProfileAccentToken(row.accent_token) ||
+    !favoriteCategories.every(isProfileCategory)
+  ) {
+    throw new ProfileDataApiError("upstream");
+  }
+
+  return {
+    username: row.username,
+    displayName: row.display_name,
+    biography: row.biography,
+    accentToken: row.accent_token,
+    links,
+    favoriteCategories,
+  };
+}
+
 async function fetchOwnProfile(context: ProfileRequestContext) {
   const payload = await requestProfiles(context, {
     method: "GET",
@@ -227,6 +324,20 @@ export async function getOwnProfile() {
   return fetchOwnProfile(context);
 }
 
+export async function getVisibleProfileByUsername(username: string) {
+  if (!PUBLIC_USERNAME_PATTERN.test(username)) return null;
+
+  const dataApiUrl = readDataApiUrl();
+  const token = await getOptionalProfileToken();
+  const query =
+    `select=${PUBLIC_PROFILE_SELECT}&username=eq.${encodeURIComponent(username)}&limit=1`;
+  const payload = await requestVisibleProfiles(dataApiUrl, query, token);
+
+  if (payload.length === 0) return null;
+  if (payload.length !== 1) throw new ProfileDataApiError("upstream");
+  return parseVisibleProfileRow(payload[0]);
+}
+
 export async function saveOwnProfile(input: {
   username: string;
   displayName: string;
@@ -234,6 +345,7 @@ export async function saveOwnProfile(input: {
   accentToken: ProfileAccentToken;
   links: string[];
   favoriteCategories: ProfileCategory[];
+  visibility: EditableProfileVisibility;
 }) {
   const context = await getProfileRequestContext();
   const current = await fetchOwnProfile(context);
@@ -244,6 +356,7 @@ export async function saveOwnProfile(input: {
     accent_token: input.accentToken,
     links: input.links,
     favorite_categories: input.favoriteCategories,
+    visibility: input.visibility,
   };
 
   const payload = current
