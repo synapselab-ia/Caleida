@@ -28,6 +28,12 @@ export default async function AccountProfilePage() {
           </Link>
           <nav className="flex flex-wrap gap-4 text-sm font-semibold">
             <Link
+              href="/account/privacy"
+              className="underline decoration-border underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+            >
+              Privacidade
+            </Link>
+            <Link
               href="/account/security"
               className="underline decoration-border underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
             >

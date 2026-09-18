@@ -17,6 +17,12 @@ export default function PrivateHomePage() {
               Meu perfil
             </Link>
             <Link
+              href="/account/privacy"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Privacidade
+            </Link>
+            <Link
               href="/account/security"
               className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >

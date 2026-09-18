@@ -46,7 +46,7 @@ Live matrix #13 / 34636223750: SUCCESS
 
 # Incremento 3 - Perfis e privacidade / EPIC-03
 
-**Estado:** EM ANDAMENTO / US-PRIV-004 PRONTA  
+**Estado:** EM ANDAMENTO / US-PRIV-004 EM REVISÃO  
 **Plano:** `docs/INCREMENT_3_PLAN.md`  
 **Capacidades:** CAP-03, CAP-05, CAP-33  
 **Refino:** OPS-007 / Issue #59
@@ -56,7 +56,7 @@ Live matrix #13 / 34636223750: SUCCESS
 | US-PRIV-001 - Perfil básico user-scoped + Data API/RLS | CONCLUÍDA | #61/#62 | CAP-03, fundação CAP-05 | `US_PRIV_001_VERIFICATION.md` |
 | US-PRIV-002 - Personalização segura do perfil | CONCLUÍDA | #63/#64 | CAP-03 | `US_PRIV_002_VERIFICATION.md` |
 | US-PRIV-003 - Rota pública + visibilidade | CONCLUÍDA | #65/#66 | CAP-03, CAP-05 | `US_PRIV_003_VERIFICATION.md` |
-| US-PRIV-004 - Bloqueio com efeito real | PRONTA | - | CAP-05 | - |
+| US-PRIV-004 - Bloqueio com efeito real | EM REVISÃO | #67/#68 | CAP-05 | `US_PRIV_004_VERIFICATION.md` |
 | US-PRIV-005 - Desativação e reativação | A FAZER | - | CAP-33 | - |
 | US-PRIV-006 - Solicitação/cancelamento + export de encerramento | A FAZER | - | CAP-33 | - |
 | US-PRIV-007 - Finalização segura da exclusão | A FAZER | - | CAP-33 | - |
@@ -123,7 +123,7 @@ A Story adicionou somente biografia, token de destaque, links HTTPS e categorias
 
 # Próxima ação operacional
 
-> Promover US-PRIV-004 como próxima Story limitada: criar Issue e branch próprias, implementar bloqueio direcional e enforcement real sobre leitura de perfil autenticada, preservando a leitura pública anônima de US-PRIV-003. Não antecipar US-PRIV-005, mute/restrict ou relações sociais funcionais.
+> Concluir o CI final documental da PR #68, integrar US-PRIV-004, validar o CI pós-merge e fechar a Issue #67. Depois, promover somente US-PRIV-005.
 
 ## Fechamento de US-PRIV-003
 
@@ -142,3 +142,18 @@ Schema diff isolated vs baseline: vazio
 ```
 
 A Story publicou somente perfis `public`, manteve `only_me`, `followers` e `connections` privados para terceiros e limitou `anonymous` às seis colunas deliberadamente públicas.
+
+
+## Estado de US-PRIV-004
+
+```text
+Issue #67: open
+PR #68: open
+CI #302 / 35360488983 / job 105650247432: SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo: PASS
+Baseline migrations: 000001-000013
+Schema diff isolated vs baseline: vazio
+```
+
+O bloqueio é direcional na persistência e bilateral no efeito de leitura autenticada. A leitura pública anônima de US-PRIV-003 permanece inalterada.

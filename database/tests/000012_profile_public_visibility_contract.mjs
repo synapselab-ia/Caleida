@@ -75,6 +75,7 @@ if (target === "ephemeral") {
       GRANT EXECUTE ON FUNCTION caleida_profile.touch_profile_updated_at() TO caleida_profile_test_authenticated;
       GRANT EXECUTE ON FUNCTION caleida_profile.profile_links_are_valid(text[]) TO caleida_profile_test_authenticated;
       GRANT EXECUTE ON FUNCTION caleida_profile.favorite_categories_are_valid(text[]) TO caleida_profile_test_authenticated;
+      GRANT EXECUTE ON FUNCTION caleida_profile.has_block_relationship_with(uuid) TO caleida_profile_test_authenticated;
 
       GRANT USAGE ON SCHEMA caleida_profile TO caleida_profile_test_anonymous;
       GRANT SELECT (
@@ -86,6 +87,7 @@ if (target === "ephemeral") {
         favorite_categories
       ) ON caleida_profile.profiles TO caleida_profile_test_anonymous;
       GRANT EXECUTE ON FUNCTION caleida_profile.current_auth_user_id() TO caleida_profile_test_anonymous;
+      GRANT EXECUTE ON FUNCTION caleida_profile.has_block_relationship_with(uuid) TO caleida_profile_test_anonymous;
     `,
   });
 

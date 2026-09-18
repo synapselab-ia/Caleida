@@ -1,8 +1,8 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `READY`  
+**Status operacional:** `IN_REVIEW`  
 **Fase:** Incremento 3 - Perfis e privacidade / EPIC-03  
-**Story ativa:** nenhuma
+**Story ativa:** `US-PRIV-004 - Implementar bloqueio com efeito real`
 
 ## Cursor
 
@@ -12,12 +12,12 @@ LAST_COMPLETED_ISSUE: #65
 LAST_COMPLETED_PR: #66
 LAST_COMPLETED_MERGE: 8541324800708eaecaff17c9492ef072142672a5
 
-ACTIVE_TASK: none
-ACTIVE_ISSUE: none
-ACTIVE_BRANCH: none
-ACTIVE_PR: none
+ACTIVE_TASK: US-PRIV-004 - Implementar bloqueio com efeito real
+ACTIVE_ISSUE: #67
+ACTIVE_BRANCH: feat/us-priv-004-profile-blocking
+ACTIVE_PR: #68
 
-NEXT_ACTION: Promover US-PRIV-004 - Implementar bloqueio com efeito real como próxima Story limitada. Criar Issue e branch próprias a partir da main atual, reler docs/INCREMENT_3_PLAN.md e implementar somente a relação direcional de bloqueio e seu enforcement real sobre leitura de perfil autenticada. Preservar a leitura pública anônima definida em US-PRIV-003, impedir auto-bloqueio e duplicidade, negar leitura entre identidades quando qualquer lado bloqueou o outro e não antecipar mute/restrict, US-PRIV-005, relações sociais funcionais, Storage, Production Neon ou deployment Vercel.
+NEXT_ACTION: Executar o CI final documental da PR #68. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #67 e promover somente US-PRIV-005. Não antecipar US-PRIV-006, mute/restrict, relações sociais funcionais, Storage, Production Neon ou deployment Vercel.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
@@ -202,3 +202,45 @@ Readback confirmou RLS habilitada e forçada, policies owner preservadas, policy
 - nenhum bloqueio, mute/restrict, Storage ou relação social funcional foi antecipado.
 
 Browser/live intermediário e probe HTTP externo direto permaneceram `SKIPPED/deferred` pelos motivos registrados em `docs/US_PRIV_003_VERIFICATION.md`. Nenhum deployment Vercel foi executado.
+
+
+## US-PRIV-004 em revisão
+
+```text
+Issue: #67 - open
+PR: #68 - open
+Branch: feat/us-priv-004-profile-blocking
+Base Git: main @ dc35642d7588518289154995525f5b59428df568
+Migration: database/migrations/000013_profile_blocking.sql
+Checksum: 3a0b5d0548deef10e1fa2bda0c7c143400210288f681d51dbcdffa58c419e105
+```
+
+Implementado:
+
+- relação direcional blocker -> blocked, sem auto-bloqueio e sem duplicidade;
+- RLS owner em SELECT/INSERT/DELETE da relação, sem UPDATE;
+- helper reutilizável para bloqueio em qualquer direção;
+- policy `RESTRICTIVE` de SELECT em perfis para impedir bypass pelas policies permissivas existentes;
+- owner continua lendo o próprio perfil;
+- bloqueio bilateral entre identidades autenticadas, mesmo com perfil público;
+- leitura anônima de perfis públicos preservada;
+- `/account/privacy` cria, lista e remove somente os próprios bloqueios;
+- nenhum mute/restrict, relação social funcional, Storage ou ciclo de conta foi antecipado.
+
+Gates:
+
+```text
+CI #299 / 35360001503: FAIL - expectativa textual incorreta em teste novo
+CI #301 / 35360262227: FAIL - regex ampla demais em teste novo
+CI #302 / 35360488983 / job 105650247432: SUCCESS
+PostgreSQL 18 + verify:db: PASS
+Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo: PASS
+Managed authenticated/anonymous matrix: PASS
+Synthetic cleanup: PASS
+Baseline ledger: 000001-000013
+Schema diff isolated vs baseline: vazio
+Data API: active / somente caleida_profile
+Browser/live intermediário: SKIPPED/deferred conforme protocolo
+```
+
+Nenhum deployment Vercel foi executado.

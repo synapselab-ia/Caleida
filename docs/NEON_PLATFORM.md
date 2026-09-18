@@ -1,6 +1,6 @@
 # Neon Platform - Caleida
 
-**Status:** arquitetura canônica de plataforma durante o Incremento 3, após promoção da US-PRIV-003 para a baseline non-production  
+**Status:** arquitetura canônica de plataforma durante o Incremento 3, após promoção da US-PRIV-004 para a baseline non-production  
 **Decisões:** ADR-004, ADR-005, ADR-008 e ADR-009
 
 ## 1. Topologia vigente
@@ -40,7 +40,7 @@ A branch Neon `main` é staging/non-production e não é a branch Git `main`.
 
 ## 3. Baseline de migrations
 
-A baseline integrada contém migrations `000001`-`000012`.
+A baseline integrada contém migrations `000001`-`000013`.
 
 Checksums mais recentes:
 
@@ -59,9 +59,12 @@ Checksums mais recentes:
 
 000012_profile_public_visibility.sql
 d8a1f4f7f973e12490cf205bd8ec96ce50c55e4dbc5dd09bb978f16dcfdf3713
+
+000013_profile_blocking.sql
+3a0b5d0548deef10e1fa2bda0c7c143400210288f681d51dbcdffa58c419e105
 ```
 
-`000009` cria o núcleo de perfil/RLS. `000010` deriva identidade do `sub` validado em `request.jwt.claims`. `000011` adiciona personalização segura. `000012` adiciona leitura pública fail-closed e grants anônimos somente por coluna.
+`000009` cria o núcleo de perfil/RLS. `000010` deriva identidade do `sub` validado em `request.jwt.claims`. `000011` adiciona personalização segura. `000012` adiciona leitura pública fail-closed. `000013` adiciona bloqueio persistente e guard restritivo sobre leitura autenticada de perfis.
 
 ## 4. Perfil user-scoped e Data API
 
@@ -136,6 +139,7 @@ verify-us-auth-008 / br-delicate-meadow-aw1u62kn
 verify-us-priv-001 / br-silent-rain-aw4fqrhg
 verify-us-priv-002 / br-proud-wind-awycp0sd
 verify-us-priv-003 / br-noisy-firefly-aw06x1br
+verify-us-priv-004 / br-curly-fog-aw1c1hpo
 ```
 
 Branches temporárias não são fonte de verdade de schema. Exclusão exige autorização explícita porque é destrutiva.
@@ -192,6 +196,20 @@ Readback confirmou policy pública somente de SELECT, estados sociais reservados
 
 Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.
 
-## 13. Próximo gate de plataforma
+## 13. Evidência de US-PRIV-004
 
-US-PRIV-003 está concluída. US-PRIV-004 é a próxima Story e poderá introduzir bloqueio direcional com enforcement real sobre leitura autenticada. A leitura pública anônima de US-PRIV-003 deve permanecer intacta, e grants públicos não devem ser ampliados fora do necessário.
+```text
+CI portável #302 / 35360488983 / job 105650247432: SUCCESS
+Neon isolated: verify-us-priv-004 / br-curly-fog-aw1c1hpo
+Baseline ledger: 000001-000013
+Schema diff isolated vs baseline: vazio
+Data API: active / somente caleida_profile
+```
+
+`caleida_profile.profile_blocks` possui RLS owner para SELECT/INSERT/DELETE, sem UPDATE. O helper `has_block_relationship_with(uuid)` é `SECURITY DEFINER` e o guard `profiles_block_guard` é RESTRICTIVE, preservando acesso do owner e leitura anônima pública enquanto nega o par bloqueado em ambos os sentidos para identidades autenticadas.
+
+A matriz Neon real confirmou auto-bloqueio e duplicidade negados, blocker forjado negado por RLS, UPDATE negado, tabela de bloqueios inacessível a anonymous e desbloqueio restaurando a leitura.
+
+## 14. Próximo gate de plataforma
+
+Após merge e fechamento da US-PRIV-004, US-PRIV-005 poderá introduzir estado de desativação reversível. Não antecipar exclusão, Storage ou relações sociais.
