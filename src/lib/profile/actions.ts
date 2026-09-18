@@ -10,6 +10,8 @@ import {
   PROFILE_LINK_MAX_LENGTH,
   isProfileAccentToken,
   isProfileCategory,
+  type ProfileAccentToken,
+  type ProfileCategory,
 } from "@/lib/profile/personalization";
 
 export type ProfileActionState = {
@@ -168,9 +170,9 @@ function validateProfileInput(formData: FormData) {
       username,
       displayName,
       biography,
-      accentToken,
+      accentToken: accentToken as ProfileAccentToken,
       links: linksResult.links,
-      favoriteCategories,
+      favoriteCategories: favoriteCategories as ProfileCategory[],
     },
   };
 }
