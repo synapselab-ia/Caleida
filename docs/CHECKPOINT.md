@@ -1,8 +1,8 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `READY`  
+**Status operacional:** `IN_PROGRESS`  
 **Fase:** Incremento 3 - Perfis e privacidade / EPIC-03  
-**Story ativa:** nenhuma
+**Story ativa:** `US-PRIV-002 - Personalização segura do perfil`
 
 ## Cursor
 
@@ -12,12 +12,12 @@ LAST_COMPLETED_ISSUE: #61
 LAST_COMPLETED_PR: #62
 LAST_COMPLETED_MERGE: 8aeb90cdc3b9b017aee3cefcd4e60b35f22d2758
 
-ACTIVE_TASK: none
-ACTIVE_ISSUE: none
-ACTIVE_BRANCH: none
-ACTIVE_PR: none
+ACTIVE_TASK: US-PRIV-002 - Personalização segura do perfil
+ACTIVE_ISSUE: #63
+ACTIVE_BRANCH: feat/us-priv-002-profile-personalization
+ACTIVE_PR: #64
 
-NEXT_ACTION: Promover US-PRIV-002 - Personalização segura do perfil como próxima Story limitada. Criar a Issue e branch próprias a partir da main atual, reler o escopo canônico em docs/INCREMENT_3_PLAN.md e implementar somente biografia, cor de destaque por tokens aprovados, links HTTPS permitidos e categorias culturais favoritas, preservando ownership e validação server-side/banco. Não antecipar avatar, banner, Storage, obras favoritas, perfil público ou relações sociais.
+NEXT_ACTION: Executar e corrigir os gates da PR #64 para a US-PRIV-002. Validar migration 000011, testes de banco PostgreSQL 18, lint, typecheck, testes e build. Executar gate Neon adicional somente se a mudança depender de comportamento específico do serviço; não usar a baseline Neon main como laboratório. Após todos os gates aplicáveis, promover a migration para a baseline non-production com readback, reconciliar documentação, mergear a PR e fechar a Issue. Não antecipar US-PRIV-003.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
@@ -110,3 +110,26 @@ O payload normal aceita somente `username` e `display_name`. `auth_user_id` e vi
 - deployment Vercel continua exclusivamente humano/manual;
 - nenhum endpoint real, JWT, OTP, senha, API key ou connection string é persistido;
 - branches históricas Git/Neon não são removidas sem autorização destrutiva explícita.
+
+
+## US-PRIV-002 em andamento
+
+```text
+Issue: #63 - open
+Branch: feat/us-priv-002-profile-personalization
+PR: #64 - open
+Base Git: main @ 23ab71a37b191146209e3f90ace5b729918267de
+Migration nova: database/migrations/000011_profile_personalization.sql
+```
+
+Escopo implementado na branch até este checkpoint:
+
+- biografia opcional limitada a 280 caracteres;
+- cor de destaque restrita a tokens aprovados do design system;
+- até 5 links HTTPS, sem credenciais embutidas e com normalização server-side;
+- até 3 categorias culturais favoritas da taxonomia canônica;
+- novos campos no mesmo perfil user-scoped já protegido por RLS;
+- `auth_user_id` e `visibility` continuam fora do payload editável;
+- nenhum avatar, banner, upload, Storage, obra favorita, rota pública ou relação social foi introduzido.
+
+Gates ainda não devem ser tratados como PASS até o CI e as verificações aplicáveis concluírem.
