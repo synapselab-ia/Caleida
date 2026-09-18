@@ -1,6 +1,6 @@
 # Execution Plan - Caleida
 
-**Estado:** Incremento 3 em execução; US-PRIV-003 verificada e em revisão na Issue #65 / PR #66.  
+**Estado:** Incremento 3 em execução; US-PRIV-003 concluída e US-PRIV-004 pronta para promoção como próxima Story.  
 **Fonte de execução:** `docs/CHECKPOINT.md`  
 **Plano vigente:** `docs/INCREMENT_3_PLAN.md`
 
@@ -47,9 +47,9 @@ US-PRIV-001 - perfil básico user-scoped + Data API/RLS       CONCLUÍDA
   ↓
 US-PRIV-002 - personalização segura do perfil                CONCLUÍDA
   ↓
-US-PRIV-003 - rota pública + visibilidade                     EM REVISÃO
+US-PRIV-003 - rota pública + visibilidade                     CONCLUÍDA
   ↓
-US-PRIV-004 - bloqueio e contrato de exclusão social          A FAZER
+US-PRIV-004 - bloqueio e contrato de exclusão social          PRONTA / próxima ação
   ↓
 US-PRIV-005 - desativação e reativação da conta              A FAZER
   ↓
@@ -100,34 +100,33 @@ Para ambientes novos, o serviço Data API deve existir antes da migration user-s
 
 ## 6. Escopo da próxima Story
 
-US-PRIV-003 publica o perfil por username com visibilidade fail-closed, sem antecipar bloqueio ou relações sociais inexistentes.
+US-PRIV-004 adiciona bloqueio direcional com efeito real sobre leitura de perfil autenticada.
 
 Escopo permitido:
 
-- criar rota pública por username;
-- aplicar visibilidade no servidor e no banco;
-- owner continua autorizado a consultar o próprio perfil;
-- `public` pode ser lido conforme política;
-- `only_me` não pode vazar para terceiros;
-- `followers` e `connections` continuam estados canônicos fail-closed e não aparecem como opções funcionais enquanto as relações não existirem;
-- acesso direto por UUID ou username obedece à mesma política;
-- anônimo recebe somente colunas deliberadamente públicas;
-- nenhuma policy concede `UPDATE` ou `DELETE` a anônimo;
-- executar gate Neon-specific se a leitura pública usar `anonymous`/Data API.
+- relação persistente blocker -> blocked;
+- blocker e blocked devem ser identidades distintas;
+- impedir duplicidade do mesmo par;
+- usuário autenticado cria, lista e remove somente os próprios bloqueios;
+- se A bloqueia B ou B bloqueia A, a leitura de perfil entre essas identidades autenticadas é negada mesmo quando o perfil é público;
+- acesso direto por username/ID deve obedecer ao mesmo predicado;
+- leitura pública anônima de perfis públicos permanece conforme US-PRIV-003, sem inferir identidade do visitante;
+- o predicado de bloqueio deve ficar reutilizável por consultas sociais futuras;
+- RLS, grants e testes adversariais devem cobrir IDOR e os dois sentidos do bloqueio.
 
 Continuam fora do escopo:
 
-- bloqueio, mute ou restrict;
+- mute/restrict;
 - followers/connections funcionais;
-- avatar/banner/upload/Storage;
-- obras favoritas dependentes de catálogo;
-- ciclo de desativação/exclusão;
+- desativação e reativação;
+- exclusão de conta;
+- avatar/banner/Storage;
 - Production Neon;
 - deployment Vercel pela IA.
 
 ## 7. NEXT_ACTION
 
-> Executar o CI final documental da PR #66. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #65 e promover somente US-PRIV-004 como próxima Story.
+> Promover US-PRIV-004 - Implementar bloqueio com efeito real como próxima Story limitada. Criar Issue e branch próprias a partir da `main` atual, reler `docs/INCREMENT_3_PLAN.md` e implementar somente bloqueio direcional + enforcement sobre leitura de perfil autenticada. Não antecipar US-PRIV-005.
 
 ## 8. Fechamento de US-PRIV-002
 
@@ -147,19 +146,21 @@ Browser/live intermediário: SKIPPED/deferred conforme Verification Protocol
 ```
 
 
-## 9. Evidência atual de US-PRIV-003
+## 9. Fechamento de US-PRIV-003
 
 ```text
-Issue: #65
-PR: #66
-CI funcional: #292 / 35354823796 / job 105631496653 / SUCCESS
+Issue #65: closed/completed
+PR #66: merged
+Feature head final: ed821cf9bcf5ee77b9fbec57ba75b19c014d4458
+Merge: 8541324800708eaecaff17c9492ef072142672a5
+CI final PR #296 / 35355383381 / job 105633487565: SUCCESS
+CI pós-merge main #297 / 35355615237 / job 105634118124: SUCCESS
 PostgreSQL 18 + verify:db: PASS
 Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br / PASS
-Managed anonymous: SELECT público permitido / coluna auth_user_id negada
 Baseline ledger: 000001-000012
 000012 checksum: d8a1f4f7f973e12490cf205bd8ec96ce50c55e4dbc5dd09bb978f16dcfdf3713
 Schema diff isolated vs baseline: vazio
-Browser/live intermediário: SKIPPED/deferred
+Browser/live intermediário: SKIPPED/deferred conforme Verification Protocol
 ```
 
 Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.

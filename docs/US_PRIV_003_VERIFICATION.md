@@ -1,8 +1,10 @@
 # US-PRIV-003 - Verificação do perfil público com visibilidade fail-closed
 
-**Estado:** `PASS / PRONTA PARA INTEGRAÇÃO`  
-**Issue:** `#65` - open até o merge  
-**PR:** `#66` - open  
+**Estado:** `PASS / CONCLUÍDA`  
+**Issue:** `#65` - closed / completed  
+**PR:** `#66` - merged  
+**Feature head final:** `ed821cf9bcf5ee77b9fbec57ba75b19c014d4458`  
+**Merge:** `8541324800708eaecaff17c9492ef072142672a5`  
 **Branch Git:** `feat/us-priv-003-public-profile-visibility`  
 **Branch Neon isolada:** `verify-us-priv-003 / br-noisy-firefly-aw06x1br`  
 **Baseline Neon:** `main / br-restless-cherry-awpcwy6r`
@@ -65,6 +67,12 @@ Install dependencies: SUCCESS
 Verify application / npm run verify: SUCCESS
 PostgreSQL 18 server check: SUCCESS
 Verify database / npm run verify:db: SUCCESS
+
+CI final da PR #296 / run 35355383381 / job 105633487565: SUCCESS
+PR #66: merged
+Merge: 8541324800708eaecaff17c9492ef072142672a5
+Issue #65: closed/completed
+CI pós-merge main #297 / run 35355615237 / job 105634118124: SUCCESS
 ```
 
 O gate portável cobre:
@@ -188,6 +196,19 @@ Nenhum deployment Vercel foi executado.
 
 ## 10. Resultado
 
-US-PRIV-003 possui implementação, CI/PostgreSQL 18, Neon-specific e promoção/readback da baseline em PASS.
+US-PRIV-003 está concluída. Implementação, CI/PostgreSQL 18, gate Neon-specific, promoção/readback da baseline, CI final da PR e CI pós-merge estão em PASS.
 
-A PR #66 pode ser integrada após o CI final do conjunto documental. Após merge e CI pós-merge, fechar a Issue #65 e promover somente US-PRIV-004 - Implementar bloqueio com efeito real.
+```text
+Issue #65: closed/completed
+PR #66: merged
+Feature head final: ed821cf9bcf5ee77b9fbec57ba75b19c014d4458
+Merge: 8541324800708eaecaff17c9492ef072142672a5
+CI final PR #296 / 35355383381 / job 105633487565: SUCCESS
+CI pós-merge main #297 / 35355615237 / job 105634118124: SUCCESS
+Baseline ledger: 000001-000012
+Schema diff isolated vs baseline: vazio
+```
+
+Browser/live intermediário e o probe HTTP externo direto permanecem corretamente registrados como `SKIPPED/deferred`, não como PASS.
+
+A próxima ação operacional é promover somente US-PRIV-004 - Implementar bloqueio com efeito real. US-PRIV-005 e dependências futuras não devem ser antecipadas.

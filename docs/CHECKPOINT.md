@@ -1,23 +1,23 @@
 # Checkpoint - Caleida
 
-**Status operacional:** `IN_REVIEW`  
+**Status operacional:** `READY`  
 **Fase:** Incremento 3 - Perfis e privacidade / EPIC-03  
-**Story ativa:** `US-PRIV-003 - Publicar perfil com visibilidade fail-closed`
+**Story ativa:** nenhuma
 
 ## Cursor
 
 ```text
-LAST_COMPLETED_TASK: US-PRIV-002 - Personalização segura do perfil
-LAST_COMPLETED_ISSUE: #63
-LAST_COMPLETED_PR: #64
-LAST_COMPLETED_MERGE: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
+LAST_COMPLETED_TASK: US-PRIV-003 - Publicar perfil com visibilidade fail-closed
+LAST_COMPLETED_ISSUE: #65
+LAST_COMPLETED_PR: #66
+LAST_COMPLETED_MERGE: 8541324800708eaecaff17c9492ef072142672a5
 
-ACTIVE_TASK: US-PRIV-003 - Publicar perfil com visibilidade fail-closed
-ACTIVE_ISSUE: #65
-ACTIVE_BRANCH: feat/us-priv-003-public-profile-visibility
-ACTIVE_PR: #66
+ACTIVE_TASK: none
+ACTIVE_ISSUE: none
+ACTIVE_BRANCH: none
+ACTIVE_PR: none
 
-NEXT_ACTION: Executar o CI final documental da PR #66. Se permanecer em PASS, mergear a PR, validar o CI pós-merge, fechar a Issue #65 e promover somente US-PRIV-004. Não antecipar US-PRIV-005, relações sociais funcionais, Storage, Production Neon ou deployment Vercel.
+NEXT_ACTION: Promover US-PRIV-004 - Implementar bloqueio com efeito real como próxima Story limitada. Criar Issue e branch próprias a partir da main atual, reler docs/INCREMENT_3_PLAN.md e implementar somente a relação direcional de bloqueio e seu enforcement real sobre leitura de perfil autenticada. Preservar a leitura pública anônima definida em US-PRIV-003, impedir auto-bloqueio e duplicidade, negar leitura entre identidades quando qualquer lado bloqueou o outro e não antecipar mute/restrict, US-PRIV-005, relações sociais funcionais, Storage, Production Neon ou deployment Vercel.
 
 BLOCKERS: none
 MANUAL_ACTION_REQUIRED: none
@@ -158,41 +158,47 @@ Readback preservou RLS habilitada e forçada, somente as policies owner `SELECT`
 Browser/live intermediário permaneceu `SKIPPED/deferred` conforme o Verification Protocol e ADR-007. Nenhum deployment Vercel foi executado.
 
 
-## US-PRIV-003 em revisão
+## Fechamento real da US-PRIV-003
+
+### Git e CI
 
 ```text
-Issue: #65 - open
-PR: #66 - open
-Branch: feat/us-priv-003-public-profile-visibility
-Base Git: main @ b613d19bdf726b53f575a69db4a37452cb383259
-Migration: database/migrations/000012_profile_public_visibility.sql
-Checksum: d8a1f4f7f973e12490cf205bd8ec96ce50c55e4dbc5dd09bb978f16dcfdf3713
+Issue: #65 - closed / completed
+PR: #66 - merged
+Feature head final: ed821cf9bcf5ee77b9fbec57ba75b19c014d4458
+Merge: 8541324800708eaecaff17c9492ef072142672a5
+CI final da PR #296 / run 35355383381 / job 105633487565: SUCCESS
+CI pós-merge main #297 / run 35355615237 / job 105634118124: SUCCESS
+Open Issues/PRs após o fechamento: none
 ```
 
-Escopo implementado:
+O CI final e o pós-merge cobriram runtime, manifest de migrations, lint, typecheck, testes, build Next.js, PostgreSQL 18 e `npm run verify:db`.
 
-- rota pública `/<username>`;
-- UI funcional somente para `public` e `only_me`;
-- `followers` e `connections` permanecem fail-closed;
-- policy pública somente de SELECT para linhas `visibility = 'public'`;
-- `anonymous` recebe SELECT somente nas seis colunas públicas;
-- projeção Data API pública exclui ownership, visibility e timestamps;
-- loading, erro e not-found fail-closed na rota pública;
-- nenhum bloqueio, relação social funcional, Storage ou dependência futura foi antecipado.
-
-Gates concluídos:
+### Neon e baseline non-production
 
 ```text
-CI #292 / 35354823796 / job 105631496653: SUCCESS
-PostgreSQL 18 + npm run verify:db: PASS
-Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br: PASS
-Managed role anonymous: public SELECT permitido / auth_user_id negado
-Baseline migration 000012: promovida
-Baseline ledger: 000001-000012
+Project: caleida-nonprod / patient-glade-95136440
+PostgreSQL: 18
+Baseline: main / br-restless-cherry-awpcwy6r / ready
+Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br / PASS
+Baseline migrations: 000001-000012
+000012 checksum: d8a1f4f7f973e12490cf205bd8ec96ce50c55e4dbc5dd09bb978f16dcfdf3713
 Schema diff isolated vs baseline: vazio
-Data API baseline: active / somente caleida_profile
-Browser/live intermediário: SKIPPED/deferred
-Probe HTTP externo direto: SKIPPED por indisponibilidade de DNS no ambiente; não contado como PASS
+Data API: active / somente caleida_profile
+anonymous: SELECT somente nas seis colunas públicas
+OpenAPI: disabled
 ```
 
-Nenhum deployment Vercel foi executado.
+Readback confirmou RLS habilitada e forçada, policies owner preservadas, policy pública somente de SELECT para `visibility = 'public'`, `authenticated` com INSERT/SELECT/UPDATE e `anonymous` sem grant amplo de tabela ou escrita. O papel gerenciado `anonymous` conseguiu executar a leitura pública permitida e recebeu `permission denied` ao tentar selecionar `auth_user_id`.
+
+### Implementação consolidada
+
+- `database/migrations/000012_profile_public_visibility.sql` introduz leitura pública fail-closed;
+- owner pode escolher funcionalmente somente `public` ou `only_me`;
+- `followers` e `connections` permanecem estados canônicos privados para terceiros;
+- rota pública `/<username>` usa Server Component, loading, erro e not-found fail-closed;
+- perfil privado e username inexistente compartilham ausência de dados públicos;
+- projeção pública contém somente `username`, `display_name`, `biography`, `accent_token`, `links` e `favorite_categories`;
+- nenhum bloqueio, mute/restrict, Storage ou relação social funcional foi antecipado.
+
+Browser/live intermediário e probe HTTP externo direto permaneceram `SKIPPED/deferred` pelos motivos registrados em `docs/US_PRIV_003_VERIFICATION.md`. Nenhum deployment Vercel foi executado.

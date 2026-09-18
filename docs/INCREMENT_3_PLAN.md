@@ -366,7 +366,7 @@ Deve validar tamanho/formato no servidor e no banco quando aplicável, neutraliz
 # US-PRIV-003 - Publicar perfil com visibilidade fail-closed
 
 **Prioridade:** P0  
-**Estado:** EM REVISÃO / PR #66  
+**Estado:** CONCLUÍDA  
 **Dependência:** US-PRIV-002  
 **Capacidades:** CAP-03, CAP-05
 
@@ -390,7 +390,7 @@ Gate Neon-specific é obrigatório se a leitura pública usar papel `anonymous`/
 # US-PRIV-004 - Implementar bloqueio com efeito real
 
 **Prioridade:** P0  
-**Estado:** A FAZER  
+**Estado:** PRONTA / próxima ação  
 **Dependência:** US-PRIV-003  
 **Capacidade:** CAP-05
 
@@ -528,36 +528,25 @@ CAP-03 e CAP-05 permanecerão com extensões futuras deliberadas onde suas depen
 
 ## 9. Estado operacional após US-PRIV-003
 
-US-PRIV-001 e US-PRIV-002 estão concluídas. US-PRIV-003 está implementada e verificada na PR #66.
+US-PRIV-001, US-PRIV-002 e US-PRIV-003 estão concluídas.
 
-Fechamento de US-PRIV-002:
+Fechamento de US-PRIV-003:
 
 ```text
-Issue #63: closed/completed
-PR #64: merged
-Feature head final: 510f4ee461b9976d8f8311dbe3d9a9557c46cdd8
-Merge: d19be4e881da6f8e3ba54a50ecef1c67fb1160e3
-CI final PR #289 / 35351088749 / job 105619133550: SUCCESS
-CI pós-merge main #290 / 35351301592 / job 105619831900: SUCCESS
+Issue #65: closed/completed
+PR #66: merged
+Feature head final: ed821cf9bcf5ee77b9fbec57ba75b19c014d4458
+Merge: 8541324800708eaecaff17c9492ef072142672a5
+CI final PR #296 / 35355383381 / job 105633487565: SUCCESS
+CI pós-merge main #297 / 35355615237 / job 105634118124: SUCCESS
 PostgreSQL 18 + verify:db: PASS
-Neon isolated: verify-us-priv-002 / br-proud-wind-awycp0sd: PASS
-Baseline ledger: 000001-000011
-Schema diff isolated vs baseline: vazio
-```
-
-Fechamento técnico atual de US-PRIV-003:
-
-```text
-Issue #65: open
-PR #66: open
-CI #292 / 35354823796 / job 105631496653: SUCCESS
 Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br: PASS
 Baseline ledger: 000001-000012
 Schema diff isolated vs baseline: vazio
 ```
 
-Após CI final, merge e CI pós-merge, promover somente:
+Promover somente:
 
 > `US-PRIV-004 - Implementar bloqueio com efeito real`
 
-Não iniciar US-PRIV-005 nem antecipar Storage, relações sociais funcionais, Production Neon ou deployment Vercel.
+Não iniciar US-PRIV-005 nem antecipar mute/restrict, relações sociais funcionais, Storage, Production Neon ou deployment Vercel.

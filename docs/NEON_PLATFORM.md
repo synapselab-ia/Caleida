@@ -177,7 +177,10 @@ Detalhes: `docs/US_PRIV_002_VERIFICATION.md`.
 ## 12. Evidência de US-PRIV-003
 
 ```text
-CI #292 / 35354823796 / job 105631496653: SUCCESS
+CI funcional #292 / 35354823796 / job 105631496653: SUCCESS
+CI final PR #296 / 35355383381 / job 105633487565: SUCCESS
+Merge PR #66: 8541324800708eaecaff17c9492ef072142672a5
+CI pós-merge main #297 / 35355615237 / job 105634118124: SUCCESS
 Neon isolated: verify-us-priv-003 / br-noisy-firefly-aw06x1br
 Baseline ledger: 000001-000012
 Schema diff isolated vs baseline: vazio
@@ -191,4 +194,4 @@ Detalhes: `docs/US_PRIV_003_VERIFICATION.md`.
 
 ## 13. Próximo gate de plataforma
 
-Após merge e fechamento da US-PRIV-003, US-PRIV-004 poderá introduzir bloqueio com efeito real. Não ampliar grants públicos nem relações sociais fora dessa Story.
+US-PRIV-003 está concluída. US-PRIV-004 é a próxima Story e poderá introduzir bloqueio direcional com enforcement real sobre leitura autenticada. A leitura pública anônima de US-PRIV-003 deve permanecer intacta, e grants públicos não devem ser ampliados fora do necessário.

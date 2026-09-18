@@ -162,7 +162,7 @@ Implementado e verificado:
 
 Evidência: `docs/US_PRIV_002_VERIFICATION.md`.
 
-#### US-PRIV-003 - Perfil público + visibilidade fail-closed (#65/#66) - EM REVISÃO
+#### US-PRIV-003 - Perfil público + visibilidade fail-closed (#65/#66) - CONCLUÍDA
 
 Implementado e verificado:
 
@@ -174,6 +174,10 @@ Implementado e verificado:
 - `anonymous` limitado às seis colunas públicas, sem INSERT/UPDATE/DELETE;
 - perfil privado e inexistente usam a mesma ausência de conteúdo na rota pública;
 - CI #292 / `35354823796` / job `105631496653`: SUCCESS;
+- CI final da PR #296 / `35355383381` / job `105633487565`: SUCCESS;
+- PR #66 integrada no merge `8541324800708eaecaff17c9492ef072142672a5`;
+- Issue #65 fechada como completed;
+- CI pós-merge main #297 / `35355615237` / job `105634118124`: SUCCESS;
 - Neon isolated `verify-us-priv-003 / br-noisy-firefly-aw06x1br`: PASS;
 - migration `000012` promovida à baseline non-production;
 - Data API permanece ativa somente para `caleida_profile`;
@@ -185,7 +189,7 @@ Evidência: `docs/US_PRIV_003_VERIFICATION.md`.
 
 ### Próxima Story
 
-Após merge, CI pós-merge e fechamento da Issue #65, a próxima Story é `US-PRIV-004 - Implementar bloqueio com efeito real`.
+`US-PRIV-004 - Implementar bloqueio com efeito real` está pronta para promoção. Seu escopo é bloqueio direcional e enforcement sobre leitura autenticada. Mute/restrict, relações sociais funcionais, Storage e ciclo de conta continuam fora de escopo.
 
 ### Limites vigentes do Incremento 3
 
