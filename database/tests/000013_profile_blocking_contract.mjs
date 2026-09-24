@@ -46,13 +46,21 @@ const blockPolicies = runPsql({
   databaseUrl,
   tuplesOnly: true,
   sql: `
-    SELECT string_agg(cmd, ',' ORDER BY cmd)
+    SELECT string_agg(policyname || ':' || cmd, ',' ORDER BY policyname)
     FROM pg_policies
     WHERE schemaname = 'caleida_profile'
-      AND tablename = 'profile_blocks';
+      AND tablename = 'profile_blocks'
+      AND policyname IN (
+        'profile_blocks_owner_delete',
+        'profile_blocks_owner_insert',
+        'profile_blocks_owner_select'
+      );
   `,
 });
-assert.equal(blockPolicies, "DELETE,INSERT,SELECT");
+assert.equal(
+  blockPolicies,
+  "profile_blocks_owner_delete:DELETE,profile_blocks_owner_insert:INSERT,profile_blocks_owner_select:SELECT",
+);
 
 const profileGuard = runPsql({
   databaseUrl,
