@@ -12,6 +12,7 @@ type LoginPageProps = {
   searchParams: Promise<{
     loggedOut?: string | string[];
     reset?: string | string[];
+    deactivated?: string | string[];
   }>;
 };
 
@@ -22,6 +23,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const loggedOut = params.loggedOut === "1";
   const reset = params.reset === "1";
+  const deactivated = params.deactivated === "1";
 
   return (
     <main className="min-h-dvh bg-background px-5 py-8 text-text-primary sm:px-8">
@@ -56,6 +58,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {reset ? (
           <Feedback kind="status" title="Senha redefinida">
             Sua nova senha já pode ser usada para entrar.
+          </Feedback>
+        ) : null}
+
+        {deactivated ? (
+          <Feedback kind="status" title="Conta desativada">
+            Seus dados foram preservados. Faça um novo login para acessar somente a tela de reativação.
           </Feedback>
         ) : null}
 

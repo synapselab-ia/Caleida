@@ -56,3 +56,88 @@ export async function listOwnSessionSummaries(): Promise<SessionSummaryResult> {
     return { sessions: [], error: true };
   }
 }
+
+
+export type LifecycleSessionRevocationResult = {
+  remoteSessionsRevoked: boolean;
+  currentSessionRevoked: boolean;
+};
+
+async function listOwnedSessionsForLifecycle(userId: string) {
+  const auth = createServerAuth();
+  const { data, error } = await auth.listSessions();
+
+  if (error || !data) {
+    return { auth, sessions: null };
+  }
+
+  return {
+    auth,
+    sessions: data.filter((session) => session.userId === userId),
+  };
+}
+
+export async function revokeOtherOwnedSessionsForLifecycle(
+  userId: string,
+  currentSessionId: string,
+) {
+  try {
+    const { auth, sessions } = await listOwnedSessionsForLifecycle(userId);
+    if (!sessions) return false;
+
+    for (const session of sessions) {
+      if (session.id === currentSessionId) continue;
+      const { error } = await auth.revokeSession({ token: session.token });
+      if (error) return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function revokeAllOwnedSessionsForLifecycle(
+  userId: string,
+  currentSessionId: string,
+): Promise<LifecycleSessionRevocationResult> {
+  let remoteSessionsRevoked = true;
+  let currentSessionRevoked = false;
+
+  try {
+    const { auth, sessions } = await listOwnedSessionsForLifecycle(userId);
+
+    if (!sessions) {
+      remoteSessionsRevoked = false;
+    } else {
+      for (const session of sessions) {
+        if (session.id === currentSessionId) continue;
+
+        try {
+          const { error } = await auth.revokeSession({ token: session.token });
+          if (error) remoteSessionsRevoked = false;
+        } catch {
+          remoteSessionsRevoked = false;
+        }
+      }
+    }
+
+    try {
+      const { error } = await auth.signOut();
+      currentSessionRevoked = !error;
+    } catch {
+      currentSessionRevoked = false;
+    }
+  } catch {
+    remoteSessionsRevoked = false;
+
+    try {
+      const { error } = await createServerAuth().signOut();
+      currentSessionRevoked = !error;
+    } catch {
+      currentSessionRevoked = false;
+    }
+  }
+
+  return { remoteSessionsRevoked, currentSessionRevoked };
+}

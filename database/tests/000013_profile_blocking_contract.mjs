@@ -46,13 +46,21 @@ const blockPolicies = runPsql({
   databaseUrl,
   tuplesOnly: true,
   sql: `
-    SELECT string_agg(cmd, ',' ORDER BY cmd)
+    SELECT string_agg(policyname || ':' || cmd, ',' ORDER BY policyname)
     FROM pg_policies
     WHERE schemaname = 'caleida_profile'
-      AND tablename = 'profile_blocks';
+      AND tablename = 'profile_blocks'
+      AND policyname IN (
+        'profile_blocks_owner_delete',
+        'profile_blocks_owner_insert',
+        'profile_blocks_owner_select'
+      );
   `,
 });
-assert.equal(blockPolicies, "DELETE,INSERT,SELECT");
+assert.equal(
+  blockPolicies,
+  "profile_blocks_owner_delete:DELETE,profile_blocks_owner_insert:INSERT,profile_blocks_owner_select:SELECT",
+);
 
 const profileGuard = runPsql({
   databaseUrl,
@@ -99,6 +107,9 @@ if (target === "ephemeral") {
       $block$;
 
       GRANT USAGE ON SCHEMA caleida_profile TO caleida_profile_block_test_authenticated;
+      GRANT USAGE ON SCHEMA caleida_account TO caleida_profile_block_test_authenticated;
+      GRANT EXECUTE ON FUNCTION caleida_account.is_account_active(uuid)
+        TO caleida_profile_block_test_authenticated;
       GRANT SELECT, INSERT, UPDATE
         ON caleida_profile.profiles
         TO caleida_profile_block_test_authenticated;
@@ -122,6 +133,9 @@ if (target === "ephemeral") {
         TO caleida_profile_block_test_authenticated;
 
       GRANT USAGE ON SCHEMA caleida_profile TO caleida_profile_block_test_anonymous;
+      GRANT USAGE ON SCHEMA caleida_account TO caleida_profile_block_test_anonymous;
+      GRANT EXECUTE ON FUNCTION caleida_account.is_account_active(uuid)
+        TO caleida_profile_block_test_anonymous;
       GRANT SELECT (
         username,
         display_name,

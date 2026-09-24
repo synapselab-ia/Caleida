@@ -35,12 +35,20 @@ export default async function AccountSecurityPage() {
           >
             <CaleidaLogo className="h-14 max-w-56" />
           </Link>
-          <Link
-            href="/app"
-            className="text-sm font-semibold text-text-primary underline decoration-border underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
-          >
-            Voltar para o início
-          </Link>
+          <nav className="flex flex-wrap gap-4 text-sm font-semibold">
+            <Link
+              href="/account/lifecycle"
+              className="underline decoration-border underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+            >
+              Conta
+            </Link>
+            <Link
+              href="/app"
+              className="underline decoration-border underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus"
+            >
+              Voltar para o início
+            </Link>
+          </nav>
         </header>
 
         <section className="grid gap-3">
