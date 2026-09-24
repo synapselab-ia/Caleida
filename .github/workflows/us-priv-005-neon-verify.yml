@@ -1,0 +1,223 @@
+name: US-PRIV-005 Neon verification
+
+on:
+  push:
+    branches:
+      - probe/us-priv-005-neon
+    paths:
+      - .github/workflows/us-priv-005-neon-verify.yml
+      - database/migrations/000014_account_lifecycle.sql
+      - tests/account-lifecycle-contract.test.mjs
+      - src/lib/account/**
+      - src/lib/auth/session-management.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: us-priv-005-neon-verify
+  cancel-in-progress: true
+
+jobs:
+  verify-neon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEON_API_KEY: \${{ secrets.NEON_API_KEY }}
+      NEON_PROJECT_ID: patient-glade-95136440
+      NEON_BASELINE_BRANCH_ID: br-restless-cherry-awpcwy6r
+      MIGRATION_CHECKSUM: c532f794f7fe4ad28c2bf854a3a239f3d2ae1f140e7576bff7e2cb523802ce8d
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Verify Neon credential availability
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "\${NEON_API_KEY:-}"
+          echo "::add-mask::\${NEON_API_KEY}"
+          echo 'CALEIDA_NEON_API_KEY_AVAILABLE true'
+
+      - name: Create isolated Neon branch
+        id: neon
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: \${{ env.NEON_PROJECT_ID }}
+          parent_branch: \${{ env.NEON_BASELINE_BRANCH_ID }}
+          branch_name: verify-us-priv-005-\${{ github.run_id }}
+          database: neondb
+          role: neondb_owner
+          api_key: \${{ secrets.NEON_API_KEY }}
+          get_auth_url: true
+          get_data_api_url: true
+
+      - name: Confirm isolated services
+        shell: bash
+        env:
+          AUTH_URL: \${{ steps.neon.outputs.auth_url }}
+          DATA_API_URL: \${{ steps.neon.outputs.data_api_url }}
+          VERIFY_BRANCH_ID: \${{ steps.neon.outputs.branch_id }}
+        run: |
+          set -euo pipefail
+          test -n "\${VERIFY_BRANCH_ID}"
+          test -n "\${AUTH_URL}"
+          test -n "\${DATA_API_URL}"
+          echo "CALEIDA_NEON_BRANCH_ID \${VERIFY_BRANCH_ID}"
+          echo 'CALEIDA_NEON_AUTH_ENDPOINT_DISCOVERED true'
+          echo 'CALEIDA_NEON_DATA_API_ENDPOINT_DISCOVERED true'
+
+      - name: Install PostgreSQL client and Neon CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update >/dev/null
+          sudo apt-get install --yes postgresql-client jq >/dev/null
+          npm install --global neon@latest >/dev/null
+          neon --version
+          psql --version
+
+      - name: Apply 000014 on isolated branch
+        shell: bash
+        env:
+          DATABASE_URL: \${{ steps.neon.outputs.db_url }}
+        run: |
+          set -euo pipefail
+          test -n "\${DATABASE_URL}"
+          psql "\${DATABASE_URL}" -v ON_ERROR_STOP=1 <<SQL
+          BEGIN;
+          \i database/migrations/000014_account_lifecycle.sql
+          INSERT INTO caleida_internal.schema_migrations (filename, checksum)
+          VALUES ('000014_account_lifecycle.sql', '\${MIGRATION_CHECKSUM}');
+          COMMIT;
+          SQL
+          echo 'CALEIDA_000014_APPLIED true'
+
+      - name: Verify managed services and ACL readback
+        shell: bash
+        env:
+          DATABASE_URL: \${{ steps.neon.outputs.db_url }}
+          VERIFY_BRANCH_ID: \${{ steps.neon.outputs.branch_id }}
+        run: |
+          set -euo pipefail
+          test -n "\${DATABASE_URL}"
+          test -n "\${VERIFY_BRANCH_ID}"
+
+          roles="$(psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "SELECT string_agg(rolname, ',' ORDER BY rolname) FROM pg_roles WHERE rolname IN ('anonymous','authenticated');")"
+          test "\${roles}" = "anonymous,authenticated"
+
+          ledger="$(psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "SELECT filename || ':' || checksum FROM caleida_internal.schema_migrations WHERE filename='000014_account_lifecycle.sql';")"
+          test "\${ledger}" = "000014_account_lifecycle.sql:\${MIGRATION_CHECKSUM}"
+
+          rls="$(psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "SELECT relrowsecurity::text || '|' || relforcerowsecurity::text FROM pg_class WHERE oid='caleida_account.account_lifecycle'::regclass;")"
+          test "\${rls}" = "true|false"
+
+          helper="$(psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "SELECT prosecdef::text || '|' || has_function_privilege('authenticated','caleida_account.is_account_active(uuid)','EXECUTE')::text || '|' || has_function_privilege('anonymous','caleida_account.is_account_active(uuid)','EXECUTE')::text || '|' || has_function_privilege('public','caleida_account.is_account_active(uuid)','EXECUTE')::text FROM pg_proc WHERE oid='caleida_account.is_account_active(uuid)'::regprocedure;")"
+          test "\${helper}" = "true|true|true|false"
+
+          lifecycle_grants="$(psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM information_schema.role_table_grants WHERE table_schema='caleida_account' AND table_name='account_lifecycle' AND grantee IN ('authenticated','anonymous');")"
+          test "\${lifecycle_grants}" = "0"
+
+          audit_grants="$(psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM information_schema.role_table_grants WHERE table_schema='caleida_audit' AND table_name='account_lifecycle_events' AND grantee IN ('authenticated','anonymous');")"
+          test "\${audit_grants}" = "0"
+
+          data_json="$(neon data-api get --project-id "\${NEON_PROJECT_ID}" --branch "\${VERIFY_BRANCH_ID}" --database neondb --output json --no-color)"
+          jq -e '.status == "active"' <<<"\${data_json}" >/dev/null
+          jq -e '.settings.db_schemas == ["caleida_profile"]' <<<"\${data_json}" >/dev/null
+          jq -e '.settings.db_anon_role == "anonymous"' <<<"\${data_json}" >/dev/null
+          jq -e '.settings.openapi_mode == "disabled"' <<<"\${data_json}" >/dev/null
+
+          neon neon-auth status --project-id "\${NEON_PROJECT_ID}" --branch "\${VERIFY_BRANCH_ID}" --output json --no-color >/tmp/auth-status.json
+          test -s /tmp/auth-status.json
+
+          echo 'CALEIDA_MANAGED_ROLES_VERIFIED true'
+          echo 'CALEIDA_DATA_API_SCOPE_VERIFIED true'
+          echo 'CALEIDA_NEON_AUTH_STATUS_VERIFIED true'
+
+      - name: Execute managed-role lifecycle matrix
+        shell: bash
+        env:
+          DATABASE_URL: \${{ steps.neon.outputs.db_url }}
+        run: |
+          set -euo pipefail
+
+          A='00000000-0000-4000-8000-000000000371'
+          B='00000000-0000-4000-8000-000000000372'
+          C='00000000-0000-4000-8000-000000000373'
+
+          query() {
+            psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "$1"
+          }
+
+          psql "\${DATABASE_URL}" -q -v ON_ERROR_STOP=1 <<SQL
+          SET ROLE authenticated;
+          SET request.jwt.claims = '{"sub":"\${A}","role":"authenticated"}';
+          INSERT INTO caleida_profile.profiles (username, display_name, visibility)
+          VALUES ('neon_lifecycle_a', 'Neon Lifecycle A', 'public');
+
+          SET request.jwt.claims = '{"sub":"\${B}","role":"authenticated"}';
+          INSERT INTO caleida_profile.profiles (username, display_name, visibility)
+          VALUES ('neon_lifecycle_b', 'Neon Lifecycle B', 'public');
+
+          SET request.jwt.claims = '{"sub":"\${C}","role":"authenticated"}';
+          INSERT INTO caleida_profile.profiles (username, display_name, visibility)
+          VALUES ('neon_lifecycle_c', 'Neon Lifecycle C', 'public');
+
+          SET request.jwt.claims = '{"sub":"\${A}","role":"authenticated"}';
+          INSERT INTO caleida_profile.profile_blocks (blocked_auth_user_id, blocked_username)
+          VALUES ('\${C}', 'neon_lifecycle_c');
+          RESET ROLE;
+          RESET request.jwt.claims;
+          SQL
+
+          test "$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${B}\",\"role\":\"authenticated\"}'; SELECT count(*) FROM caleida_profile.profiles WHERE auth_user_id='\${A}';")" = "1"
+          test "$(query "SET ROLE anonymous; RESET request.jwt.claims; SELECT count(username) FROM caleida_profile.profiles WHERE username='neon_lifecycle_a';")" = "1"
+
+          psql "\${DATABASE_URL}" -q -v ON_ERROR_STOP=1 -c "INSERT INTO caleida_account.account_lifecycle (auth_user_id,status,deactivated_at) VALUES ('\${A}','deactivated',CURRENT_TIMESTAMP);"
+
+          test "$(query "SELECT caleida_account.is_account_active('\${A}')::text || '|' || caleida_account.is_account_active('\${B}')::text;")" = "false|true"
+          test "$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${A}\",\"role\":\"authenticated\"}'; SELECT count(*) FROM caleida_profile.profiles WHERE auth_user_id='\${A}';")" = "1"
+          test "$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${B}\",\"role\":\"authenticated\"}'; SELECT count(*) FROM caleida_profile.profiles WHERE auth_user_id='\${A}';")" = "0"
+          test "$(query "SET ROLE anonymous; RESET request.jwt.claims; SELECT count(username) FROM caleida_profile.profiles WHERE username='neon_lifecycle_a';")" = "0"
+
+          update_count="$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${A}\",\"role\":\"authenticated\"}'; WITH changed AS (UPDATE caleida_profile.profiles SET display_name='must not change' WHERE auth_user_id='\${A}' RETURNING 1) SELECT count(*) FROM changed;")"
+          test "\${update_count}" = "0"
+
+          block_count="$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${A}\",\"role\":\"authenticated\"}'; SELECT count(*) FROM caleida_profile.profile_blocks;")"
+          test "\${block_count}" = "0"
+
+          block_delete_count="$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${A}\",\"role\":\"authenticated\"}'; WITH removed AS (DELETE FROM caleida_profile.profile_blocks WHERE blocked_auth_user_id='\${C}' RETURNING 1) SELECT count(*) FROM removed;")"
+          test "\${block_delete_count}" = "0"
+
+          preserved="$(query "RESET ROLE; RESET request.jwt.claims; SELECT (SELECT count(*) FROM caleida_profile.profiles WHERE auth_user_id='\${A}') || '|' || (SELECT count(*) FROM caleida_profile.profile_blocks WHERE blocker_auth_user_id='\${A}' AND blocked_auth_user_id='\${C}');")"
+          test "\${preserved}" = "1|1"
+
+          if psql "\${DATABASE_URL}" -qAt -v ON_ERROR_STOP=1 -c "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${A}\",\"role\":\"authenticated\"}'; SELECT * FROM caleida_account.account_lifecycle;" >/dev/null 2>&1; then
+            echo 'authenticated unexpectedly read account_lifecycle'
+            exit 1
+          fi
+
+          psql "\${DATABASE_URL}" -q -v ON_ERROR_STOP=1 -c "UPDATE caleida_account.account_lifecycle SET status='active', reactivated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE auth_user_id='\${A}';"
+
+          test "$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${B}\",\"role\":\"authenticated\"}'; SELECT count(*) FROM caleida_profile.profiles WHERE auth_user_id='\${A}';")" = "1"
+          test "$(query "SET ROLE anonymous; RESET request.jwt.claims; SELECT count(username) FROM caleida_profile.profiles WHERE username='neon_lifecycle_a';")" = "1"
+          test "$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${A}\",\"role\":\"authenticated\"}'; WITH changed AS (UPDATE caleida_profile.profiles SET display_name='Neon Lifecycle A Restored' WHERE auth_user_id='\${A}' RETURNING 1) SELECT count(*) FROM changed;")" = "1"
+          test "$(query "SET ROLE authenticated; SET request.jwt.claims='{\"sub\":\"\${A}\",\"role\":\"authenticated\"}'; SELECT count(*) FROM caleida_profile.profile_blocks;")" = "1"
+
+          echo 'CALEIDA_NEON_LIFECYCLE_MATRIX_PASS true'
+          echo 'CALEIDA_NEON_SYNTHETIC_DATA_ISOLATED true'
+
+      - name: Show schema delta
+        shell: bash
+        env:
+          VERIFY_BRANCH_ID: \${{ steps.neon.outputs.branch_id }}
+        run: |
+          set -euo pipefail
+          neon branches schema-diff "\${VERIFY_BRANCH_ID}" \
+            --project-id "\${NEON_PROJECT_ID}" \
+            --base-branch "\${NEON_BASELINE_BRANCH_ID}" \
+            --database neondb \
+            --output json --no-color >/tmp/schema-diff.json || true
+          test -s /tmp/schema-diff.json
+          echo 'CALEIDA_NEON_SCHEMA_DIFF_CAPTURED true'
