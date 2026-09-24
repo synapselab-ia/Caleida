@@ -99,6 +99,9 @@ if (target === "ephemeral") {
       $block$;
 
       GRANT USAGE ON SCHEMA caleida_profile TO caleida_profile_block_test_authenticated;
+      GRANT USAGE ON SCHEMA caleida_account TO caleida_profile_block_test_authenticated;
+      GRANT EXECUTE ON FUNCTION caleida_account.is_account_active(uuid)
+        TO caleida_profile_block_test_authenticated;
       GRANT SELECT, INSERT, UPDATE
         ON caleida_profile.profiles
         TO caleida_profile_block_test_authenticated;
@@ -122,6 +125,9 @@ if (target === "ephemeral") {
         TO caleida_profile_block_test_authenticated;
 
       GRANT USAGE ON SCHEMA caleida_profile TO caleida_profile_block_test_anonymous;
+      GRANT USAGE ON SCHEMA caleida_account TO caleida_profile_block_test_anonymous;
+      GRANT EXECUTE ON FUNCTION caleida_account.is_account_active(uuid)
+        TO caleida_profile_block_test_anonymous;
       GRANT SELECT (
         username,
         display_name,
